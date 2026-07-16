@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import * as kasane from '../../src/index.js';
 
 describe('public entry point', () => {
-  it('exports only the implemented public error classes', () => {
+  it('exports only implemented public contracts', () => {
     expect(Object.keys(kasane).sort()).toEqual([
       'KasaneError',
       'KasaneLayerError',
@@ -12,6 +12,7 @@ describe('public entry point', () => {
       'KasaneSecurityError',
       'KasaneSourceError',
       'KasaneValidationError',
+      'remove',
     ]);
   });
 });

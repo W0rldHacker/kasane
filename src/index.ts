@@ -1,4 +1,5 @@
 /** Public ESM entry point. */
+export { remove } from './merge/remove.js';
 export {
   KasaneError,
   KasaneLayerError,
