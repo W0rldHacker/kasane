@@ -1,4 +1,3 @@
-/** Public ESM entry point. */
 export {
   KasaneError,
   KasaneLayerError,
@@ -7,4 +6,4 @@ export {
   KasaneSecurityError,
   KasaneSourceError,
   KasaneValidationError,
-} from './errors/index.js';
+} from './kasane-error.js';
