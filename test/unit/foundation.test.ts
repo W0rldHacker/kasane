@@ -3,7 +3,15 @@ import { describe, expect, it } from 'vitest';
 import * as kasane from '../../src/index.js';
 
 describe('public entry point', () => {
-  it('is a valid empty ESM module', () => {
-    expect(Object.keys(kasane)).toEqual([]);
+  it('exports only the implemented public error classes', () => {
+    expect(Object.keys(kasane).sort()).toEqual([
+      'KasaneError',
+      'KasaneLayerError',
+      'KasaneMergeError',
+      'KasanePathError',
+      'KasaneSecurityError',
+      'KasaneSourceError',
+      'KasaneValidationError',
+    ]);
   });
 });
