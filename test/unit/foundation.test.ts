@@ -5,6 +5,7 @@ import * as kasane from '../../src/index.js';
 describe('public entry point', () => {
   it('exports only implemented public contracts', () => {
     expect(Object.keys(kasane).sort()).toEqual([
+      'ConfigSnapshot',
       'KasaneError',
       'KasaneLayerError',
       'KasaneMergeError',
@@ -12,7 +13,10 @@ describe('public entry point', () => {
       'KasaneSecurityError',
       'KasaneSourceError',
       'KasaneValidationError',
+      'file',
+      'kasane',
       'remove',
+      'value',
     ]);
   });
 });
