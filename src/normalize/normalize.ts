@@ -1,9 +1,18 @@
 import { KasaneMergeError, KasaneSecurityError } from '../errors/index.js';
+import { isRemoveMarker } from '../merge/remove.js';
+import type {
+  MergeLayerNode,
+  MergeLayerObject,
+  RemoveMarker,
+} from '../merge/remove.js';
 import { boundedUtf8ByteLength, resolveNormalizeLimits } from './limits.js';
 import type { NormalizeLimits, ResolvedNormalizeLimits } from './limits.js';
 import { isPlainObject } from './plain-object.js';
 import { isSafeConfigKey } from './safe-key.js';
-import type { ConfigArray, ConfigNode, ConfigObject } from './types.js';
+import type { ConfigArray, ConfigNode } from './types.js';
+
+type NormalizedNode = ConfigNode | MergeLayerObject | RemoveMarker;
+type NormalizedObject = Record<string, NormalizedNode>;
 
 const ARRAY_INDEX = /^(?:0|[1-9][0-9]*)$/u;
 
@@ -23,7 +32,7 @@ type Assignment =
   | {
       readonly key: string;
       readonly kind: 'object';
-      readonly target: ConfigObject;
+      readonly target: NormalizedObject;
     };
 
 interface VisitTask {
@@ -31,6 +40,7 @@ interface VisitTask {
   readonly depth: number;
   readonly kind: 'visit';
   readonly path: string;
+  readonly insideArray: boolean;
   readonly value: unknown;
 }
 
@@ -42,6 +52,7 @@ interface ExitTask {
 type WorkItem = ExitTask | VisitTask;
 
 interface NormalizeContext {
+  readonly allowRemove: boolean;
   readonly ancestors: Set<object>;
   readonly limits: ResolvedNormalizeLimits;
   nodes: number;
@@ -218,9 +229,9 @@ function prepareObject(
 }
 
 function defineConfigProperty(
-  target: ConfigObject,
+  target: NormalizedObject,
   key: string,
-  value: ConfigNode,
+  value: NormalizedNode,
 ): void {
   Object.defineProperty(target, key, {
     configurable: true,
@@ -232,12 +243,12 @@ function defineConfigProperty(
 
 function assignValue(
   assignment: Assignment,
-  value: ConfigNode,
-  setRoot: (value: ConfigNode) => void,
+  value: NormalizedNode,
+  setRoot: (value: NormalizedNode) => void,
 ): void {
   switch (assignment.kind) {
     case 'array':
-      assignment.target[assignment.index] = value;
+      assignment.target[assignment.index] = value as ConfigNode;
       return;
     case 'object':
       defineConfigProperty(assignment.target, assignment.key, value);
@@ -294,7 +305,7 @@ function normalizePrimitive(
 }
 
 function childAssignment(
-  output: ConfigArray | ConfigObject,
+  output: ConfigArray | NormalizedObject,
   child: PreparedChild,
   array: boolean,
 ): Assignment {
@@ -309,7 +320,7 @@ function childAssignment(
   return {
     key: child.key as string,
     kind: 'object',
-    target: output as ConfigObject,
+    target: output as NormalizedObject,
   };
 }
 
@@ -318,7 +329,7 @@ function processContainer(
   value: object,
   context: NormalizeContext,
   work: WorkItem[],
-  setRoot: (value: ConfigNode) => void,
+  setRoot: (value: NormalizedNode) => void,
 ): void {
   if (context.ancestors.has(value)) return failCycle(task.path);
 
@@ -330,7 +341,7 @@ function processContainer(
   const children = array
     ? prepareArray(value, task.path)
     : prepareObject(value, task.path);
-  const output: ConfigArray | ConfigObject = array ? [] : {};
+  const output: ConfigArray | NormalizedObject = array ? [] : {};
 
   assignValue(task.assignment, output, setRoot);
   context.ancestors.add(value);
@@ -345,6 +356,7 @@ function processContainer(
       depth: task.depth + 1,
       kind: 'visit',
       path: child.path,
+      insideArray: task.insideArray || array,
       value: child.value,
     });
   }
@@ -356,14 +368,16 @@ function processContainer(
  * Root `undefined` is the only no-op representation. Traversal is iterative;
  * cycle detection tracks only active ancestors so shared subtrees remain valid.
  */
-export function normalizeConfigNode(
+function normalizeNode(
   input: unknown,
-  limitOverrides?: NormalizeLimits,
-): ConfigNode | undefined {
+  limitOverrides: NormalizeLimits | undefined,
+  allowRemove: boolean,
+): NormalizedNode | undefined {
   const limits = resolveNormalizeLimits(limitOverrides);
   if (input === undefined) return undefined;
 
   const context: NormalizeContext = {
+    allowRemove,
     ancestors: new Set(),
     limits,
     nodes: 0,
@@ -374,11 +388,12 @@ export function normalizeConfigNode(
       depth: 0,
       kind: 'visit',
       path: '',
+      insideArray: false,
       value: input,
     },
   ];
-  let result: ConfigNode | undefined;
-  const setRoot = (value: ConfigNode): void => {
+  let result: NormalizedNode | undefined;
+  const setRoot = (value: NormalizedNode): void => {
     result = value;
   };
 
@@ -392,6 +407,13 @@ export function normalizeConfigNode(
     }
 
     reserveNode(context, task.path, task.depth);
+
+    if (isRemoveMarker(task.value)) {
+      if (!context.allowRemove) failValue(task.path, 'unsupported-symbol');
+      if (task.insideArray) failValue(task.path, 'remove-in-array');
+      assignValue(task.assignment, task.value, setRoot);
+      continue;
+    }
 
     if (task.value === null) {
       assignValue(task.assignment, null, setRoot);
@@ -423,4 +445,20 @@ export function normalizeConfigNode(
   }
 
   return result;
+}
+
+/** Normalizes a materialized configuration/validation value. */
+export function normalizeConfigNode(
+  input: unknown,
+  limitOverrides?: NormalizeLimits,
+): ConfigNode | undefined {
+  return normalizeNode(input, limitOverrides, false) as ConfigNode | undefined;
+}
+
+/** Normalizes one merge layer while preserving root/object remove controls. */
+export function normalizeLayerNode(
+  input: unknown,
+  limitOverrides?: NormalizeLimits,
+): MergeLayerNode | undefined {
+  return normalizeNode(input, limitOverrides, true);
 }

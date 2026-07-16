@@ -42,6 +42,7 @@
     "test:types": "pnpm build && tsd",
     "docs:check": "node scripts/docs-check.mjs",
     "architecture:check": "node scripts/architecture-check.mjs",
+    "bench": "pnpm build && node --expose-gc scripts/bench.mjs",
     "changeset": "changeset",
     "verify": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm docs:check && pnpm architecture:check && pnpm build:check && pnpm test && pnpm test:types"
   },

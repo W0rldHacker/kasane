@@ -32,6 +32,7 @@ const metadataByConstructor = new Map<object, ErrorMetadata>();
 
 export interface KasaneErrorDetailsInput {
   readonly path?: string;
+  readonly layerId?: number;
   readonly layerName?: string;
   readonly kind?: string;
   readonly operation?: string;
@@ -48,6 +49,7 @@ export interface KasaneErrorOptions {
 
 export interface KasaneErrorDetails {
   readonly path?: string;
+  readonly layerId?: number;
   readonly layerName?: string;
   readonly kind?: string;
   readonly operation?: string;
@@ -111,12 +113,22 @@ function copyStringProperty(
     operation?: string;
     reference?: string;
   },
-  property: keyof KasaneErrorDetailsInput,
+  property: Exclude<keyof KasaneErrorDetailsInput, 'layerId' | 'limits'>,
 ): void {
   const value = readOwnDataProperty(source, property);
-  if (typeof value !== 'string' || property === 'limits') return;
+  if (typeof value !== 'string') return;
 
   target[property] = value;
+}
+
+function copyLayerIdProperty(
+  source: object,
+  target: { layerId?: number },
+): void {
+  const value = readOwnDataProperty(source, 'layerId');
+  if (typeof value === 'number' && Number.isSafeInteger(value) && value >= 0) {
+    target.layerId = value;
+  }
 }
 
 function sanitizeLimits(
@@ -153,12 +165,14 @@ function sanitizeDetails(value: unknown): KasaneErrorDetails {
 
   const details: {
     path?: string;
+    layerId?: number;
     layerName?: string;
     kind?: string;
     operation?: string;
     reference?: string;
     limits?: Readonly<Record<string, number>>;
   } = {};
+  copyLayerIdProperty(value, details);
   copyStringProperty(value, details, 'path');
   copyStringProperty(value, details, 'layerName');
   copyStringProperty(value, details, 'kind');
