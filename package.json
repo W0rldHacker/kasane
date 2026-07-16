@@ -1,0 +1,66 @@
+{
+  "name": "kasane",
+  "version": "0.0.0",
+  "description": "Explainable layered configuration for Node.js and TypeScript.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=11 <12"
+  },
+  "packageManager": "pnpm@11.13.0",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "lint": "pnpm lint:code && pnpm lint:markdown",
+    "lint:code": "eslint .",
+    "lint:markdown": "markdownlint-cli2",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "tsc -p tsconfig.build.json",
+    "build:check": "pnpm build && node scripts/check-build.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:unit": "vitest run --project unit",
+    "test:integration": "vitest run --project integration",
+    "test:security": "vitest run --project security",
+    "test:property": "vitest run --project property",
+    "test:architecture": "vitest run --project architecture",
+    "test:types": "pnpm build && tsd",
+    "docs:check": "node scripts/docs-check.mjs",
+    "architecture:check": "node scripts/architecture-check.mjs",
+    "changeset": "changeset",
+    "verify": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm docs:check && pnpm architecture:check && pnpm build:check && pnpm test && pnpm test:types"
+  },
+  "devDependencies": {
+    "@changesets/cli": "2.31.0",
+    "@eslint/js": "10.0.1",
+    "@types/node": "22.20.1",
+    "@vitest/coverage-v8": "4.1.10",
+    "eslint": "10.7.0",
+    "fast-check": "4.9.0",
+    "globals": "17.7.0",
+    "markdownlint-cli2": "0.23.0",
+    "prettier": "3.9.5",
+    "tsd": "0.33.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.64.0",
+    "vitest": "4.1.10"
+  },
+  "tsd": {
+    "directory": "test/types"
+  }
+}

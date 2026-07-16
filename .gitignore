@@ -1,0 +1,11 @@
+.changeset/pre.json
+.env
+.env.*
+!.env.example
+.idea/
+.vscode/*.local.json
+coverage/
+dist/
+node_modules/
+*.log
+*.tsbuildinfo
