@@ -2,9 +2,11 @@ import { expectAssignable, expectType } from 'tsd';
 
 import { env, file, kasane, remove, secret, secretValue, value } from 'kasane';
 import type {
+  ConfigDiff,
   ConfigSnapshot,
   EnvLayerOptions,
   Explanation,
+  FingerprintKey,
   FileLayerOptions,
   LayerDescriptor,
   LayerSource,
@@ -12,6 +14,9 @@ import type {
   SourceContext,
   SecretValue,
 } from 'kasane';
+
+expectAssignable<FingerprintKey>('application-key');
+expectAssignable<FingerprintKey>(new Uint8Array([1, 2, 3]));
 
 expectAssignable<symbol>(remove);
 
@@ -52,6 +57,7 @@ expectAssignable<LayerDescriptor>({
 });
 expectAssignable<Promise<ConfigSnapshot<AppConfig>>>(
   kasane<AppConfig>({
+    fingerprintKey: 'application-key',
     layers: [value('defaults', { server: { port: 3000 } })],
     secrets: ['server.token', 'integrations.*.token'],
   }),
@@ -61,3 +67,4 @@ declare const snapshot: ConfigSnapshot<AppConfig>;
 expectType<Origin | undefined>(snapshot.origin('server.port'));
 expectType<Explanation>(snapshot.explain('server.port'));
 expectType<string>(snapshot.explain('server.port').format());
+expectType<ConfigDiff>(snapshot.diff(snapshot));

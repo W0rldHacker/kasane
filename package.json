@@ -15,6 +15,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./standard-schema": {
+      "types": "./dist/standard-schema.d.ts",
+      "import": "./dist/standard-schema.js"
     }
   },
   "files": [
@@ -39,7 +43,7 @@
     "test:security": "vitest run --project security",
     "test:property": "vitest run --project property",
     "test:architecture": "vitest run --project architecture",
-    "test:types": "pnpm build && tsd",
+    "test:types": "pnpm build && node scripts/test-types.mjs",
     "docs:check": "node scripts/docs-check.mjs",
     "architecture:check": "node scripts/architecture-check.mjs",
     "bench": "pnpm build && node --expose-gc scripts/bench.mjs",

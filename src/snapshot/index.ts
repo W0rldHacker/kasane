@@ -6,6 +6,20 @@ export type {
   SnapshotRedactor,
 } from './snapshot.js';
 export type {
+  AddedConfigChange,
+  AvailableDiffSource,
+  ConfigChange,
+  ConfigChangeType,
+  ConfigDiff,
+  ConfigDiffSide,
+  DiffSource,
+  RemovedConfigChange,
+  SourceChangedConfigChange,
+  UnavailableDiffSource,
+  ValueAndSourceChangedConfigChange,
+  ValueChangedConfigChange,
+} from './diff.js';
+export type {
   Explanation,
   ExplanationData,
   ExplanationHistoryEntry,

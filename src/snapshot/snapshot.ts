@@ -2,7 +2,7 @@ import { inspect } from 'node:util';
 
 import { formatDiagnostic } from '../diagnostics/formatter.js';
 import { safeDiagnosticValue } from '../diagnostics/safe-json.js';
-import { KasanePathError } from '../errors/index.js';
+import { KasaneError, KasanePathError } from '../errors/index.js';
 import type { ConfigNode } from '../normalize/types.js';
 import { PathCache, resolvePath } from '../paths/index.js';
 import {
@@ -14,6 +14,8 @@ import type { ProvenanceTree } from '../provenance/tree.js';
 import { createProvenanceTree } from '../provenance/tree.js';
 import type { LayerRegistry } from '../provenance/registry.js';
 import { cloneConfigNode, deepFreezeConfigNode } from './freeze.js';
+import { createConfigDiff, createSecretFingerprintIndex } from './diff.js';
+import type { ConfigDiff, SecretFingerprintIndex } from './diff.js';
 
 export const SNAPSHOT_PATH_CACHE_LIMIT = 256;
 
@@ -45,6 +47,8 @@ export interface ConfigSnapshotOptions {
   readonly redactedValue?: ConfigNode;
   /** Internal safe source registry retained for diagnostic readers. */
   readonly registry?: LayerRegistry;
+  /** Internal current-value digests; the fingerprint key is never retained. */
+  readonly secretFingerprints?: SecretFingerprintIndex;
 }
 
 /** Immutable read facade over one detached configuration value. */
@@ -54,6 +58,7 @@ export class ConfigSnapshot<T = ConfigNode> {
   readonly #redact: SnapshotRedactor | undefined;
   readonly #redactedValue: ConfigNode | undefined;
   readonly #registry: LayerRegistry | undefined;
+  readonly #secretFingerprints: SecretFingerprintIndex;
   readonly #value: ConfigNode;
 
   constructor(value: T & ConfigNode, options: ConfigSnapshotOptions = {}) {
@@ -66,6 +71,10 @@ export class ConfigSnapshot<T = ConfigNode> {
         ? undefined
         : deepFreezeConfigNode(cloneConfigNode(options.redactedValue));
     this.#registry = options.registry;
+    this.#secretFingerprints = new Map(
+      options.secretFingerprints ??
+        createSecretFingerprintIndex(detached, options.provenance),
+    );
     this.#redact = options.redact;
     Object.freeze(this);
   }
@@ -128,6 +137,38 @@ export class ConfigSnapshot<T = ConfigNode> {
       root: this.#value,
       segments,
     });
+  }
+
+  diff(other: ConfigSnapshot<unknown>): ConfigDiff {
+    if (!(other instanceof ConfigSnapshot)) {
+      throw new KasaneError('Snapshot diff target is invalid.', {
+        details: { kind: 'invalid-snapshot', operation: 'diff' },
+      });
+    }
+    return createConfigDiff(
+      {
+        fingerprints: this.#secretFingerprints,
+        ...(this.#provenance === undefined
+          ? {}
+          : { provenance: this.#provenance }),
+        ...(this.#redactedValue === undefined
+          ? {}
+          : { redactedValue: this.#redactedValue }),
+        ...(this.#registry === undefined ? {} : { registry: this.#registry }),
+        value: this.#value,
+      },
+      {
+        fingerprints: other.#secretFingerprints,
+        ...(other.#provenance === undefined
+          ? {}
+          : { provenance: other.#provenance }),
+        ...(other.#redactedValue === undefined
+          ? {}
+          : { redactedValue: other.#redactedValue }),
+        ...(other.#registry === undefined ? {} : { registry: other.#registry }),
+        value: other.#value,
+      },
+    );
   }
 
   toJSON(): RedactedConfigNode {

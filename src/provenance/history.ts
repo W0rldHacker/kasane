@@ -1,4 +1,5 @@
 import type { ConfigPrimitive } from '../normalize/types.js';
+import type { SecretFingerprint } from '../secrets/fingerprint.js';
 import type {
   LeafOriginRecord,
   RemoveOriginRecord,
@@ -22,6 +23,7 @@ export interface RedactedHistoryEntry {
   readonly kind: 'redacted';
   readonly origin: LeafOriginRecord;
   readonly redacted: true;
+  readonly fingerprint: SecretFingerprint;
 }
 
 /** Structural and removal attempts deliberately contain no value snapshot. */
@@ -34,12 +36,22 @@ export type OriginHistoryEntry =
   ValueHistoryEntry | RedactedHistoryEntry | OperationHistoryEntry;
 export type OriginHistory = readonly OriginHistoryEntry[];
 
+export type HistoryFingerprinter = (
+  value: ConfigPrimitive,
+) => SecretFingerprint;
+
 export function createLeafHistoryEntry(
   origin: LeafOriginRecord,
   value: ConfigPrimitive,
+  fingerprint: HistoryFingerprinter,
 ): ValueHistoryEntry | RedactedHistoryEntry {
   return origin.secret
-    ? Object.freeze({ kind: 'redacted', origin, redacted: true })
+    ? Object.freeze({
+        fingerprint: fingerprint(value),
+        kind: 'redacted',
+        origin,
+        redacted: true,
+      })
     : Object.freeze({ kind: 'value', origin, value });
 }
 
@@ -60,13 +72,17 @@ export function appendHistoryEntry(
  * Used when a later annotation makes a path secret. Every detached plaintext
  * snapshot is replaced immediately; origins and ordering remain available.
  */
-export function redactHistory(history: OriginHistory): OriginHistory {
+export function redactHistory(
+  history: OriginHistory,
+  fingerprint: HistoryFingerprinter,
+): OriginHistory {
   if (!history.some((entry) => entry.kind === 'value')) return history;
 
   return Object.freeze(
     history.map((entry): OriginHistoryEntry => {
       if (entry.kind !== 'value') return entry;
       return Object.freeze({
+        fingerprint: fingerprint(entry.value),
         kind: 'redacted',
         origin: entry.origin,
         redacted: true,

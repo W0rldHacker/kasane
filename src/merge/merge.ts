@@ -13,12 +13,14 @@ import { mergeNode } from './merge-node.js';
 import type { MergeLayerNode } from './remove.js';
 import type { MergeRuleIndex } from './rule-index.js';
 import type { SecretPathMatcher } from '../secrets/matcher.js';
+import type { FingerprintKey } from '../secrets/fingerprint.js';
 
 export interface MergeInput {
   readonly base: ConfigNode | undefined;
   readonly baseProvenance?: ProvenanceTree;
   readonly inputReferenceId?: SourceReferenceId;
   readonly inputReferenceIds?: ReadonlyMap<string, SourceReferenceId>;
+  readonly fingerprintKey?: FingerprintKey;
   readonly layer: MergeLayerNode | undefined;
   readonly layerId: LayerId;
   readonly provenanceMode?: ProvenanceMode;
@@ -99,6 +101,9 @@ export function mergeConfigNodes(input: MergeInput): MergeOutput {
       registry: input.registry,
       rules: input.rules,
       secret: input.secret ?? false,
+      ...(input.fingerprintKey === undefined
+        ? {}
+        : { fingerprintKey: input.fingerprintKey }),
       ...(input.secretPaths === undefined
         ? {}
         : { secretPaths: input.secretPaths }),

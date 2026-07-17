@@ -36,11 +36,14 @@ import type {
 import type { MergeRuleIndex } from './rule-index.js';
 import { isInSecretSubtree } from '../secrets/matcher.js';
 import type { SecretPathMatcher } from '../secrets/matcher.js';
+import { fingerprintSecretValue } from '../secrets/fingerprint.js';
+import type { FingerprintKey } from '../secrets/fingerprint.js';
 import { isRemoveMarker } from './remove.js';
 import type { MergeLayerNode, MergeLayerObject } from './remove.js';
 import { configNodeKind, resolveMergeDecision } from './strategy.js';
 
 export interface MergeNodeContext {
+  readonly fingerprintKey?: FingerprintKey;
   readonly inputReferenceId?: SourceReferenceId;
   readonly inputReferenceIds?: ReadonlyMap<string, SourceReferenceId>;
   readonly layerId: LayerId;
@@ -108,11 +111,15 @@ function leafHistory(
 
   const previousHistory =
     origin.secret && previous?.history !== undefined
-      ? redactHistory(previous.history)
+      ? redactHistory(previous.history, (entryValue) =>
+          fingerprintSecretValue(entryValue, context.fingerprintKey),
+        )
       : previous?.history;
   return appendHistoryEntry(
     previousHistory,
-    createLeafHistoryEntry(origin, value),
+    createLeafHistoryEntry(origin, value, (entryValue) =>
+      fingerprintSecretValue(entryValue, context.fingerprintKey),
+    ),
   );
 }
 
@@ -127,7 +134,9 @@ function operationHistory(
 
   const previousHistory =
     origin.secret && previous?.history !== undefined
-      ? redactHistory(previous.history)
+      ? redactHistory(previous.history, (entryValue) =>
+          fingerprintSecretValue(entryValue, context.fingerprintKey),
+        )
       : previous?.history;
   return appendHistoryEntry(
     previousHistory,
@@ -538,8 +547,12 @@ function removeNode(
 
 function subtreeIsSecret(node: ProvenanceNode): boolean {
   if (node.secret) return true;
-  if (node.state === 'tombstone' || node.kind === 'leaf') return false;
-  for (const child of node.children.values()) {
+  if (node.state === 'tombstone') return false;
+  const descendants =
+    node.kind === 'leaf'
+      ? node.removedChildren?.values()
+      : node.children.values();
+  for (const child of descendants ?? []) {
     if (subtreeIsSecret(child)) return true;
   }
   return false;

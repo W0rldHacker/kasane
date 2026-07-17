@@ -12,6 +12,7 @@ const pureZones = new Set([
   'paths',
   'provenance',
   'redaction',
+  'validation',
 ]);
 const diagnosticZones = new Set([
   'diagnostics',

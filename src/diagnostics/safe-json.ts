@@ -1,8 +1,11 @@
 import { isProxy } from 'node:util/types';
 
-import { Redactor } from '../secrets/redact.js';
+import { REDACTED_VALUE, Redactor } from '../secrets/redact.js';
 import type { SecretPathMatcher } from '../secrets/matcher.js';
 import type { DiagnosticValue, RedactionContext } from '../secrets/redact.js';
+import type { ProvenanceTree } from '../provenance/tree.js';
+
+export type { DiagnosticValue } from '../secrets/redact.js';
 
 const diagnosticRedactor = new Redactor({ unsafeObject: isProxy });
 
@@ -21,6 +24,11 @@ export function safeStringify(
   return JSON.stringify(safeDiagnosticValue(value, context));
 }
 
+/** Returns the central placeholder for an already-redacted diagnostic field. */
+export function safeRedactedValue(): DiagnosticValue {
+  return REDACTED_VALUE;
+}
+
 /** Internal bridge for provenance-free snapshots; input must be normalized. */
 export function safeNormalizedRedaction(
   value: unknown,
@@ -28,4 +36,17 @@ export function safeNormalizedRedaction(
   preserve: (value: unknown) => boolean,
 ): unknown {
   return diagnosticRedactor.redactNormalized(value, policy, preserve);
+}
+
+/** Builds a full detached redacted value from temporary validation metadata. */
+export function safeNormalizedProvenanceRedaction(
+  value: unknown,
+  provenance: ProvenanceTree,
+  policy?: SecretPathMatcher,
+): unknown {
+  return diagnosticRedactor.redactNormalizedWithProvenance(
+    value,
+    provenance,
+    policy,
+  );
 }

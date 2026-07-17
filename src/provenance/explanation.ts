@@ -2,6 +2,7 @@ import type { ConfigNode } from '../normalize/types.js';
 import { resolvePath, serializePath } from '../paths/index.js';
 import type { PathResolution } from '../paths/index.js';
 import type { DiagnosticValue } from '../secrets/redact.js';
+import type { SecretFingerprint } from '../secrets/fingerprint.js';
 import type { OriginHistory, OriginHistoryEntry } from './history.js';
 import { resolveOriginRecord } from './origin.js';
 import type { OriginRecord, ResolvedOriginRecord } from './origin.js';
@@ -25,6 +26,7 @@ export interface ExplanationValueHistoryEntry extends ExplanationHistoryBase {
 }
 
 export interface ExplanationRedactedHistoryEntry extends ExplanationHistoryBase {
+  readonly fingerprint: SecretFingerprint;
   readonly kind: 'redacted';
   readonly redacted: true;
 }
@@ -144,7 +146,12 @@ function resolveHistoryEntry(
     case 'operation':
       return Object.freeze({ kind: 'operation', origin });
     case 'redacted':
-      return Object.freeze({ kind: 'redacted', origin, redacted: true });
+      return Object.freeze({
+        fingerprint: entry.fingerprint,
+        kind: 'redacted',
+        origin,
+        redacted: true,
+      });
     case 'value':
       return Object.freeze({
         kind: 'value',
@@ -187,11 +194,12 @@ function nearestRemoval(
 
   let depth = 0;
   for (const segment of segments) {
-    if (node === undefined || node.kind === 'leaf') {
-      return undefined;
-    }
+    if (node === undefined) return undefined;
     depth += 1;
-    node = node.children.get(segment);
+    node =
+      node.kind === 'leaf'
+        ? node.removedChildren?.get(segment)
+        : node.children.get(segment);
     if (node?.state === 'tombstone') {
       return {
         node,

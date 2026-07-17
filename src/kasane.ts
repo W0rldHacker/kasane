@@ -1,7 +1,7 @@
 import path from 'node:path';
 import process from 'node:process';
 
-import { safeNormalizedRedaction } from './diagnostics/safe-json.js';
+import { safeNormalizedProvenanceRedaction } from './diagnostics/safe-json.js';
 import {
   KasaneError,
   KasaneLayerError,
@@ -10,13 +10,8 @@ import {
 } from './errors/index.js';
 import { prepareLayers } from './layers/index.js';
 import type { LayerDescriptor, PreparedLayer } from './layers/index.js';
-import {
-  createMergeRuleIndex,
-  isRemoveMarker,
-  mergeConfigNodes,
-} from './merge/index.js';
+import { createMergeRuleIndex, mergeConfigNodes } from './merge/index.js';
 import type {
-  MergeLayerNode,
   MergeOutput,
   MergeRule,
   MergeStrategy,
@@ -33,11 +28,22 @@ import type {
   SourceReferenceId,
 } from './provenance/registry.js';
 import { ConfigSnapshot } from './snapshot/index.js';
+import { createSecretFingerprintIndex } from './snapshot/diff.js';
 import {
   applySecretPathPolicy,
   createSecretPathMatcher,
-  isInSecretSubtree,
 } from './secrets/index.js';
+import type { FingerprintKey } from './secrets/index.js';
+import {
+  prepareValidation,
+  reconcileValidationProvenance,
+  validateConfigValue,
+} from './validation/index.js';
+import type {
+  InferValidationOutput,
+  ValidationAdapter,
+} from './validation/index.js';
+import { createProvenanceTree } from './provenance/tree.js';
 import type {
   LoadedLayer,
   SourceContext,
@@ -46,14 +52,19 @@ import type {
 
 export type MergeRuleDeclarations = Readonly<Record<string, MergeStrategy>>;
 
-export interface KasaneOptions {
+export interface KasaneOptions<
+  Validation extends ValidationAdapter | undefined =
+    ValidationAdapter | undefined,
+> {
   readonly layers: readonly LayerDescriptor[];
   readonly cwd?: string;
+  readonly fingerprintKey?: FingerprintKey;
   readonly freeze?: boolean;
   readonly merge?: MergeRuleDeclarations;
   readonly provenance?: ProvenanceMode;
   readonly secrets?: readonly string[];
   readonly signal?: AbortSignal;
+  readonly validate?: Validation;
 }
 
 function failOptions(kind: string): never {
@@ -124,6 +135,12 @@ function resolveProvenanceMode(
     return failOptions('invalid-provenance-mode');
   }
   return provenance;
+}
+
+function resolveFingerprintKey(key: unknown): FingerprintKey | undefined {
+  if (key === undefined || typeof key === 'string') return key;
+  if (key instanceof Uint8Array) return new Uint8Array(key);
+  return failOptions('invalid-fingerprint-key');
 }
 
 function resolveRules(
@@ -210,29 +227,49 @@ function pathReferenceIds(
 
 /** Runs the strictly sequential load → normalize → merge → snapshot pipeline. */
 export function kasane<T = ConfigNode>(
-  options: KasaneOptions,
+  options: KasaneOptions<undefined>,
 ): Promise<ConfigSnapshot<T>>;
-export async function kasane<T = ConfigNode>(
+export function kasane<Validation extends ValidationAdapter>(
+  options: KasaneOptions<Validation> & Readonly<{ validate: Validation }>,
+): Promise<ConfigSnapshot<InferValidationOutput<Validation>>>;
+export async function kasane(
   options: unknown,
-): Promise<ConfigSnapshot<T>> {
+): Promise<ConfigSnapshot<unknown>> {
   if (typeof options !== 'object' || options === null) {
     return failOptions('invalid-options');
   }
 
   const invocationOptions = options as KasaneOptions;
   const context = resolveContext(invocationOptions);
+  const fingerprintKey = resolveFingerprintKey(
+    invocationOptions.fingerprintKey,
+  );
   const layers = prepareLayers(invocationOptions.layers);
   const enabledLayers = layers.filter((layer) => layer.enabled);
+  const validation = prepareValidation(invocationOptions.validate);
+  if (
+    validation !== undefined &&
+    enabledLayers.some((layer) => layer.name === 'validation')
+  ) {
+    return failOptions('reserved-validation-layer-name');
+  }
   const rules = resolveRules(invocationOptions.merge);
   const provenanceMode = resolveProvenanceMode(invocationOptions.provenance);
+  const mergeProvenanceMode =
+    provenanceMode === 'none' ? 'origin-only' : provenanceMode;
   const secretPolicy = createSecretPathMatcher(invocationOptions.secrets);
-  const registry = createLayerRegistry(
-    enabledLayers.map((layer) => ({ kind: layer.kind, name: layer.name })),
-  );
+  const registry = createLayerRegistry([
+    ...enabledLayers.map((layer) => ({
+      kind: layer.kind,
+      name: layer.name,
+    })),
+    ...(validation === undefined
+      ? []
+      : [{ kind: 'validation', name: 'validation' }]),
+  ]);
 
   checkAbort(context.signal);
   let merged: MergeOutput | undefined;
-  let redactedMerged: MergeOutput | undefined;
 
   for (const layer of enabledLayers) {
     checkAbort(context.signal, layer);
@@ -246,34 +283,11 @@ export async function kasane<T = ConfigNode>(
     if (record === undefined) return failOptions('missing-layer-registration');
     const references = pathReferenceIds(loaded.metadata, registry);
 
-    if (provenanceMode === 'none') {
-      const redactedLayer = safeNormalizedRedaction(
-        normalized.value,
-        {
-          matches(path: string): boolean {
-            return (
-              layer.secret ||
-              isInSecretSubtree(normalized.secretPaths, path) ||
-              secretPolicy.matches(path)
-            );
-          },
-        },
-        isRemoveMarker,
-      ) as MergeLayerNode;
-      redactedMerged = mergeConfigNodes({
-        base: redactedMerged?.value,
-        layer: redactedLayer,
-        layerId: record.id,
-        provenanceMode: 'none',
-        registry,
-        rules,
-      });
-    }
-
     merged = mergeConfigNodes({
       base: merged?.value,
       layer: normalized.value,
       layerId: record.id,
+      ...(fingerprintKey === undefined ? {} : { fingerprintKey }),
       registry,
       rules,
       secret: layer.secret,
@@ -283,25 +297,82 @@ export async function kasane<T = ConfigNode>(
       ...(merged?.provenance === undefined
         ? {}
         : { baseProvenance: merged.provenance }),
-      ...(provenanceMode === undefined ? {} : { provenanceMode }),
+      ...(mergeProvenanceMode === undefined
+        ? {}
+        : { provenanceMode: mergeProvenanceMode }),
     });
   }
 
   checkAbort(context.signal);
-  if (merged?.value === undefined) return failAbsentRoot();
-  const provenance =
-    merged.provenance === undefined
+  let finalValue = merged?.value;
+  let workingProvenance =
+    merged?.provenance === undefined
       ? undefined
-      : applySecretPathPolicy(merged.provenance, registry, secretPolicy);
+      : applySecretPathPolicy(
+          merged.provenance,
+          registry,
+          secretPolicy,
+          fingerprintKey,
+        );
 
-  return new ConfigSnapshot<T>(merged.value as T & ConfigNode, {
+  if (validation !== undefined) {
+    const validationLayer = registry.getLayerByName('validation');
+    if (validationLayer === undefined) {
+      return failOptions('missing-validation-layer');
+    }
+    const preValidationProvenance =
+      workingProvenance ??
+      createProvenanceTree(
+        undefined,
+        mergeProvenanceMode === 'full' ? 'full' : 'origin-only',
+      );
+    const validated = await validateConfigValue(finalValue, validation, {
+      ...(fingerprintKey === undefined ? {} : { fingerprintKey }),
+      includeSource: provenanceMode !== 'none',
+      provenance: preValidationProvenance,
+      registry,
+      value: finalValue,
+    });
+    checkAbort(context.signal);
+    workingProvenance = applySecretPathPolicy(
+      reconcileValidationProvenance({
+        after: validated,
+        before: finalValue,
+        ...(fingerprintKey === undefined ? {} : { fingerprintKey }),
+        provenance: preValidationProvenance,
+        registry,
+        validationLayerId: validationLayer.id,
+      }),
+      registry,
+      secretPolicy,
+      fingerprintKey,
+    );
+    finalValue = validated;
+  }
+
+  if (finalValue === undefined) return failAbsentRoot();
+  const provenance = provenanceMode === 'none' ? undefined : workingProvenance;
+  const redactedValue =
+    provenanceMode === 'none' && workingProvenance !== undefined
+      ? (safeNormalizedProvenanceRedaction(
+          finalValue,
+          workingProvenance,
+          secretPolicy,
+        ) as ConfigNode)
+      : undefined;
+  const secretFingerprints = createSecretFingerprintIndex(
+    finalValue,
+    workingProvenance,
+    fingerprintKey,
+  );
+
+  return new ConfigSnapshot<unknown>(finalValue, {
     ...(invocationOptions.freeze === undefined
       ? {}
       : { freeze: invocationOptions.freeze }),
     ...(provenance === undefined ? {} : { provenance }),
-    ...(redactedMerged?.value === undefined
-      ? {}
-      : { redactedValue: redactedMerged.value }),
+    ...(redactedValue === undefined ? {} : { redactedValue }),
     registry,
+    secretFingerprints,
   });
 }

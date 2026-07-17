@@ -10,6 +10,8 @@ import {
 } from '../provenance/tree.js';
 import type { ProvenanceNode, ProvenanceTree } from '../provenance/tree.js';
 import type { SecretPathMatcher } from './matcher.js';
+import { fingerprintSecretValue } from './fingerprint.js';
+import type { FingerprintKey } from './fingerprint.js';
 
 function appendPath(parent: string, segment: string): string {
   const escaped = segment.replaceAll('\\', '\\\\').replaceAll('.', '\\.');
@@ -58,11 +60,14 @@ function applyNode(
   path: string,
   registry: LayerRegistry,
   matcher: SecretPathMatcher,
+  fingerprintKey: FingerprintKey | undefined,
 ): ProvenanceNode {
   const secret = matcher.matches(path);
   const history =
     secret && node.history !== undefined
-      ? redactHistory(node.history)
+      ? redactHistory(node.history, (value) =>
+          fingerprintSecretValue(value, fingerprintKey),
+        )
       : node.history;
 
   if (node.state === 'tombstone') {
@@ -74,11 +79,25 @@ function applyNode(
     );
   }
   if (node.kind === 'leaf') {
+    const removedChildren = new Map<string, ProvenanceNode>();
+    for (const [segment, child] of node.removedChildren ?? []) {
+      removedChildren.set(
+        segment,
+        applyNode(
+          child,
+          appendPath(path, segment),
+          registry,
+          matcher,
+          fingerprintKey,
+        ),
+      );
+    }
     return createLeafProvenanceNode(
       secret
         ? (markOriginSecret(registry, node.current) as typeof node.current)
         : node.current,
       history,
+      removedChildren,
     );
   }
 
@@ -86,7 +105,13 @@ function applyNode(
   for (const [segment, child] of node.children) {
     children.set(
       segment,
-      applyNode(child, appendPath(path, segment), registry, matcher),
+      applyNode(
+        child,
+        appendPath(path, segment),
+        registry,
+        matcher,
+        fingerprintKey,
+      ),
     );
   }
   return createContainerProvenanceNode(
@@ -104,11 +129,12 @@ export function applySecretPathPolicy(
   tree: ProvenanceTree,
   registry: LayerRegistry,
   matcher: SecretPathMatcher,
+  fingerprintKey?: FingerprintKey,
 ): ProvenanceTree {
   return createProvenanceTree(
     tree.root === undefined
       ? undefined
-      : applyNode(tree.root, '', registry, matcher),
+      : applyNode(tree.root, '', registry, matcher, fingerprintKey),
     tree.mode,
   );
 }

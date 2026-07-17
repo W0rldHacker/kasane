@@ -18,6 +18,8 @@ interface ValueProvenanceNodeBase {
 export interface LeafProvenanceNode extends ValueProvenanceNodeBase {
   readonly kind: 'leaf';
   readonly current: LeafOriginRecord;
+  /** Validation removals below a path whose current value became a leaf. */
+  readonly removedChildren?: ReadonlyMap<string, ProvenanceNode>;
 }
 
 export interface ContainerProvenanceNode extends ValueProvenanceNodeBase {
@@ -120,13 +122,23 @@ function immutableChildren(
 export function createLeafProvenanceNode(
   current: LeafOriginRecord,
   history?: OriginHistory,
+  removedChildren?:
+    | ReadonlyMap<string, ProvenanceNode>
+    | Iterable<readonly [string, ProvenanceNode]>,
 ): LeafProvenanceNode {
+  const removed =
+    removedChildren === undefined
+      ? undefined
+      : immutableChildren(removedChildren);
   return Object.freeze({
     state: 'value',
     kind: 'leaf',
     current,
     secret: current.secret,
     ...nodeHistory(history),
+    ...(removed === undefined || removed.size === 0
+      ? {}
+      : { removedChildren: removed }),
   });
 }
 
@@ -197,11 +209,14 @@ export function getProvenanceNode(
     if (
       node === undefined ||
       node.state === 'tombstone' ||
-      node.kind === 'leaf'
+      (node.kind === 'leaf' && node.removedChildren === undefined)
     ) {
       return undefined;
     }
-    node = node.children.get(segment);
+    node =
+      node.kind === 'leaf'
+        ? node.removedChildren?.get(segment)
+        : node.children.get(segment);
   }
 
   return node;
@@ -216,8 +231,11 @@ export function getNearestTombstone(
   if (node?.state === 'tombstone') return node;
 
   for (const segment of segments) {
-    if (node === undefined || node.kind === 'leaf') return undefined;
-    node = node.children.get(segment);
+    if (node === undefined) return undefined;
+    node =
+      node.kind === 'leaf'
+        ? node.removedChildren?.get(segment)
+        : node.children.get(segment);
     if (node?.state === 'tombstone') return node;
   }
 

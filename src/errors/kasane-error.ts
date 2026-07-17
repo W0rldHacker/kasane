@@ -2,6 +2,7 @@ import { inspect } from 'node:util';
 import { isProxy } from 'node:util/types';
 
 import { safeDiagnosticValue } from '../diagnostics/safe-json.js';
+import type { ConfigIssue } from '../validation/issues.js';
 
 const MAX_LIMIT_ENTRIES = 16;
 const SAFE_LIMIT_NAME = /^[A-Za-z][A-Za-z0-9_-]{0,63}$/u;
@@ -362,7 +363,10 @@ export class KasaneSourceError extends KasaneError {}
 export class KasaneMergeError extends KasaneError {}
 
 /** `KASANE_VALIDATION_ERROR`: configuration validation did not succeed. */
-export class KasaneValidationError extends KasaneError {}
+export class KasaneValidationError extends KasaneError {
+  /** Present on validator failures enriched with normalized issue context. */
+  declare readonly issues?: readonly ConfigIssue[];
+}
 
 /** `KASANE_PATH_ERROR`: a requested configuration path is invalid or missing. */
 export class KasanePathError extends KasaneError {}

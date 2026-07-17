@@ -326,10 +326,18 @@ describe('provenance-modes', () => {
       requireLayer(registry, 'secret').id,
       { operation: 'set', scope: 'leaf', secret: false },
     );
-    const publicHistory = [createLeafHistoryEntry(publicOrigin, canary)];
-    const redacted = redactHistory(publicHistory);
+    const publicHistory = [
+      createLeafHistoryEntry(publicOrigin, canary, () => 'v1:sha256:unused'),
+    ];
+    const redacted = redactHistory(
+      publicHistory,
+      () => 'v1:sha256:fixture-fingerprint',
+    );
 
     expect(JSON.stringify(redacted)).not.toContain(canary);
+    expect(redacted).toMatchObject([
+      { fingerprint: 'v1:sha256:fixture-fingerprint', kind: 'redacted' },
+    ]);
     expect(redacted).toMatchObject([{ kind: 'redacted', redacted: true }]);
   });
 

@@ -1,0 +1,54 @@
+import { expectError, expectType } from 'tsd';
+
+import { kasane, value } from 'kasane';
+import type {
+  ConfigIssue,
+  DeepReadonly,
+  FunctionValidator,
+  KasaneValidationError,
+} from 'kasane';
+import type { StandardSchemaV1 } from 'kasane/standard-schema';
+
+interface ValidatedConfig {
+  enabled: boolean;
+  port: number;
+}
+
+const functionValidator: FunctionValidator<ValidatedConfig> = (input) => {
+  const value = input as { enabled: string; port: string };
+  return {
+    enabled: value.enabled === 'true',
+    port: Number(value.port),
+  };
+};
+
+const functionSnapshot = await kasane({
+  layers: [value('input', { enabled: 'true', port: '8080' })],
+  validate: functionValidator,
+});
+expectType<DeepReadonly<ValidatedConfig>>(functionSnapshot.value);
+expectError((functionSnapshot.value.port = 3000));
+
+const asyncSnapshot = await kasane({
+  layers: [value('input', { port: '8080' })],
+  async validate(input) {
+    return { port: Number((input as { port: string }).port) };
+  },
+});
+expectType<Readonly<{ readonly port: number }>>(asyncSnapshot.value);
+
+const schema: StandardSchemaV1<unknown, ValidatedConfig> = {
+  '~standard': {
+    version: 1,
+    vendor: 'fixture',
+    validate: () => ({ value: { enabled: true, port: 8080 } }),
+  },
+};
+const schemaSnapshot = await kasane({
+  layers: [value('input', {})],
+  validate: schema,
+});
+expectType<DeepReadonly<ValidatedConfig>>(schemaSnapshot.value);
+
+declare const validationError: KasaneValidationError;
+expectType<readonly ConfigIssue[] | undefined>(validationError.issues);

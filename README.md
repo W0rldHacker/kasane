@@ -51,6 +51,45 @@ strings. Env collisions, empty segments, and dangerous path segments are errors,
 never order-dependent overrides. Dotenv loading is intentionally left to the
 application.
 
+## Validation
+
+`validate` accepts a synchronous or asynchronous function and infers its output
+type. The function receives a detached mutable copy; its result is normalized
+again before snapshot creation:
+
+```ts
+const config = await kasane({
+  layers,
+  validate(input) {
+    const value = input as { server: { port: string } };
+    return { server: { port: Number(value.server.port) } };
+  },
+});
+```
+
+Standard Schema V1 objects are detected structurally through `~standard`, so
+schema packages remain optional consumer dependencies. Compatible contract types
+are available from `kasane/standard-schema`. Coerced paths retain their input
+source with `transformed: true`; schema-added defaults use the synthetic
+`validation` source, and removed paths receive validation tombstones.
+
+Standard Schema failures expose sorted canonical `ConfigIssue` records on the
+`KasaneValidationError`. Each issue uses a library-controlled reason and, when
+available, includes its safe source reference, centrally redacted received
+value, and the previous value/origin in `full` provenance mode. Third-party
+issue messages and raw thrown errors are never copied into serialized
+diagnostics.
+
+## Snapshot diff
+
+`snapshot.diff(other)` compares validated normalized values and their stable
+source identity. Object changes are reported at leaf paths, while arrays are
+atomic values. The result distinguishes `added`, `removed`, `value-changed`,
+`source-changed`, and `value-and-source-changed` in deterministic path order.
+Secret values remain redacted and can carry their versioned fingerprint. When
+provenance is disabled, diff sides explicitly use `{ available: false }` rather
+than inventing a source.
+
 ## Secret annotations
 
 Secret sensitivity is stored in provenance for current values and history. A
@@ -71,6 +110,7 @@ policies can protect public source layers:
 
 ```ts
 await kasane({
+  fingerprintKey: applicationFingerprintKey,
   layers,
   secrets: ['database.password', 'integrations.*.token'],
 });
@@ -80,6 +120,12 @@ await kasane({
 value clears the current value-level annotation unless a path policy still
 matches. Earlier secret history remains secret. This API annotates values; it
 does not connect to or replace a secret manager.
+
+With `provenance: 'full'`, secret leaf history stores a versioned SHA-256
+fingerprint instead of plaintext. `fingerprintKey` switches this to HMAC-SHA-256
+and is never copied into snapshot metadata. Unkeyed fingerprints of low-entropy
+values are vulnerable to offline guessing, so they are not password hashes and
+do not replace secret storage or encryption.
 
 ## Safe diagnostics
 

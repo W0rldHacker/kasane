@@ -1,6 +1,13 @@
 /** Public ESM entry point. */
 export { kasane } from './kasane.js';
 export type { KasaneOptions, MergeRuleDeclarations } from './kasane.js';
+export type {
+  ConfigIssue,
+  ConfigIssuePrevious,
+  FunctionValidator,
+  InferValidationOutput,
+  ValidationAdapter,
+} from './validation/index.js';
 export { value } from './layers/value.js';
 export { file } from './layers/file.js';
 export { env } from './layers/env.js';
@@ -27,6 +34,10 @@ export type {
 export { remove } from './merge/remove.js';
 export { secretValue } from './secrets/secret-value.js';
 export type { SecretValue } from './secrets/secret-value.js';
+export type {
+  FingerprintKey,
+  SecretFingerprint,
+} from './secrets/fingerprint.js';
 export {
   KasaneError,
   KasaneLayerError,
@@ -42,6 +53,20 @@ export type {
   DeepReadonly,
   RedactedConfigNode,
 } from './snapshot/snapshot.js';
+export type {
+  AddedConfigChange,
+  AvailableDiffSource,
+  ConfigChange,
+  ConfigChangeType,
+  ConfigDiff,
+  ConfigDiffSide,
+  DiffSource,
+  RemovedConfigChange,
+  SourceChangedConfigChange,
+  UnavailableDiffSource,
+  ValueAndSourceChangedConfigChange,
+  ValueChangedConfigChange,
+} from './snapshot/diff.js';
 export type {
   Explanation,
   ExplanationData,

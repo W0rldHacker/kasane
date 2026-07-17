@@ -175,6 +175,73 @@ export class Redactor {
     return this.#visitNormalized(value, policy, preserve, '');
   }
 
+  /** Redacts a canonical tree using ephemeral provenance without truncation. */
+  redactNormalizedWithProvenance(
+    value: unknown,
+    provenance: ProvenanceTree,
+    policy?: SecretPathMatcher,
+  ): unknown {
+    return this.#visitNormalizedWithProvenance(
+      value,
+      provenance.root,
+      policy,
+      '',
+      false,
+      false,
+    );
+  }
+
+  #visitNormalizedWithProvenance(
+    value: unknown,
+    provenance: ProvenanceNode | undefined,
+    policy: SecretPathMatcher | undefined,
+    path: string,
+    inheritedSecret: boolean,
+    inheritedPolicy: boolean,
+  ): unknown {
+    const valueSecret = provenance?.secret ?? inheritedSecret;
+    const policySecret = inheritedPolicy || safePolicyMatch(policy, path);
+    const secret = valueSecret || policySecret;
+    if (value === null || typeof value !== 'object') {
+      return secret ? REDACTED_VALUE : value;
+    }
+
+    if (Array.isArray(value)) {
+      return value.map((child, index) => {
+        const segment = String(index);
+        return this.#visitNormalizedWithProvenance(
+          child,
+          childProvenance(provenance, segment),
+          policy,
+          appendPath(path, segment),
+          valueSecret,
+          policySecret,
+        );
+      });
+    }
+
+    const output: Record<string, unknown> = Object.create(null) as Record<
+      string,
+      unknown
+    >;
+    for (const key of Object.keys(value)) {
+      Object.defineProperty(output, key, {
+        configurable: true,
+        enumerable: true,
+        value: this.#visitNormalizedWithProvenance(
+          (value as Record<string, unknown>)[key],
+          childProvenance(provenance, key),
+          policy,
+          appendPath(path, key),
+          valueSecret,
+          policySecret,
+        ),
+        writable: true,
+      });
+    }
+    return output;
+  }
+
   #visitNormalized(
     value: unknown,
     policy: SecretPathMatcher,
