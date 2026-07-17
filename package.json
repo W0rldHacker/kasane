@@ -2,7 +2,22 @@
   "name": "kasane",
   "version": "0.0.0",
   "description": "Explainable layered configuration for Node.js and TypeScript.",
+  "keywords": [
+    "configuration",
+    "environment",
+    "esm",
+    "nodejs",
+    "typescript"
+  ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/W0rldHacker/kasane.git"
+  },
+  "homepage": "https://github.com/W0rldHacker/kasane#readme",
+  "bugs": {
+    "url": "https://github.com/W0rldHacker/kasane/issues"
+  },
   "type": "module",
   "sideEffects": false,
   "engines": {
@@ -24,7 +39,8 @@
   "files": [
     "dist",
     "LICENSE",
-    "README.md"
+    "README.md",
+    "SECURITY.md"
   ],
   "scripts": {
     "lint": "pnpm lint:code && pnpm lint:markdown",
@@ -33,8 +49,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "build": "tsc -p tsconfig.build.json",
+    "build": "node scripts/build.mjs",
     "build:check": "pnpm build && node scripts/check-build.mjs",
+    "api:check": "pnpm build && node scripts/check-public-api.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -43,12 +60,13 @@
     "test:security": "vitest run --project security",
     "test:property": "vitest run --project property",
     "test:architecture": "vitest run --project architecture",
-    "test:types": "pnpm build && node scripts/test-types.mjs",
+    "test:package": "pnpm build && node scripts/check-build.mjs && node scripts/test-package.mjs && publint",
+    "test:types": "pnpm build && node scripts/test-types.mjs && node scripts/check-public-api.mjs && node scripts/check-type-performance.mjs",
     "docs:check": "node scripts/docs-check.mjs",
     "architecture:check": "node scripts/architecture-check.mjs",
     "bench": "pnpm build && node --expose-gc scripts/bench.mjs",
     "changeset": "changeset",
-    "verify": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm docs:check && pnpm architecture:check && pnpm build:check && pnpm test && pnpm test:types"
+    "verify": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm docs:check && pnpm architecture:check && pnpm build:check && node scripts/test-package.mjs && publint && pnpm test && pnpm test:types"
   },
   "devDependencies": {
     "@changesets/cli": "2.31.0",
@@ -60,6 +78,7 @@
     "globals": "17.7.0",
     "markdownlint-cli2": "0.23.0",
     "prettier": "3.9.5",
+    "publint": "0.3.21",
     "tsd": "0.33.0",
     "typescript": "6.0.3",
     "typescript-eslint": "8.64.0",

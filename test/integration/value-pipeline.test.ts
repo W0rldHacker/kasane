@@ -204,8 +204,10 @@ describe('value pipeline', () => {
       kind: 'custom',
       load(context) {
         contexts.push(context);
-        expect(Reflect.ownKeys(context)).toEqual(['cwd']);
+        expect(Reflect.ownKeys(context)).toEqual(['cwd', 'limits']);
         expect(Object.isFrozen(context)).toBe(true);
+        expect(context.limits).toEqual({ maxSourceBytes: 10_000_000 });
+        expect(Object.isFrozen(context.limits)).toBe(true);
         expect('value' in context).toBe(false);
         expect('previous' in context).toBe(false);
         expect('snapshot' in context).toBe(false);

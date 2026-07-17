@@ -1,9 +1,15 @@
-import { readFile } from 'node:fs/promises';
+import { createReadStream } from 'node:fs';
 import nodePath from 'node:path';
 
-import { KasaneLayerError, KasaneSourceError } from '../errors/index.js';
-import { sourceMetadata } from '../sources/index.js';
+import {
+  KasaneLayerError,
+  KasaneSecurityError,
+  KasaneSourceError,
+} from '../errors/index.js';
+import { DEFAULT_MAX_SOURCE_BYTES } from '../security/index.js';
+import { builtInSource, sourceMetadata } from '../sources/index.js';
 import type {
+  BuiltInSource,
   SourceContext,
   SourceMetadata,
   SourceWithMetadata,
@@ -60,6 +66,37 @@ function parseJson(source: string): unknown {
   return JSON.parse(source) as unknown;
 }
 
+async function readBoundedUtf8File(
+  absolutePath: string,
+  maxSourceBytes: number,
+  signal: AbortSignal | undefined,
+): Promise<string> {
+  const chunks: Buffer[] = [];
+  let bytes = 0;
+  const stream = createReadStream(absolutePath, {
+    highWaterMark: 64 * 1024,
+    ...(signal === undefined ? {} : { signal }),
+  });
+
+  for await (const buffer of stream as AsyncIterable<Buffer>) {
+    const observedSourceBytes = bytes + buffer.byteLength;
+    if (observedSourceBytes > maxSourceBytes) {
+      throw new KasaneSecurityError('Configuration source is too large.', {
+        details: {
+          kind: 'source-too-large',
+          limits: { maxSourceBytes, observedSourceBytes },
+          operation: 'read-file',
+          reference: absolutePath,
+        },
+      });
+    }
+    chunks.push(buffer);
+    bytes = observedSourceBytes;
+  }
+
+  return Buffer.concat(chunks, bytes).toString('utf8');
+}
+
 /** Creates a UTF-8 file source with JSON parsing by default. */
 export function file<Output = unknown>(
   name: string,
@@ -84,7 +121,8 @@ export function file<Output = unknown>(
 
   const optional = options.optional === true;
   const parse = options.parse ?? parseJson;
-  const source: SourceWithMetadata = Object.freeze({
+  const source: SourceWithMetadata & BuiltInSource = Object.freeze({
+    [builtInSource]: true as const,
     kind: 'file',
     [sourceMetadata](context: SourceContext): SourceMetadata {
       return metadataFor(filePath, context);
@@ -93,11 +131,13 @@ export function file<Output = unknown>(
       const absolutePath = resolvedPath(filePath, context);
       let contents: string;
       try {
-        contents = await readFile(absolutePath, {
-          encoding: 'utf8',
-          ...(context.signal === undefined ? {} : { signal: context.signal }),
-        });
+        contents = await readBoundedUtf8File(
+          absolutePath,
+          context.limits?.maxSourceBytes ?? DEFAULT_MAX_SOURCE_BYTES,
+          context.signal,
+        );
       } catch (cause) {
+        if (cause instanceof KasaneSecurityError) throw cause;
         if (optional && errorCode(cause) === 'ENOENT') return undefined;
         throw new KasaneSourceError('Configuration file could not be read.', {
           cause,

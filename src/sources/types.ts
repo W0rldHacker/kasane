@@ -1,6 +1,13 @@
+export interface SourceLimits {
+  /** Maximum bytes a built-in byte source may consume before parsing. */
+  readonly maxSourceBytes: number;
+}
+
 /** The complete context available to every built-in or custom source. */
 export interface SourceContext {
   readonly cwd: string;
+  /** Present when invoked by kasane; optional for direct adapter invocation. */
+  readonly limits?: SourceLimits;
   readonly signal?: AbortSignal;
 }
 
@@ -8,7 +15,7 @@ export interface SourceContext {
 export interface LayerSource<Output = unknown> {
   readonly kind: string;
   /** May return a value directly or a promise; orchestration awaits both. */
-  load(context: SourceContext): Output | Promise<Output>;
+  readonly load: (context: SourceContext) => Output | Promise<Output>;
 }
 
 /** Safe source metadata never contains configuration values. */

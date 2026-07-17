@@ -1,10 +1,6 @@
-export { SNAPSHOT_PATH_CACHE_LIMIT, ConfigSnapshot } from './snapshot.js';
-export type {
-  ConfigSnapshotOptions,
-  DeepReadonly,
-  RedactedConfigNode,
-  SnapshotRedactor,
-} from './snapshot.js';
+export { SNAPSHOT_PATH_CACHE_LIMIT, createConfigSnapshot } from './snapshot.js';
+export { ConfigSnapshot } from './public.js';
+export type { DeepReadonly, RedactedConfigNode } from '../public-types.js';
 export type {
   AddedConfigChange,
   AvailableDiffSource,

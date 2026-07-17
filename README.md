@@ -1,9 +1,8 @@
 # Kasane
 
 Kasane is an explainable layered-configuration library for Node.js and
-TypeScript. Runtime implementation has not started; the current repository
-contains the accepted product/architecture baseline and a reproducible strict
-toolchain.
+TypeScript with deterministic merging, validation, provenance, redacted
+diagnostics, and bounded resource use.
 
 ## Development
 
@@ -80,6 +79,17 @@ value, and the previous value/origin in `full` provenance mode. Third-party
 issue messages and raw thrown errors are never copied into serialized
 diagnostics.
 
+## TypeScript API
+
+With a function validator or Standard Schema, `snapshot.value` is inferred from
+the validator output and exposed as `DeepReadonly<T>`. Without a validator,
+`kasane<T>(options)` is an explicit user assertion: Kasane normalizes the data
+but cannot prove that it matches `T`.
+
+Runtime paths deliberately stay lightweight. Both `snapshot.get(path)` and
+`snapshot.require(path)` return `unknown`, including for string literals; Kasane
+does not generate recursive typed-path unions that can slow the language server.
+
 ## Snapshot diff
 
 `snapshot.diff(other)` compares validated normalized values and their stable
@@ -138,6 +148,32 @@ placeholder itself is not used to infer sensitivity.
 
 Kasane errors expose only allowlisted details and detached cause summaries.
 There is no debug or formatting option that makes secret values printable.
+
+## Resource limits and trust boundary
+
+Every source result and validator output crosses the same configurable
+normalization limits. The built-in file source also limits bytes before calling
+its parser:
+
+```ts
+const config = await kasane({
+  layers,
+  limits: {
+    maxDepth: 64,
+    maxNodes: 100_000,
+    maxSourceBytes: 10_000_000,
+    maxStringLength: 1_000_000,
+  },
+});
+```
+
+These values are the defaults. Paths, per-snapshot caches, validation issues,
+and diagnostic traversal/formatting have fixed defensive budgets as described in
+the [threat model](docs/threat-model.md).
+
+Custom sources, parsers, validators, and Proxy traps are trusted executable code
+running with application authority. Kasane bounds and validates the data they
+return; it does not sandbox their execution.
 
 ## Origin and explanation
 

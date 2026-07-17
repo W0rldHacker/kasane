@@ -1,9 +1,19 @@
 export type {
   LayerSource,
   LoadedLayer,
+  SourceLimits,
   SourceContext,
   SourceMetadata,
   SourcePathReference,
 } from './types.js';
-export { getSourceMetadataResolver, sourceMetadata } from './metadata.js';
-export type { SourceMetadataResolver, SourceWithMetadata } from './metadata.js';
+export {
+  builtInSource,
+  getSourceMetadataResolver,
+  isBuiltInSource,
+  sourceMetadata,
+} from './metadata.js';
+export type {
+  BuiltInSource,
+  SourceMetadataResolver,
+  SourceWithMetadata,
+} from './metadata.js';

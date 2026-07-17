@@ -10,7 +10,10 @@ import type { ConfigNode } from '../../../src/normalize/types.js';
 import { createLayerRegistry } from '../../../src/provenance/registry.js';
 import type { ProvenanceTree } from '../../../src/provenance/tree.js';
 import { REDACTED_VALUE } from '../../../src/secrets/redact.js';
-import { ConfigSnapshot } from '../../../src/snapshot/index.js';
+import {
+  ConfigSnapshot,
+  createConfigSnapshot,
+} from '../../../src/snapshot/index.js';
 
 function requireProvenance(
   provenance: ProvenanceTree | undefined,
@@ -75,7 +78,7 @@ describe('ConfigSnapshot', () => {
     });
     if (result.value === undefined) throw new Error('Missing fixture value');
 
-    const snapshot = new ConfigSnapshot(result.value, {
+    const snapshot = createConfigSnapshot(result.value, {
       provenance: requireProvenance(result.provenance),
     });
     expect(snapshot.get('obsolete')).toBeUndefined();
@@ -101,7 +104,7 @@ describe('ConfigSnapshot', () => {
 
   it('allows runtime mutation only when freeze is explicitly disabled', () => {
     const input = { nested: { count: 1 } };
-    const snapshot = new ConfigSnapshot(input, { freeze: false });
+    const snapshot = createConfigSnapshot(input, { freeze: false });
     const mutable = snapshot.value as { nested: { count: number } };
 
     expect(Object.isFrozen(snapshot.value)).toBe(false);
@@ -117,7 +120,7 @@ describe('ConfigSnapshot', () => {
       (value as { public: string }).public = 'hooked';
       return value;
     });
-    const snapshot = new ConfigSnapshot(
+    const snapshot = createConfigSnapshot(
       { public: 'original' },
       { redact, freeze: false },
     );
@@ -162,7 +165,7 @@ describe('ConfigSnapshot', () => {
       secret: true,
     });
     if (result.value === undefined) throw new Error('Missing fixture value');
-    const snapshot = new ConfigSnapshot(result.value, {
+    const snapshot = createConfigSnapshot(result.value, {
       provenance: requireProvenance(result.provenance),
     });
 

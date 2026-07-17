@@ -5,7 +5,7 @@ import type { DiagnosticValue } from '../secrets/redact.js';
 import type { SecretFingerprint } from '../secrets/fingerprint.js';
 import type { OriginHistory, OriginHistoryEntry } from './history.js';
 import { resolveOriginRecord } from './origin.js';
-import type { OriginRecord, ResolvedOriginRecord } from './origin.js';
+import type { OriginRecord, ProvenanceOperation } from './origin.js';
 import type { LayerRegistry } from './registry.js';
 import type {
   ProvenanceNode,
@@ -14,7 +14,24 @@ import type {
 } from './tree.js';
 import { getProvenanceNode } from './tree.js';
 
-export type Origin = ResolvedOriginRecord;
+/** Public source identity without invocation-local registry handles. */
+export interface OriginLayer {
+  /** Invocation-local numeric identity; compare only within one snapshot. */
+  readonly id: number;
+  readonly kind: string;
+  readonly name: string;
+}
+
+/** Stable, readonly origin exposed by snapshot diagnostics. */
+export interface Origin {
+  readonly layer: OriginLayer;
+  readonly operation: ProvenanceOperation;
+  readonly scope: 'container' | 'leaf' | 'tombstone';
+  readonly secret: boolean;
+  readonly transformed?: true;
+  readonly sourceReference?: string;
+  readonly inputReference?: string;
+}
 
 interface ExplanationHistoryBase {
   readonly origin: Origin;
@@ -62,7 +79,7 @@ export interface MissingExplanationData {
 export type ExplanationData = FoundExplanationData | MissingExplanationData;
 
 export interface ExplanationMethods {
-  format(): string;
+  readonly format: () => string;
 }
 
 export type Explanation = ExplanationData & ExplanationMethods;

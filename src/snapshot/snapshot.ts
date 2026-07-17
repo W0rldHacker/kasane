@@ -16,27 +16,22 @@ import type { LayerRegistry } from '../provenance/registry.js';
 import { cloneConfigNode, deepFreezeConfigNode } from './freeze.js';
 import { createConfigDiff, createSecretFingerprintIndex } from './diff.js';
 import type { ConfigDiff, SecretFingerprintIndex } from './diff.js';
+import type {
+  ConfigSnapshot as ConfigSnapshotContract,
+  ConfigSnapshotConstructor,
+  DeepReadonly,
+  RedactedConfigNode,
+} from '../public-types.js';
 
 export const SNAPSHOT_PATH_CACHE_LIMIT = 256;
 
-export type DeepReadonly<T> = T extends null | boolean | number | string
-  ? T
-  : T extends readonly (infer Item)[]
-    ? readonly DeepReadonly<Item>[]
-    : T extends object
-      ? { readonly [Key in keyof T]: DeepReadonly<T[Key]> }
-      : T;
-
-/** A structurally safe representation; unlike `value`, it never aliases T. */
-export type RedactedConfigNode = ConfigNode;
-
-export type SnapshotRedactor = (
+type SnapshotRedactor = (
   value: ConfigNode,
   provenance: ProvenanceTree | undefined,
   registry: LayerRegistry | undefined,
 ) => RedactedConfigNode;
 
-export interface ConfigSnapshotOptions {
+interface ConfigSnapshotOptions {
   /** Runtime deep-freeze is enabled unless explicitly disabled. */
   readonly freeze?: boolean;
   /** Internal policy hook used by central redaction. */
@@ -52,7 +47,9 @@ export interface ConfigSnapshotOptions {
 }
 
 /** Immutable read facade over one detached configuration value. */
-export class ConfigSnapshot<T = ConfigNode> {
+class ConfigSnapshotImplementation<
+  T = ConfigNode,
+> implements ConfigSnapshotContract<T> {
   readonly #cache = new PathCache(SNAPSHOT_PATH_CACHE_LIMIT);
   readonly #provenance: ProvenanceTree | undefined;
   readonly #redact: SnapshotRedactor | undefined;
@@ -139,8 +136,8 @@ export class ConfigSnapshot<T = ConfigNode> {
     });
   }
 
-  diff(other: ConfigSnapshot<unknown>): ConfigDiff {
-    if (!(other instanceof ConfigSnapshot)) {
+  diff(other: ConfigSnapshotContract<unknown>): ConfigDiff {
+    if (!(other instanceof ConfigSnapshotImplementation)) {
       throw new KasaneError('Snapshot diff target is invalid.', {
         details: { kind: 'invalid-snapshot', operation: 'diff' },
       });
@@ -191,4 +188,16 @@ export class ConfigSnapshot<T = ConfigNode> {
   [inspect.custom](): RedactedConfigNode {
     return this.toJSON();
   }
+}
+
+/** @internal Runtime constructor consumed through the public facade. */
+export const ConfigSnapshot: ConfigSnapshotConstructor =
+  ConfigSnapshotImplementation;
+
+/** @internal Builds a snapshot with orchestration metadata. */
+export function createConfigSnapshot<T = ConfigNode>(
+  value: T & ConfigNode,
+  options: ConfigSnapshotOptions = {},
+): ConfigSnapshotContract<T> {
+  return new ConfigSnapshotImplementation(value, options);
 }

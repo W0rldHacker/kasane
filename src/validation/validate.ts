@@ -1,6 +1,7 @@
 import { KasaneValidationError } from '../errors/index.js';
 import { readSafeDataProperty } from '../diagnostics/safe-data.js';
 import { normalizeConfigNode } from '../normalize/index.js';
+import type { NormalizeLimits } from '../normalize/index.js';
 import type { ConfigNode } from '../normalize/types.js';
 import {
   createRootConfigIssue,
@@ -149,6 +150,7 @@ export async function validateConfigValue(
   value: ConfigNode | undefined,
   validation: PreparedValidation,
   diagnostics: ConfigIssueContext,
+  limits?: NormalizeLimits,
 ): Promise<ConfigNode | undefined> {
   const output = await invokeValidation(
     validation,
@@ -156,7 +158,7 @@ export async function validateConfigValue(
     diagnostics,
   );
   try {
-    return normalizeConfigNode(output);
+    return normalizeConfigNode(output, limits);
   } catch (cause) {
     throw createValidationError(
       'invalid-validator-output',

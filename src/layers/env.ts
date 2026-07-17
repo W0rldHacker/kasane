@@ -1,8 +1,9 @@
 import process from 'node:process';
 
 import { KasaneLayerError } from '../errors/index.js';
-import { sourceMetadata } from '../sources/index.js';
+import { builtInSource, sourceMetadata } from '../sources/index.js';
 import type {
+  BuiltInSource,
   SourceContext,
   SourceMetadata,
   SourceWithMetadata,
@@ -89,7 +90,8 @@ export function env(name: string, options: unknown = {}): LayerDescriptor {
     separator: separator ?? '__',
   });
   const metadataByContext = new WeakMap<SourceContext, SourceMetadata>();
-  const source: SourceWithMetadata = Object.freeze({
+  const source: SourceWithMetadata & BuiltInSource = Object.freeze({
+    [builtInSource]: true as const,
     kind: 'env',
     [sourceMetadata](context: SourceContext): SourceMetadata {
       return metadataByContext.get(context) ?? EMPTY_METADATA;

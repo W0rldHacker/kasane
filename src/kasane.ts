@@ -1,6 +1,12 @@
 import path from 'node:path';
 import process from 'node:process';
 
+import {
+  countConfigNodes,
+  createEventEmitter,
+  eventTimer,
+} from './diagnostics/events.js';
+import type { KasaneEventCallback } from './diagnostics/events.js';
 import { safeNormalizedProvenanceRedaction } from './diagnostics/safe-json.js';
 import {
   KasaneError,
@@ -9,7 +15,7 @@ import {
   KasaneSourceError,
 } from './errors/index.js';
 import { prepareLayers } from './layers/index.js';
-import type { LayerDescriptor, PreparedLayer } from './layers/index.js';
+import type { PreparedLayer } from './layers/index.js';
 import { createMergeRuleIndex, mergeConfigNodes } from './merge/index.js';
 import type {
   MergeOutput,
@@ -27,7 +33,7 @@ import type {
   LayerRegistry,
   SourceReferenceId,
 } from './provenance/registry.js';
-import { ConfigSnapshot } from './snapshot/index.js';
+import { createConfigSnapshot } from './snapshot/index.js';
 import { createSecretFingerprintIndex } from './snapshot/diff.js';
 import {
   applySecretPathPolicy,
@@ -44,28 +50,15 @@ import type {
   ValidationAdapter,
 } from './validation/index.js';
 import { createProvenanceTree } from './provenance/tree.js';
+import { resolveKasaneLimits } from './security/index.js';
+import type { ResolvedKasaneLimits } from './security/index.js';
 import type {
   LoadedLayer,
   SourceContext,
   SourceMetadata,
 } from './sources/index.js';
-
-export type MergeRuleDeclarations = Readonly<Record<string, MergeStrategy>>;
-
-export interface KasaneOptions<
-  Validation extends ValidationAdapter | undefined =
-    ValidationAdapter | undefined,
-> {
-  readonly layers: readonly LayerDescriptor[];
-  readonly cwd?: string;
-  readonly fingerprintKey?: FingerprintKey;
-  readonly freeze?: boolean;
-  readonly merge?: MergeRuleDeclarations;
-  readonly provenance?: ProvenanceMode;
-  readonly secrets?: readonly string[];
-  readonly signal?: AbortSignal;
-  readonly validate?: Validation;
-}
+import { isBuiltInSource } from './sources/index.js';
+import type { ConfigSnapshot, KasaneOptions } from './public-types.js';
 
 function failOptions(kind: string): never {
   throw new KasaneLayerError('Kasane options are invalid.', {
@@ -94,7 +87,10 @@ function checkAbort(
   });
 }
 
-function resolveContext(options: KasaneOptions): SourceContext {
+function resolveContext(
+  options: KasaneOptions,
+  limits: ResolvedKasaneLimits,
+): SourceContext {
   const invocationCwd = process.cwd();
   const configuredCwd = options.cwd ?? invocationCwd;
   if (typeof configuredCwd !== 'string' || configuredCwd.length === 0) {
@@ -109,6 +105,7 @@ function resolveContext(options: KasaneOptions): SourceContext {
 
   return Object.freeze({
     cwd: path.resolve(invocationCwd, configuredCwd),
+    limits: Object.freeze({ maxSourceBytes: limits.maxSourceBytes }),
     ...(options.signal === undefined ? {} : { signal: options.signal }),
   });
 }
@@ -143,6 +140,13 @@ function resolveFingerprintKey(key: unknown): FingerprintKey | undefined {
   return failOptions('invalid-fingerprint-key');
 }
 
+function resolveEventCallback(value: unknown): KasaneEventCallback | undefined {
+  if (value === undefined || typeof value === 'function') {
+    return value as KasaneEventCallback | undefined;
+  }
+  return failOptions('invalid-event-callback');
+}
+
 function resolveRules(
   declarations: unknown,
 ): ReturnType<typeof createMergeRuleIndex> {
@@ -172,7 +176,9 @@ async function loadLayer(
   try {
     loadedValue = await layer.load.call(layer.source, context);
   } catch (cause) {
-    if (cause instanceof KasaneError) throw cause;
+    if (cause instanceof KasaneError && isBuiltInSource(layer.source)) {
+      throw cause;
+    }
     throw new KasaneSourceError('Configuration source failed.', {
       cause,
       details: {
@@ -180,6 +186,7 @@ async function loadLayer(
         kind: layer.kind,
         operation: 'load-layer',
       },
+      secret: true,
     });
   }
 
@@ -187,7 +194,9 @@ async function loadLayer(
   try {
     metadata = layer.metadata?.call(layer.source, context);
   } catch (cause) {
-    if (cause instanceof KasaneError) throw cause;
+    if (cause instanceof KasaneError && isBuiltInSource(layer.source)) {
+      throw cause;
+    }
     throw new KasaneSourceError('Configuration source metadata failed.', {
       cause,
       details: {
@@ -195,6 +204,7 @@ async function loadLayer(
         kind: layer.kind,
         operation: 'load-source-metadata',
       },
+      secret: true,
     });
   }
 
@@ -225,10 +235,16 @@ function pathReferenceIds(
   return references;
 }
 
-/** Runs the strictly sequential load → normalize → merge → snapshot pipeline. */
+/**
+ * Runs the pipeline without runtime validation.
+ *
+ * An explicit `T` is a user assertion only; Kasane cannot verify it. Supply a
+ * validator when the snapshot type must be derived from runtime evidence.
+ */
 export function kasane<T = ConfigNode>(
   options: KasaneOptions<undefined>,
 ): Promise<ConfigSnapshot<T>>;
+/** Runs the pipeline and infers `snapshot.value` from validator output. */
 export function kasane<Validation extends ValidationAdapter>(
   options: KasaneOptions<Validation> & Readonly<{ validate: Validation }>,
 ): Promise<ConfigSnapshot<InferValidationOutput<Validation>>>;
@@ -240,7 +256,11 @@ export async function kasane(
   }
 
   const invocationOptions = options as KasaneOptions;
-  const context = resolveContext(invocationOptions);
+  const limits = resolveKasaneLimits(invocationOptions.limits);
+  const context = resolveContext(invocationOptions, limits);
+  const emit = createEventEmitter(
+    resolveEventCallback(invocationOptions.onEvent),
+  );
   const fingerprintKey = resolveFingerprintKey(
     invocationOptions.fingerprintKey,
   );
@@ -273,34 +293,77 @@ export async function kasane(
 
   for (const layer of enabledLayers) {
     checkAbort(context.signal, layer);
-    const loaded = await loadLayer(layer, context);
-    checkAbort(context.signal, layer);
-    if (loaded.metadata !== undefined) {
-      registerLayerSourceMetadata(registry, layer.name, loaded.metadata);
+    const identity = { kind: layer.kind, layer: layer.name } as const;
+    emit({ ...identity, type: 'source:start' });
+    const sourceDuration = eventTimer();
+    let loaded: LoadedLayer;
+    let normalized: ReturnType<typeof normalizeAnnotatedLayerNode>;
+    try {
+      loaded = await loadLayer(layer, context);
+      checkAbort(context.signal, layer);
+      normalized = normalizeAnnotatedLayerNode(loaded.value, limits);
+      if (loaded.metadata !== undefined) {
+        registerLayerSourceMetadata(registry, layer.name, loaded.metadata);
+      }
+      emit({
+        ...identity,
+        durationMs: sourceDuration(),
+        nodes: countConfigNodes(normalized.value),
+        success: true,
+        type: 'source:end',
+      });
+    } catch (error) {
+      emit({
+        ...identity,
+        durationMs: sourceDuration(),
+        nodes: 0,
+        success: false,
+        type: 'source:end',
+      });
+      throw error;
     }
-    const normalized = normalizeAnnotatedLayerNode(loaded.value);
     const record = registry.getLayerByName(layer.name);
     if (record === undefined) return failOptions('missing-layer-registration');
     const references = pathReferenceIds(loaded.metadata, registry);
 
-    merged = mergeConfigNodes({
-      base: merged?.value,
-      layer: normalized.value,
-      layerId: record.id,
-      ...(fingerprintKey === undefined ? {} : { fingerprintKey }),
-      registry,
-      rules,
-      secret: layer.secret,
-      secretPaths: normalized.secretPaths,
-      secretPolicy,
-      ...(references === undefined ? {} : { inputReferenceIds: references }),
-      ...(merged?.provenance === undefined
-        ? {}
-        : { baseProvenance: merged.provenance }),
-      ...(mergeProvenanceMode === undefined
-        ? {}
-        : { provenanceMode: mergeProvenanceMode }),
-    });
+    emit({ ...identity, type: 'merge:start' });
+    const mergeDuration = eventTimer();
+    try {
+      merged = mergeConfigNodes({
+        base: merged?.value,
+        layer: normalized.value,
+        layerId: record.id,
+        ...(fingerprintKey === undefined ? {} : { fingerprintKey }),
+        registry,
+        rules,
+        secret: layer.secret,
+        secretPaths: normalized.secretPaths,
+        secretPolicy,
+        ...(references === undefined ? {} : { inputReferenceIds: references }),
+        ...(merged?.provenance === undefined
+          ? {}
+          : { baseProvenance: merged.provenance }),
+        ...(mergeProvenanceMode === undefined
+          ? {}
+          : { provenanceMode: mergeProvenanceMode }),
+      });
+      emit({
+        ...identity,
+        durationMs: mergeDuration(),
+        nodes: countConfigNodes(merged.value),
+        success: true,
+        type: 'merge:end',
+      });
+    } catch (error) {
+      emit({
+        ...identity,
+        durationMs: mergeDuration(),
+        nodes: 0,
+        success: false,
+        type: 'merge:end',
+      });
+      throw error;
+    }
   }
 
   checkAbort(context.signal);
@@ -326,53 +389,101 @@ export async function kasane(
         undefined,
         mergeProvenanceMode === 'full' ? 'full' : 'origin-only',
       );
-    const validated = await validateConfigValue(finalValue, validation, {
-      ...(fingerprintKey === undefined ? {} : { fingerprintKey }),
-      includeSource: provenanceMode !== 'none',
-      provenance: preValidationProvenance,
-      registry,
-      value: finalValue,
-    });
-    checkAbort(context.signal);
-    workingProvenance = applySecretPathPolicy(
-      reconcileValidationProvenance({
-        after: validated,
-        before: finalValue,
-        ...(fingerprintKey === undefined ? {} : { fingerprintKey }),
-        provenance: preValidationProvenance,
+    const validationIdentity = {
+      kind: 'validation',
+      layer: 'validation',
+    } as const;
+    emit({ ...validationIdentity, type: 'validation:start' });
+    const validationDuration = eventTimer();
+    try {
+      const validated = await validateConfigValue(
+        finalValue,
+        validation,
+        {
+          ...(fingerprintKey === undefined ? {} : { fingerprintKey }),
+          includeSource: provenanceMode !== 'none',
+          provenance: preValidationProvenance,
+          registry,
+          value: finalValue,
+        },
+        limits,
+      );
+      checkAbort(context.signal);
+      workingProvenance = applySecretPathPolicy(
+        reconcileValidationProvenance({
+          after: validated,
+          before: finalValue,
+          ...(fingerprintKey === undefined ? {} : { fingerprintKey }),
+          provenance: preValidationProvenance,
+          registry,
+          validationLayerId: validationLayer.id,
+        }),
         registry,
-        validationLayerId: validationLayer.id,
-      }),
-      registry,
-      secretPolicy,
-      fingerprintKey,
-    );
-    finalValue = validated;
+        secretPolicy,
+        fingerprintKey,
+      );
+      finalValue = validated;
+      emit({
+        ...validationIdentity,
+        durationMs: validationDuration(),
+        nodes: countConfigNodes(finalValue),
+        success: true,
+        type: 'validation:end',
+      });
+    } catch (error) {
+      emit({
+        ...validationIdentity,
+        durationMs: validationDuration(),
+        nodes: 0,
+        success: false,
+        type: 'validation:end',
+      });
+      throw error;
+    }
   }
 
-  if (finalValue === undefined) return failAbsentRoot();
-  const provenance = provenanceMode === 'none' ? undefined : workingProvenance;
-  const redactedValue =
-    provenanceMode === 'none' && workingProvenance !== undefined
-      ? (safeNormalizedProvenanceRedaction(
-          finalValue,
-          workingProvenance,
-          secretPolicy,
-        ) as ConfigNode)
-      : undefined;
-  const secretFingerprints = createSecretFingerprintIndex(
-    finalValue,
-    workingProvenance,
-    fingerprintKey,
-  );
+  const snapshotDuration = eventTimer();
+  try {
+    if (finalValue === undefined) return failAbsentRoot();
+    const provenance =
+      provenanceMode === 'none' ? undefined : workingProvenance;
+    const redactedValue =
+      provenanceMode === 'none' && workingProvenance !== undefined
+        ? (safeNormalizedProvenanceRedaction(
+            finalValue,
+            workingProvenance,
+            secretPolicy,
+          ) as ConfigNode)
+        : undefined;
+    const secretFingerprints = createSecretFingerprintIndex(
+      finalValue,
+      workingProvenance,
+      fingerprintKey,
+    );
 
-  return new ConfigSnapshot<unknown>(finalValue, {
-    ...(invocationOptions.freeze === undefined
-      ? {}
-      : { freeze: invocationOptions.freeze }),
-    ...(provenance === undefined ? {} : { provenance }),
-    ...(redactedValue === undefined ? {} : { redactedValue }),
-    registry,
-    secretFingerprints,
-  });
+    const snapshot = createConfigSnapshot<unknown>(finalValue, {
+      ...(invocationOptions.freeze === undefined
+        ? {}
+        : { freeze: invocationOptions.freeze }),
+      ...(provenance === undefined ? {} : { provenance }),
+      ...(redactedValue === undefined ? {} : { redactedValue }),
+      registry,
+      secretFingerprints,
+    });
+    emit({
+      durationMs: snapshotDuration(),
+      nodes: countConfigNodes(finalValue),
+      success: true,
+      type: 'snapshot:created',
+    });
+    return snapshot;
+  } catch (error) {
+    emit({
+      durationMs: snapshotDuration(),
+      nodes: 0,
+      success: false,
+      type: 'snapshot:created',
+    });
+    throw error;
+  }
 }

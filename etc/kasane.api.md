@@ -1,3 +1,12 @@
+# Kasane public API report
+
+This report snapshots the package-root declaration surface. Update it only for
+an intentional public API change; `pnpm api:check` also rejects explicit `any`,
+external type dependencies, and private implementation names in public facades.
+
+<!-- API-REPORT:START -->
+
+```ts
 /** Public ESM entry point. */
 export { kasane } from './kasane.js';
 export type {
@@ -107,3 +116,6 @@ export type {
   Origin,
   OriginLayer,
 } from './provenance/explanation.js';
+```
+
+<!-- API-REPORT:END -->

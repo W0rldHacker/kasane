@@ -6,6 +6,8 @@ describe('public entry point', () => {
   it('exports only implemented public contracts', () => {
     expect(Object.keys(kasane).sort()).toEqual([
       'ConfigSnapshot',
+      'DEFAULT_KASANE_LIMITS',
+      'DEFAULT_MAX_SOURCE_BYTES',
       'KasaneError',
       'KasaneLayerError',
       'KasaneMergeError',
