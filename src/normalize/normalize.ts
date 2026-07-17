@@ -10,6 +10,7 @@ import type { NormalizeLimits, ResolvedNormalizeLimits } from './limits.js';
 import { isPlainObject } from './plain-object.js';
 import { isSafeConfigKey } from './safe-key.js';
 import type { ConfigArray, ConfigNode } from './types.js';
+import { unwrapSecretValue } from '../secrets/secret-value.js';
 
 type NormalizedNode = ConfigNode | MergeLayerObject | RemoveMarker;
 type NormalizedObject = Record<string, NormalizedNode>;
@@ -55,7 +56,13 @@ interface NormalizeContext {
   readonly allowRemove: boolean;
   readonly ancestors: Set<object>;
   readonly limits: ResolvedNormalizeLimits;
+  readonly secretPaths: Set<string>;
   nodes: number;
+}
+
+export interface NormalizedLayerResult {
+  readonly secretPaths: ReadonlySet<string>;
+  readonly value: MergeLayerNode | undefined;
 }
 
 function appendPath(parent: string, segment: string): string {
@@ -368,18 +375,21 @@ function processContainer(
  * Root `undefined` is the only no-op representation. Traversal is iterative;
  * cycle detection tracks only active ancestors so shared subtrees remain valid.
  */
-function normalizeNode(
+function normalizeNodeWithAnnotations(
   input: unknown,
   limitOverrides: NormalizeLimits | undefined,
   allowRemove: boolean,
-): NormalizedNode | undefined {
+): NormalizedLayerResult {
   const limits = resolveNormalizeLimits(limitOverrides);
-  if (input === undefined) return undefined;
+  if (input === undefined) {
+    return Object.freeze({ secretPaths: new Set<string>(), value: undefined });
+  }
 
   const context: NormalizeContext = {
     allowRemove,
     ancestors: new Set(),
     limits,
+    secretPaths: new Set(),
     nodes: 0,
   };
   const work: WorkItem[] = [
@@ -406,45 +416,75 @@ function normalizeNode(
       continue;
     }
 
-    reserveNode(context, task.path, task.depth);
+    let taskValue = task.value;
+    let annotation = unwrapSecretValue(taskValue);
+    while (annotation !== undefined) {
+      context.secretPaths.add(task.path);
+      taskValue = annotation.value;
+      annotation = unwrapSecretValue(taskValue);
+    }
 
-    if (isRemoveMarker(task.value)) {
-      if (!context.allowRemove) failValue(task.path, 'unsupported-symbol');
-      if (task.insideArray) failValue(task.path, 'remove-in-array');
-      assignValue(task.assignment, task.value, setRoot);
+    if (taskValue === undefined) {
+      if (task.insideArray) failValue(task.path, 'undefined-array-item');
       continue;
     }
 
-    if (task.value === null) {
+    reserveNode(context, task.path, task.depth);
+
+    if (isRemoveMarker(taskValue)) {
+      if (!context.allowRemove) failValue(task.path, 'unsupported-symbol');
+      if (task.insideArray) failValue(task.path, 'remove-in-array');
+      assignValue(task.assignment, taskValue, setRoot);
+      continue;
+    }
+
+    if (taskValue === null) {
       assignValue(task.assignment, null, setRoot);
       continue;
     }
 
-    switch (typeof task.value) {
+    switch (typeof taskValue) {
       case 'boolean':
       case 'number':
       case 'string':
         assignValue(
           task.assignment,
-          normalizePrimitive(task.value, task.path, context.limits),
+          normalizePrimitive(taskValue, task.path, context.limits),
           setRoot,
         );
         break;
       case 'object':
-        processContainer(task, task.value, context, work, setRoot);
+        processContainer(
+          { ...task, value: taskValue },
+          taskValue,
+          context,
+          work,
+          setRoot,
+        );
         break;
       case 'bigint':
       case 'function':
       case 'symbol':
       case 'undefined':
-        failValue(task.path, `unsupported-${typeof task.value}`);
+        failValue(task.path, `unsupported-${typeof taskValue}`);
         break;
       default:
         failValue(task.path, 'unsupported-type');
     }
   }
 
-  return result;
+  return Object.freeze({
+    secretPaths: new Set(context.secretPaths),
+    value: result,
+  });
+}
+
+function normalizeNode(
+  input: unknown,
+  limitOverrides: NormalizeLimits | undefined,
+  allowRemove: boolean,
+): NormalizedNode | undefined {
+  return normalizeNodeWithAnnotations(input, limitOverrides, allowRemove).value;
 }
 
 /** Normalizes a materialized configuration/validation value. */
@@ -461,4 +501,12 @@ export function normalizeLayerNode(
   limitOverrides?: NormalizeLimits,
 ): MergeLayerNode | undefined {
   return normalizeNode(input, limitOverrides, true);
+}
+
+/** Normalizes a layer and returns exact subtree roots from `secretValue`. */
+export function normalizeAnnotatedLayerNode(
+  input: unknown,
+  limitOverrides?: NormalizeLimits,
+): NormalizedLayerResult {
+  return normalizeNodeWithAnnotations(input, limitOverrides, true);
 }

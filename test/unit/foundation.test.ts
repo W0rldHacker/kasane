@@ -13,9 +13,12 @@ describe('public entry point', () => {
       'KasaneSecurityError',
       'KasaneSourceError',
       'KasaneValidationError',
+      'env',
       'file',
       'kasane',
       'remove',
+      'secret',
+      'secretValue',
       'value',
     ]);
   });

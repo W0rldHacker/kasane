@@ -1,6 +1,7 @@
 import path from 'node:path';
 import process from 'node:process';
 
+import { safeNormalizedRedaction } from './diagnostics/safe-json.js';
 import {
   KasaneError,
   KasaneLayerError,
@@ -9,17 +10,34 @@ import {
 } from './errors/index.js';
 import { prepareLayers } from './layers/index.js';
 import type { LayerDescriptor, PreparedLayer } from './layers/index.js';
-import { createMergeRuleIndex, mergeConfigNodes } from './merge/index.js';
+import {
+  createMergeRuleIndex,
+  isRemoveMarker,
+  mergeConfigNodes,
+} from './merge/index.js';
 import type {
+  MergeLayerNode,
   MergeOutput,
   MergeRule,
   MergeStrategy,
   ProvenanceMode,
 } from './merge/index.js';
-import { normalizeLayerNode } from './normalize/index.js';
+import { normalizeAnnotatedLayerNode } from './normalize/index.js';
 import type { ConfigNode } from './normalize/types.js';
-import { createLayerRegistry } from './provenance/registry.js';
+import {
+  createLayerRegistry,
+  registerLayerSourceMetadata,
+} from './provenance/registry.js';
+import type {
+  LayerRegistry,
+  SourceReferenceId,
+} from './provenance/registry.js';
 import { ConfigSnapshot } from './snapshot/index.js';
+import {
+  applySecretPathPolicy,
+  createSecretPathMatcher,
+  isInSecretSubtree,
+} from './secrets/index.js';
 import type {
   LoadedLayer,
   SourceContext,
@@ -34,6 +52,7 @@ export interface KasaneOptions {
   readonly freeze?: boolean;
   readonly merge?: MergeRuleDeclarations;
   readonly provenance?: ProvenanceMode;
+  readonly secrets?: readonly string[];
   readonly signal?: AbortSignal;
 }
 
@@ -131,7 +150,6 @@ function resolveRules(
 async function loadLayer(
   layer: PreparedLayer,
   context: SourceContext,
-  metadata: SourceMetadata | undefined,
 ): Promise<LoadedLayer> {
   let loadedValue: unknown;
   try {
@@ -148,12 +166,46 @@ async function loadLayer(
     });
   }
 
+  let metadata: SourceMetadata | undefined;
+  try {
+    metadata = layer.metadata?.call(layer.source, context);
+  } catch (cause) {
+    if (cause instanceof KasaneError) throw cause;
+    throw new KasaneSourceError('Configuration source metadata failed.', {
+      cause,
+      details: {
+        layerName: layer.name,
+        kind: layer.kind,
+        operation: 'load-source-metadata',
+      },
+    });
+  }
+
   return Object.freeze({
     kind: layer.kind,
     name: layer.name,
     value: loadedValue,
     ...(metadata === undefined ? {} : { metadata }),
   });
+}
+
+function pathReferenceIds(
+  metadata: SourceMetadata | undefined,
+  registry: LayerRegistry,
+): ReadonlyMap<string, SourceReferenceId> | undefined {
+  if (metadata?.pathReferences === undefined) return undefined;
+
+  const references = new Map<string, SourceReferenceId>();
+  for (const pathReference of metadata.pathReferences) {
+    const referenceId = registry.getReferenceId(pathReference.reference);
+    if (referenceId === undefined)
+      return failOptions('missing-source-reference');
+    if (references.has(pathReference.path)) {
+      return failOptions('duplicate-source-path-reference');
+    }
+    references.set(pathReference.path, referenceId);
+  }
+  return references;
 }
 
 /** Runs the strictly sequential load → normalize → merge → snapshot pipeline. */
@@ -173,40 +225,61 @@ export async function kasane<T = ConfigNode>(
   const enabledLayers = layers.filter((layer) => layer.enabled);
   const rules = resolveRules(invocationOptions.merge);
   const provenanceMode = resolveProvenanceMode(invocationOptions.provenance);
-  const metadata = new Map(
-    enabledLayers.map((layer) => [
-      layer.name,
-      layer.metadata?.call(layer.source, context),
-    ]),
-  );
+  const secretPolicy = createSecretPathMatcher(invocationOptions.secrets);
   const registry = createLayerRegistry(
-    enabledLayers.map((layer) => {
-      const source = metadata.get(layer.name);
-      return {
-        kind: layer.kind,
-        name: layer.name,
-        ...(source === undefined ? {} : { source }),
-      };
-    }),
+    enabledLayers.map((layer) => ({ kind: layer.kind, name: layer.name })),
   );
 
   checkAbort(context.signal);
   let merged: MergeOutput | undefined;
+  let redactedMerged: MergeOutput | undefined;
 
   for (const layer of enabledLayers) {
     checkAbort(context.signal, layer);
-    const loaded = await loadLayer(layer, context, metadata.get(layer.name));
+    const loaded = await loadLayer(layer, context);
     checkAbort(context.signal, layer);
-    const normalized = normalizeLayerNode(loaded.value);
+    if (loaded.metadata !== undefined) {
+      registerLayerSourceMetadata(registry, layer.name, loaded.metadata);
+    }
+    const normalized = normalizeAnnotatedLayerNode(loaded.value);
     const record = registry.getLayerByName(layer.name);
     if (record === undefined) return failOptions('missing-layer-registration');
+    const references = pathReferenceIds(loaded.metadata, registry);
+
+    if (provenanceMode === 'none') {
+      const redactedLayer = safeNormalizedRedaction(
+        normalized.value,
+        {
+          matches(path: string): boolean {
+            return (
+              layer.secret ||
+              isInSecretSubtree(normalized.secretPaths, path) ||
+              secretPolicy.matches(path)
+            );
+          },
+        },
+        isRemoveMarker,
+      ) as MergeLayerNode;
+      redactedMerged = mergeConfigNodes({
+        base: redactedMerged?.value,
+        layer: redactedLayer,
+        layerId: record.id,
+        provenanceMode: 'none',
+        registry,
+        rules,
+      });
+    }
 
     merged = mergeConfigNodes({
       base: merged?.value,
-      layer: normalized,
+      layer: normalized.value,
       layerId: record.id,
       registry,
       rules,
+      secret: layer.secret,
+      secretPaths: normalized.secretPaths,
+      secretPolicy,
+      ...(references === undefined ? {} : { inputReferenceIds: references }),
       ...(merged?.provenance === undefined
         ? {}
         : { baseProvenance: merged.provenance }),
@@ -216,14 +289,19 @@ export async function kasane<T = ConfigNode>(
 
   checkAbort(context.signal);
   if (merged?.value === undefined) return failAbsentRoot();
+  const provenance =
+    merged.provenance === undefined
+      ? undefined
+      : applySecretPathPolicy(merged.provenance, registry, secretPolicy);
 
   return new ConfigSnapshot<T>(merged.value as T & ConfigNode, {
     ...(invocationOptions.freeze === undefined
       ? {}
       : { freeze: invocationOptions.freeze }),
-    ...(merged.provenance === undefined
+    ...(provenance === undefined ? {} : { provenance }),
+    ...(redactedMerged?.value === undefined
       ? {}
-      : { provenance: merged.provenance }),
+      : { redactedValue: redactedMerged.value }),
     registry,
   });
 }

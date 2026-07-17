@@ -1,6 +1,8 @@
 import { inspect } from 'node:util';
 import { isProxy } from 'node:util/types';
 
+import { safeDiagnosticValue } from '../diagnostics/safe-json.js';
+
 const MAX_LIMIT_ENTRIES = 16;
 const SAFE_LIMIT_NAME = /^[A-Za-z][A-Za-z0-9_-]{0,63}$/u;
 const SAFE_CAUSE_NAME = /^(?:Error|[A-Za-z][A-Za-z0-9]{0,62}Error)$/u;
@@ -342,7 +344,7 @@ export class KasaneError extends Error {
     };
 
     if (this.cause) json.cause = this.cause;
-    return Object.freeze(json);
+    return safeDiagnosticValue(json) as unknown as KasaneErrorJson;
   }
 
   [inspect.custom](): KasaneErrorJson {

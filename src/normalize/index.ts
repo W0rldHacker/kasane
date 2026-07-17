@@ -1,6 +1,11 @@
 export { DEFAULT_NORMALIZE_LIMITS, resolveNormalizeLimits } from './limits.js';
 export type { NormalizeLimits, ResolvedNormalizeLimits } from './limits.js';
-export { normalizeConfigNode, normalizeLayerNode } from './normalize.js';
+export {
+  normalizeAnnotatedLayerNode,
+  normalizeConfigNode,
+  normalizeLayerNode,
+} from './normalize.js';
+export type { NormalizedLayerResult } from './normalize.js';
 export { isPlainObject } from './plain-object.js';
 export { isSafeConfigKey } from './safe-key.js';
 export type {

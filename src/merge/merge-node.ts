@@ -8,6 +8,7 @@ import {
   appendHistoryEntry,
   createLeafHistoryEntry,
   createOperationHistoryEntry,
+  redactHistory,
 } from '../provenance/history.js';
 import type { OriginHistory, ProvenanceMode } from '../provenance/history.js';
 import {
@@ -33,17 +34,22 @@ import type {
   ProvenanceNode,
 } from '../provenance/tree.js';
 import type { MergeRuleIndex } from './rule-index.js';
+import { isInSecretSubtree } from '../secrets/matcher.js';
+import type { SecretPathMatcher } from '../secrets/matcher.js';
 import { isRemoveMarker } from './remove.js';
 import type { MergeLayerNode, MergeLayerObject } from './remove.js';
 import { configNodeKind, resolveMergeDecision } from './strategy.js';
 
 export interface MergeNodeContext {
   readonly inputReferenceId?: SourceReferenceId;
+  readonly inputReferenceIds?: ReadonlyMap<string, SourceReferenceId>;
   readonly layerId: LayerId;
   readonly provenanceMode: ProvenanceMode;
   readonly registry: LayerRegistry;
   readonly rules: MergeRuleIndex;
   readonly secret: boolean;
+  readonly secretPaths?: ReadonlySet<string>;
+  readonly secretPolicy?: SecretPathMatcher;
 }
 
 export interface MergeNodeResult {
@@ -98,12 +104,16 @@ function leafHistory(
   origin: ReturnType<typeof createLeafOrigin>,
   value: ConfigPrimitive,
 ): OriginHistory | undefined {
-  return context.provenanceMode === 'full'
-    ? appendHistoryEntry(
-        previous?.history,
-        createLeafHistoryEntry(origin, value),
-      )
-    : undefined;
+  if (context.provenanceMode !== 'full') return undefined;
+
+  const previousHistory =
+    origin.secret && previous?.history !== undefined
+      ? redactHistory(previous.history)
+      : previous?.history;
+  return appendHistoryEntry(
+    previousHistory,
+    createLeafHistoryEntry(origin, value),
+  );
 }
 
 function operationHistory(
@@ -113,46 +123,107 @@ function operationHistory(
     | ReturnType<typeof createStructuralOrigin>
     | ReturnType<typeof createRemovalOrigin>,
 ): OriginHistory | undefined {
-  return context.provenanceMode === 'full'
-    ? appendHistoryEntry(previous?.history, createOperationHistoryEntry(origin))
-    : undefined;
+  if (context.provenanceMode !== 'full') return undefined;
+
+  const previousHistory =
+    origin.secret && previous?.history !== undefined
+      ? redactHistory(previous.history)
+      : previous?.history;
+  return appendHistoryEntry(
+    previousHistory,
+    createOperationHistoryEntry(origin),
+  );
 }
 
 function originReference(
   context: MergeNodeContext,
+  path: string,
 ): Readonly<{ inputReferenceId?: SourceReferenceId }> {
-  return context.inputReferenceId === undefined
-    ? {}
-    : { inputReferenceId: context.inputReferenceId };
+  const pathReference = referenceForPath(context.inputReferenceIds, path);
+  const inputReferenceId = pathReference ?? context.inputReferenceId;
+  return inputReferenceId === undefined ? {} : { inputReferenceId };
 }
 
-function createLeafOrigin(context: MergeNodeContext, operation: LeafOperation) {
+function secretForPath(
+  context: MergeNodeContext,
+  path: string,
+  annotationPath = path,
+): boolean {
+  return (
+    context.secret ||
+    isInSecretSubtree(context.secretPaths, annotationPath) ||
+    context.secretPolicy?.matches(path) === true
+  );
+}
+
+function referenceForPath(
+  references: ReadonlyMap<string, SourceReferenceId> | undefined,
+  path: string,
+): SourceReferenceId | undefined {
+  if (references === undefined) return undefined;
+
+  let candidate = path;
+  while (candidate.length > 0) {
+    const reference = references.get(candidate);
+    if (reference !== undefined) return reference;
+
+    let separator = -1;
+    for (let index = candidate.length - 1; index >= 0; index -= 1) {
+      if (candidate[index] !== '.') continue;
+
+      let escapes = 0;
+      for (let escape = index - 1; escape >= 0; escape -= 1) {
+        if (candidate[escape] !== '\\') break;
+        escapes += 1;
+      }
+      if (escapes % 2 === 0) {
+        separator = index;
+        break;
+      }
+    }
+    candidate = separator === -1 ? '' : candidate.slice(0, separator);
+  }
+  return references.get('');
+}
+
+function createLeafOrigin(
+  context: MergeNodeContext,
+  path: string,
+  operation: LeafOperation,
+  annotationPath = path,
+) {
   return createOriginRecord(context.registry, context.layerId, {
     operation,
     scope: 'leaf',
-    secret: context.secret,
-    ...originReference(context),
+    secret: secretForPath(context, path, annotationPath),
+    ...originReference(context, path),
   });
 }
 
 function createStructuralOrigin(
   context: MergeNodeContext,
+  path: string,
   operation: StructuralOperation,
+  annotationPath = path,
 ) {
   return createOriginRecord(context.registry, context.layerId, {
     operation,
     scope: 'container',
-    secret: context.secret,
-    ...originReference(context),
+    secret: secretForPath(context, path, annotationPath),
+    ...originReference(context, path),
   });
 }
 
-function createRemovalOrigin(context: MergeNodeContext, secret: boolean) {
+function createRemovalOrigin(
+  context: MergeNodeContext,
+  path: string,
+  secret: boolean,
+) {
   return createOriginRecord(context.registry, context.layerId, {
     operation: 'remove',
     scope: 'tombstone',
     secret,
-    ...originReference(context),
+    ...originReference(context, path),
   });
 }
 
@@ -233,6 +304,7 @@ function cloneIncomingSubtree(
   context: MergeNodeContext,
   insideArray = false,
   previous?: ProvenanceNode,
+  annotationPath = path,
 ): MergeNodeResult {
   if (isRemoveMarker(value)) {
     return insideArray
@@ -242,7 +314,7 @@ function cloneIncomingSubtree(
 
   if (value === null || typeof value !== 'object') {
     const origin = provenanceEnabled(context)
-      ? createLeafOrigin(context, operation)
+      ? createLeafOrigin(context, path, operation, annotationPath)
       : undefined;
     return {
       value,
@@ -267,6 +339,8 @@ function cloneIncomingSubtree(
         appendPath(path, String(index)),
         context,
         true,
+        undefined,
+        appendPath(annotationPath, String(index)),
       );
       output.push(child.value as ConfigNode);
       if (child.provenance !== undefined) {
@@ -275,7 +349,7 @@ function cloneIncomingSubtree(
     }
 
     const origin = provenanceEnabled(context)
-      ? createStructuralOrigin(context, operation)
+      ? createStructuralOrigin(context, path, operation, annotationPath)
       : undefined;
     return {
       value: output,
@@ -303,6 +377,8 @@ function cloneIncomingSubtree(
       appendPath(path, key),
       context,
       insideArray,
+      undefined,
+      appendPath(annotationPath, key),
     );
     if (child.value !== undefined) {
       defineConfigProperty(output, key, child.value);
@@ -311,7 +387,7 @@ function cloneIncomingSubtree(
   }
 
   const origin = provenanceEnabled(context)
-    ? createStructuralOrigin(context, operation)
+    ? createStructuralOrigin(context, path, operation, annotationPath)
     : undefined;
   return {
     value: output,
@@ -359,7 +435,8 @@ function combineArrays(
   const children = new Map<string, ProvenanceNode>();
 
   const appendIncoming = (): void => {
-    for (const item of layer) {
+    for (let layerIndex = 0; layerIndex < layer.length; layerIndex += 1) {
+      const item = layer[layerIndex] as ConfigNode;
       const outputIndex = output.length;
       const child = cloneIncomingSubtree(
         item,
@@ -367,6 +444,8 @@ function combineArrays(
         appendPath(path, String(outputIndex)),
         context,
         true,
+        undefined,
+        appendPath(path, String(layerIndex)),
       );
       output.push(child.value as ConfigNode);
       if (child.provenance !== undefined) {
@@ -400,7 +479,7 @@ function combineArrays(
   }
 
   const origin = provenanceEnabled(context)
-    ? createStructuralOrigin(context, operation)
+    ? createStructuralOrigin(context, path, operation)
     : undefined;
   return {
     value: output,
@@ -422,7 +501,7 @@ function removeNode(
   path: string,
   context: MergeNodeContext,
 ): MergeNodeResult {
-  let secret = context.secret;
+  let secret = secretForPath(context, path);
 
   if (provenanceEnabled(context) && base !== undefined) {
     const existing = requireExistingProvenance(
@@ -431,7 +510,7 @@ function removeNode(
       path,
       context,
     );
-    secret ||= existing.secret;
+    secret ||= subtreeIsSecret(existing);
   } else if (
     provenanceEnabled(context) &&
     baseProvenance?.state === 'tombstone'
@@ -443,7 +522,7 @@ function removeNode(
   }
 
   const origin = provenanceEnabled(context)
-    ? createRemovalOrigin(context, secret)
+    ? createRemovalOrigin(context, path, secret)
     : undefined;
   return {
     value: undefined,
@@ -455,6 +534,15 @@ function removeNode(
             operationHistory(context, baseProvenance, origin),
           ),
   };
+}
+
+function subtreeIsSecret(node: ProvenanceNode): boolean {
+  if (node.secret) return true;
+  if (node.state === 'tombstone' || node.kind === 'leaf') return false;
+  for (const child of node.children.values()) {
+    if (subtreeIsSecret(child)) return true;
+  }
+  return false;
 }
 
 function requireObjectProvenance(
@@ -541,7 +629,7 @@ function mergeObjects(
   }
 
   const origin = provenanceEnabled(context)
-    ? createStructuralOrigin(context, 'merge')
+    ? createStructuralOrigin(context, path, 'merge')
     : undefined;
   return {
     value: output,

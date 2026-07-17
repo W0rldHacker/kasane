@@ -1,9 +1,18 @@
+import { inspect } from 'node:util';
+
+import { formatDiagnostic } from '../diagnostics/formatter.js';
+import { safeDiagnosticValue } from '../diagnostics/safe-json.js';
 import { KasanePathError } from '../errors/index.js';
 import type { ConfigNode } from '../normalize/types.js';
 import { PathCache, resolvePath } from '../paths/index.js';
+import {
+  createExplanation,
+  resolvePathOrigin,
+} from '../provenance/explanation.js';
+import type { Explanation, Origin } from '../provenance/explanation.js';
 import type { ProvenanceTree } from '../provenance/tree.js';
+import { createProvenanceTree } from '../provenance/tree.js';
 import type { LayerRegistry } from '../provenance/registry.js';
-import { redactSnapshotValue } from '../redaction/index.js';
 import { cloneConfigNode, deepFreezeConfigNode } from './freeze.js';
 
 export const SNAPSHOT_PATH_CACHE_LIMIT = 256;
@@ -32,6 +41,8 @@ export interface ConfigSnapshotOptions {
   readonly redact?: SnapshotRedactor;
   /** Internal immutable metadata, never published as a field. */
   readonly provenance?: ProvenanceTree;
+  /** Internal centrally-redacted value retained without provenance. */
+  readonly redactedValue?: ConfigNode;
   /** Internal safe source registry retained for diagnostic readers. */
   readonly registry?: LayerRegistry;
 }
@@ -40,7 +51,8 @@ export interface ConfigSnapshotOptions {
 export class ConfigSnapshot<T = ConfigNode> {
   readonly #cache = new PathCache(SNAPSHOT_PATH_CACHE_LIMIT);
   readonly #provenance: ProvenanceTree | undefined;
-  readonly #redact: SnapshotRedactor;
+  readonly #redact: SnapshotRedactor | undefined;
+  readonly #redactedValue: ConfigNode | undefined;
   readonly #registry: LayerRegistry | undefined;
   readonly #value: ConfigNode;
 
@@ -49,8 +61,12 @@ export class ConfigSnapshot<T = ConfigNode> {
     this.#value =
       options.freeze === false ? detached : deepFreezeConfigNode(detached);
     this.#provenance = options.provenance;
+    this.#redactedValue =
+      options.redactedValue === undefined
+        ? undefined
+        : deepFreezeConfigNode(cloneConfigNode(options.redactedValue));
     this.#registry = options.registry;
-    this.#redact = options.redact ?? redactSnapshotValue;
+    this.#redact = options.redact;
     Object.freeze(this);
   }
 
@@ -77,12 +93,61 @@ export class ConfigSnapshot<T = ConfigNode> {
     });
   }
 
+  origin(path: string): Origin | undefined {
+    const segments = this.#cache.parse(path);
+    if (!resolvePath(this.#value, segments).found) return undefined;
+    return resolvePathOrigin(segments, this.#provenance, this.#registry);
+  }
+
+  explain(path: string): Explanation {
+    const segments = this.#cache.parse(path);
+    const resolution = resolvePath(this.#value, segments);
+    const redactedResolution =
+      this.#redactedValue === undefined
+        ? undefined
+        : resolvePath(this.#redactedValue, segments);
+    return createExplanation({
+      format: formatDiagnostic,
+      path,
+      ...(this.#provenance === undefined
+        ? {}
+        : { provenance: this.#provenance }),
+      redact: (value, provenance) => {
+        const subtree =
+          provenance === undefined || this.#provenance === undefined
+            ? undefined
+            : createProvenanceTree(provenance, this.#provenance.mode);
+        return safeDiagnosticValue(
+          value,
+          subtree === undefined ? {} : { provenance: subtree },
+        );
+      },
+      ...(this.#registry === undefined ? {} : { registry: this.#registry }),
+      ...(redactedResolution === undefined ? {} : { redactedResolution }),
+      resolution,
+      root: this.#value,
+      segments,
+    });
+  }
+
   toJSON(): RedactedConfigNode {
-    // Hooks receive a throwaway raw tree; their result is detached once more so
-    // even an identity or accidentally aliasing hook cannot publish internals.
-    const input = cloneConfigNode(this.#value);
-    return cloneConfigNode(
-      this.#redact(input, this.#provenance, this.#registry),
-    );
+    if (this.#redactedValue !== undefined) {
+      return safeDiagnosticValue(this.#redactedValue) as ConfigNode;
+    }
+    const context =
+      this.#provenance === undefined ? {} : { provenance: this.#provenance };
+    const safe = safeDiagnosticValue(this.#value, context) as ConfigNode;
+    if (this.#redact === undefined) return safe;
+
+    // Extension hooks receive only already-redacted data. The central pass is
+    // repeated over their output so an identity hook cannot bypass policy.
+    return safeDiagnosticValue(
+      this.#redact(cloneConfigNode(safe), this.#provenance, this.#registry),
+      context,
+    ) as ConfigNode;
+  }
+
+  [inspect.custom](): RedactedConfigNode {
+    return this.toJSON();
   }
 }

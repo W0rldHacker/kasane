@@ -12,17 +12,21 @@ import type { ProvenanceTree } from '../provenance/tree.js';
 import { mergeNode } from './merge-node.js';
 import type { MergeLayerNode } from './remove.js';
 import type { MergeRuleIndex } from './rule-index.js';
+import type { SecretPathMatcher } from '../secrets/matcher.js';
 
 export interface MergeInput {
   readonly base: ConfigNode | undefined;
   readonly baseProvenance?: ProvenanceTree;
   readonly inputReferenceId?: SourceReferenceId;
+  readonly inputReferenceIds?: ReadonlyMap<string, SourceReferenceId>;
   readonly layer: MergeLayerNode | undefined;
   readonly layerId: LayerId;
   readonly provenanceMode?: ProvenanceMode;
   readonly registry: LayerRegistry;
   readonly rules: MergeRuleIndex;
   readonly secret?: boolean;
+  readonly secretPaths?: ReadonlySet<string>;
+  readonly secretPolicy?: SecretPathMatcher;
 }
 
 export interface MergeOutput {
@@ -62,6 +66,12 @@ export function mergeConfigNodes(input: MergeInput): MergeOutput {
     return failMergeInput(input, 'unknown-source-reference-id');
   }
 
+  for (const referenceId of input.inputReferenceIds?.values() ?? []) {
+    if (input.registry.getReference(referenceId) === undefined) {
+      return failMergeInput(input, 'unknown-source-reference-id');
+    }
+  }
+
   if (
     provenanceMode !== 'none' &&
     input.baseProvenance !== undefined &&
@@ -89,9 +99,18 @@ export function mergeConfigNodes(input: MergeInput): MergeOutput {
       registry: input.registry,
       rules: input.rules,
       secret: input.secret ?? false,
+      ...(input.secretPaths === undefined
+        ? {}
+        : { secretPaths: input.secretPaths }),
+      ...(input.secretPolicy === undefined
+        ? {}
+        : { secretPolicy: input.secretPolicy }),
       ...(input.inputReferenceId === undefined
         ? {}
         : { inputReferenceId: input.inputReferenceId }),
+      ...(input.inputReferenceIds === undefined
+        ? {}
+        : { inputReferenceIds: input.inputReferenceIds }),
     },
   );
 

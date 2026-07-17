@@ -19,6 +19,10 @@ export type SourceReferenceId = number & {
 export interface SafeSourceMetadataInput {
   readonly reference?: string;
   readonly inputReferences?: readonly string[];
+  readonly pathReferences?: readonly Readonly<{
+    path: string;
+    reference: string;
+  }>[];
 }
 
 export interface LayerRegistration {
@@ -98,13 +102,13 @@ function addReference(
 }
 
 class ImmutableLayerRegistry implements OwnedLayerRegistry {
-  readonly #layers: readonly LayerRecord[];
-  readonly #layersByName: ReadonlyMap<string, LayerRecord>;
-  readonly #references: readonly string[];
-  readonly #referencesByValue: ReadonlyMap<string, SourceReferenceId>;
+  readonly #layers: LayerRecord[];
+  readonly #layersByName: Map<string, LayerRecord>;
+  readonly #references: string[];
+  readonly #referencesByValue: Map<string, SourceReferenceId>;
+  readonly #registeredMetadata = new Set<string>();
   readonly [registryIdentity]: RegistryIdentity;
   readonly size: number;
-  readonly referenceCount: number;
 
   constructor(
     layers: readonly LayerRecord[],
@@ -112,14 +116,17 @@ class ImmutableLayerRegistry implements OwnedLayerRegistry {
     references: readonly string[],
     referencesByValue: ReadonlyMap<string, SourceReferenceId>,
   ) {
-    this.#layers = layers;
-    this.#layersByName = layersByName;
-    this.#references = references;
-    this.#referencesByValue = referencesByValue;
+    this.#layers = [...layers];
+    this.#layersByName = new Map(layersByName);
+    this.#references = [...references];
+    this.#referencesByValue = new Map(referencesByValue);
     this[registryIdentity] = Object.freeze({});
     this.size = layers.length;
-    this.referenceCount = references.length;
     Object.freeze(this);
+  }
+
+  get referenceCount(): number {
+    return this.#references.length;
   }
 
   getLayer(id: LayerId): LayerRecord | undefined {
@@ -136,6 +143,52 @@ class ImmutableLayerRegistry implements OwnedLayerRegistry {
 
   getReferenceId(reference: string): SourceReferenceId | undefined {
     return this.#referencesByValue.get(reference);
+  }
+
+  registerSourceMetadata(
+    layerName: string,
+    source: SafeSourceMetadataInput,
+  ): void {
+    const layer = this.#layersByName.get(layerName);
+    if (layer === undefined)
+      registryError('unknown-layer-name', { name: layerName });
+    if (this.#registeredMetadata.has(layerName)) {
+      registryError('duplicate-source-metadata', { name: layerName });
+    }
+    this.#registeredMetadata.add(layerName);
+
+    const sourceReferenceId =
+      source.reference === undefined
+        ? undefined
+        : addReference(
+            source.reference,
+            this.#references,
+            this.#referencesByValue,
+            layerName,
+          );
+
+    for (const reference of source.inputReferences ?? []) {
+      addReference(
+        reference,
+        this.#references,
+        this.#referencesByValue,
+        layerName,
+      );
+    }
+    for (const pathReference of source.pathReferences ?? []) {
+      addReference(
+        pathReference.reference,
+        this.#references,
+        this.#referencesByValue,
+        layerName,
+      );
+    }
+
+    if (sourceReferenceId !== undefined) {
+      const updated = Object.freeze({ ...layer, sourceReferenceId });
+      this.#layers[layer.id] = updated;
+      this.#layersByName.set(layerName, updated);
+    }
   }
 }
 
@@ -170,6 +223,14 @@ export function createLayerRegistry(
     for (const reference of registration.source?.inputReferences ?? []) {
       addReference(reference, references, referencesByValue, registration.name);
     }
+    for (const pathReference of registration.source?.pathReferences ?? []) {
+      addReference(
+        pathReference.reference,
+        references,
+        referencesByValue,
+        registration.name,
+      );
+    }
 
     const record: LayerRecord = Object.freeze({
       id: layers.length as LayerId,
@@ -187,6 +248,18 @@ export function createLayerRegistry(
     Object.freeze(references),
     referencesByValue,
   );
+}
+
+/** Adds invocation-local metadata after a source has completed loading. */
+export function registerLayerSourceMetadata(
+  registry: LayerRegistry,
+  layerName: string,
+  source: SafeSourceMetadataInput,
+): void {
+  if (!(registry instanceof ImmutableLayerRegistry)) {
+    return registryError('unknown-layer-registry');
+  }
+  registry.registerSourceMetadata(layerName, source);
 }
 
 export function getRegistryIdentity(registry: LayerRegistry): RegistryIdentity {

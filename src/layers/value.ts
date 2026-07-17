@@ -3,6 +3,7 @@ import type { LayerSource } from '../sources/index.js';
 
 export interface ValueLayerOptions {
   readonly enabled?: boolean;
+  readonly secret?: boolean;
 }
 
 /** Creates a synchronous in-memory source without reading or mutating its data. */
@@ -22,5 +23,6 @@ export function value(
     name,
     source,
     ...(options.enabled === undefined ? {} : { enabled: options.enabled }),
+    ...(options.secret === undefined ? {} : { secret: options.secret }),
   });
 }

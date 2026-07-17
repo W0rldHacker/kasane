@@ -9,7 +9,7 @@ import {
 import type { ConfigNode } from '../../../src/normalize/types.js';
 import { createLayerRegistry } from '../../../src/provenance/registry.js';
 import type { ProvenanceTree } from '../../../src/provenance/tree.js';
-import { REDACTED_VALUE } from '../../../src/redaction/index.js';
+import { REDACTED_VALUE } from '../../../src/secrets/redact.js';
 import { ConfigSnapshot } from '../../../src/snapshot/index.js';
 
 function requireProvenance(

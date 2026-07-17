@@ -5,4 +5,12 @@ export type {
   RedactedConfigNode,
   SnapshotRedactor,
 } from './snapshot.js';
+export type {
+  Explanation,
+  ExplanationData,
+  ExplanationHistoryEntry,
+  FoundExplanationData,
+  MissingExplanationData,
+  Origin,
+} from '../provenance/explanation.js';
 export { cloneConfigNode, deepFreezeConfigNode } from './freeze.js';

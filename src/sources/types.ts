@@ -12,9 +12,17 @@ export interface LayerSource<Output = unknown> {
 }
 
 /** Safe source metadata never contains configuration values. */
+export interface SourcePathReference {
+  /** Canonical configuration path produced from this input. */
+  readonly path: string;
+  /** Safe provider identifier, such as an environment variable name. */
+  readonly reference: string;
+}
+
 export interface SourceMetadata {
   readonly reference?: string;
   readonly inputReferences?: readonly string[];
+  readonly pathReferences?: readonly SourcePathReference[];
 }
 
 /** Invocation-local result produced after one source has completed loading. */

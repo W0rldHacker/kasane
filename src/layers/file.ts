@@ -18,6 +18,7 @@ export interface FileLayerOptions<Output = unknown> {
   readonly enabled?: boolean;
   readonly optional?: boolean;
   readonly parse?: FileParser<Output>;
+  readonly secret?: boolean;
 }
 
 function failFileDeclaration(
@@ -77,6 +78,9 @@ export function file<Output = unknown>(
   if (options.parse !== undefined && typeof options.parse !== 'function') {
     return failFileDeclaration('invalid-file-parser', name, filePath);
   }
+  if (options.secret !== undefined && typeof options.secret !== 'boolean') {
+    return failFileDeclaration('invalid-file-secret', name, filePath);
+  }
 
   const optional = options.optional === true;
   const parse = options.parse ?? parseJson;
@@ -124,5 +128,6 @@ export function file<Output = unknown>(
     name,
     source,
     ...(options.enabled === undefined ? {} : { enabled: options.enabled }),
+    ...(options.secret === undefined ? {} : { secret: options.secret }),
   });
 }

@@ -6,6 +6,7 @@ export interface LayerDescriptor {
   readonly name: string;
   readonly source: LayerSource;
   readonly enabled?: boolean;
+  readonly secret?: boolean;
 }
 
 /** Validated invocation-local layer used only by orchestration. */
@@ -16,4 +17,5 @@ export interface PreparedLayer {
   readonly load: LayerSource['load'];
   readonly metadata?: SourceMetadataResolver;
   readonly enabled: boolean;
+  readonly secret: boolean;
 }

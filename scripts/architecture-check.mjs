@@ -13,6 +13,15 @@ const pureZones = new Set([
   'provenance',
   'redaction',
 ]);
+const diagnosticZones = new Set([
+  'diagnostics',
+  'diff',
+  'errors',
+  'explanation',
+  'lifecycle',
+  'snapshot',
+  'validation',
+]);
 
 const importPattern =
   /\b(?:import|export)\s+(?:[^'";]*?\s+from\s+)?['"]([^'"]+)['"]/gu;
@@ -49,9 +58,33 @@ function resolvesToZone(file, specifier, zone) {
   return relative[0] === zone;
 }
 
+function resolvesToCentralRedactor(file, specifier) {
+  if (!specifier.startsWith('.')) return false;
+  const resolved = path
+    .resolve(path.dirname(file), specifier)
+    .replace(/\.js$/u, '');
+  return resolved === path.join(sourceRoot, 'secrets', 'redact');
+}
+
 for (const file of await walk(sourceRoot)) {
   const zone = sourceZone(file);
   const source = await readFile(file, 'utf8');
+
+  if (
+    file !== path.join(sourceRoot, 'secrets', 'redact.ts') &&
+    source.includes('[REDACTED]')
+  ) {
+    failures.push(
+      `${path.relative(root, file)} defines an ad-hoc redaction placeholder`,
+    );
+  }
+
+  if (
+    diagnosticZones.has(zone) &&
+    /\.(?:replace|replaceAll)\([^\n]*(?:mask|redact|secret)/iu.test(source)
+  ) {
+    failures.push(`${path.relative(root, file)} implements ad-hoc masking`);
+  }
 
   for (const match of source.matchAll(importPattern)) {
     const specifier = match[1];
@@ -59,6 +92,16 @@ for (const file of await walk(sourceRoot)) {
 
     if (pureZones.has(zone) && specifier.startsWith('node:')) {
       failures.push(`${path.relative(root, file)} imports ${specifier}`);
+    }
+
+    if (
+      diagnosticZones.has(zone) &&
+      file !== path.join(sourceRoot, 'diagnostics', 'safe-json.ts') &&
+      resolvesToCentralRedactor(file, specifier)
+    ) {
+      failures.push(
+        `${path.relative(root, file)} bypasses the safe diagnostic adapter`,
+      );
     }
 
     if (zone === 'merge' && resolvesToZone(file, specifier, 'sources')) {

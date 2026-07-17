@@ -21,6 +21,7 @@ import type {
   LayerRecord,
   LayerRegistry,
 } from '../../../src/provenance/registry.js';
+import { resolveOriginRecord } from '../../../src/provenance/origin.js';
 import {
   getProvenanceNode,
   type ProvenanceTree,
@@ -389,5 +390,57 @@ describe('merge-core', () => {
 
     expect(result.value).toBeUndefined();
     expect(requireProvenance(result).root).toBeUndefined();
+  });
+
+  it('assigns path-specific input references to every incoming leaf', () => {
+    const registry = createLayerRegistry([
+      {
+        kind: 'env',
+        name: 'environment',
+        source: { inputReferences: ['APP_FEATURE', 'APP_SERVER__PORT'] },
+      },
+    ]);
+    const layer = requireLayer(registry, 'environment');
+    const feature = registry.getReferenceId('APP_FEATURE');
+    const port = registry.getReferenceId('APP_SERVER__PORT');
+    if (feature === undefined || port === undefined) {
+      throw new Error('Missing input reference fixture');
+    }
+
+    const result = mergeConfigNodes({
+      base: undefined,
+      inputReferenceIds: new Map([
+        ['feature', feature],
+        ['server.port', port],
+      ]),
+      layer: canonical({
+        feature: { enabled: true, mode: 'safe' },
+        server: { port: 8080 },
+      }),
+      layerId: layer.id,
+      registry,
+      rules: createMergeRuleIndex([]),
+    });
+    const provenance = requireProvenance(result);
+    const enabled = getProvenanceNode(provenance, ['feature', 'enabled']);
+    const mode = getProvenanceNode(provenance, ['feature', 'mode']);
+    const portNode = getProvenanceNode(provenance, ['server', 'port']);
+    if (
+      enabled?.state !== 'value' ||
+      mode?.state !== 'value' ||
+      portNode?.state !== 'value'
+    ) {
+      throw new Error('Missing leaf provenance fixture');
+    }
+
+    expect(resolveOriginRecord(registry, enabled.current).inputReference).toBe(
+      'APP_FEATURE',
+    );
+    expect(resolveOriginRecord(registry, mode.current).inputReference).toBe(
+      'APP_FEATURE',
+    );
+    expect(resolveOriginRecord(registry, portNode.current).inputReference).toBe(
+      'APP_SERVER__PORT',
+    );
   });
 });

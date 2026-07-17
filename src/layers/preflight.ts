@@ -83,6 +83,10 @@ export function prepareLayers(
     if (enabledValue !== undefined && typeof enabledValue !== 'boolean') {
       return failLayer('invalid-enabled', { layerName: name });
     }
+    const secretValue = declaration['secret'];
+    if (secretValue !== undefined && typeof secretValue !== 'boolean') {
+      return failLayer('invalid-secret', { layerName: name });
+    }
 
     const source = prepareSource(declaration['source'], name);
     prepared.push(
@@ -92,6 +96,7 @@ export function prepareLayers(
         load: source.load,
         ...(source.metadata === undefined ? {} : { metadata: source.metadata }),
         name,
+        secret: secretValue === true,
         source: source.source,
       }),
     );
