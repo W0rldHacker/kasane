@@ -258,9 +258,10 @@ export async function kasane(
   const invocationOptions = options as KasaneOptions;
   const limits = resolveKasaneLimits(invocationOptions.limits);
   const context = resolveContext(invocationOptions, limits);
-  const emit = createEventEmitter(
-    resolveEventCallback(invocationOptions.onEvent),
-  );
+  const eventCallback = resolveEventCallback(invocationOptions.onEvent);
+  const emit = createEventEmitter(eventCallback);
+  const eventNodeCount =
+    eventCallback === undefined ? (): number => 0 : countConfigNodes;
   const fingerprintKey = resolveFingerprintKey(
     invocationOptions.fingerprintKey,
   );
@@ -308,7 +309,7 @@ export async function kasane(
       emit({
         ...identity,
         durationMs: sourceDuration(),
-        nodes: countConfigNodes(normalized.value),
+        nodes: eventNodeCount(normalized.value),
         success: true,
         type: 'source:end',
       });
@@ -350,7 +351,7 @@ export async function kasane(
       emit({
         ...identity,
         durationMs: mergeDuration(),
-        nodes: countConfigNodes(merged.value),
+        nodes: eventNodeCount(merged.value),
         success: true,
         type: 'merge:end',
       });
@@ -426,7 +427,7 @@ export async function kasane(
       emit({
         ...validationIdentity,
         durationMs: validationDuration(),
-        nodes: countConfigNodes(finalValue),
+        nodes: eventNodeCount(finalValue),
         success: true,
         type: 'validation:end',
       });
@@ -469,10 +470,13 @@ export async function kasane(
       ...(redactedValue === undefined ? {} : { redactedValue }),
       registry,
       secretFingerprints,
+      ...(invocationOptions.freeze === false
+        ? {}
+        : { takeValueOwnership: true }),
     });
     emit({
       durationMs: snapshotDuration(),
-      nodes: countConfigNodes(finalValue),
+      nodes: eventNodeCount(finalValue),
       success: true,
       type: 'snapshot:created',
     });

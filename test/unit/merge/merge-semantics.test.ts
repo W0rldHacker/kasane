@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 import { describe, expect, it } from 'vitest';
 
 import { KasaneMergeError } from '../../../src/index.js';
@@ -15,101 +17,28 @@ import type {
   MergeStrategy,
 } from '../../../src/merge/index.js';
 
-const incomingKinds = [
-  'undefined',
-  'remove',
-  'null',
-  'boolean',
-  'number',
-  'string',
-  'array',
-  'object',
-] as const satisfies readonly IncomingValueKind[];
+interface MergeMatrixFixture {
+  readonly incomingKinds: readonly IncomingValueKind[];
+  readonly defaultRows: readonly {
+    readonly existing: ExistingValueKind;
+    readonly outcomes: readonly MergeOutcome[];
+  }[];
+  readonly explicitCases: readonly (readonly [
+    MergeStrategy,
+    ExistingValueKind,
+    IncomingValueKind,
+    string,
+  ])[];
+}
 
-const defaultRows = [
-  {
-    existing: 'absent',
-    outcomes: ['no-op', 'remove', 'set', 'set', 'set', 'set', 'set', 'set'],
-  },
-  {
-    existing: 'null',
-    outcomes: [
-      'no-op',
-      'remove',
-      'replace',
-      'replace',
-      'replace',
-      'replace',
-      'replace',
-      'replace',
-    ],
-  },
-  {
-    existing: 'boolean',
-    outcomes: [
-      'no-op',
-      'remove',
-      'replace',
-      'replace',
-      'replace',
-      'replace',
-      'replace',
-      'replace',
-    ],
-  },
-  {
-    existing: 'number',
-    outcomes: [
-      'no-op',
-      'remove',
-      'replace',
-      'replace',
-      'replace',
-      'replace',
-      'replace',
-      'replace',
-    ],
-  },
-  {
-    existing: 'string',
-    outcomes: [
-      'no-op',
-      'remove',
-      'replace',
-      'replace',
-      'replace',
-      'replace',
-      'replace',
-      'replace',
-    ],
-  },
-  {
-    existing: 'array',
-    outcomes: [
-      'no-op',
-      'remove',
-      'replace',
-      'replace',
-      'replace',
-      'replace',
-      'replace',
-      'replace',
-    ],
-  },
-  {
-    existing: 'object',
-    outcomes: [
-      'no-op',
-      'remove',
-      'replace',
-      'replace',
-      'replace',
-      'replace',
-      'replace',
-      'merge',
-    ],
-  },
-] as const satisfies readonly {
+const matrix = JSON.parse(
+  readFileSync(
+    new URL('../../fixtures/merge-matrix.json', import.meta.url),
+    'utf8',
+  ),
+) as MergeMatrixFixture;
+const incomingKinds = matrix.incomingKinds;
+const defaultRows = matrix.defaultRows satisfies readonly {
   readonly existing: ExistingValueKind;
   readonly outcomes: readonly MergeOutcome[];
 }[];
@@ -122,21 +51,7 @@ const defaultCells = defaultRows.flatMap((row) =>
   })),
 );
 
-const explicitCases = [
-  ['replace', 'object', 'array', 'replace'],
-  ['replace', 'null', 'object', 'replace'],
-  ['merge', 'object', 'object', 'merge'],
-  ['merge', 'array', 'object', 'merge-requires-object-pair'],
-  ['append', 'array', 'array', 'append'],
-  ['append', 'array', 'object', 'append-requires-array-pair'],
-  ['prepend', 'array', 'array', 'prepend'],
-  ['prepend', 'string', 'array', 'prepend-requires-array-pair'],
-] as const satisfies readonly (readonly [
-  MergeStrategy,
-  ExistingValueKind,
-  IncomingValueKind,
-  string,
-])[];
+const explicitCases = matrix.explicitCases;
 
 function captureMergeError(run: () => unknown): KasaneMergeError {
   try {

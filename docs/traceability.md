@@ -178,7 +178,16 @@ security suite. `P0` is stronger than `P1` for this audit.
 4. every `REQ-SEC-*` row appears in the security owner audit;
 5. no `REQ-POST-*` or `REQ-OPT-*` row appears in a core release gate;
 6. every mandatory row uses canonical owner-task and test-suite IDs;
-7. all four baseline files link to one another and pass Markdown lint.
+7. all four baseline files link to one another and all documentation-local
+   links resolve;
+8. user snippets import only shipped public exports, and both API maps name
+   every root and Standard Schema export;
+9. README doctests match their executable example source exactly;
+10. documented merge matrices match the same fixture as the unit suite;
+11. documented public option defaults match the generated table and their
+    implementation evidence;
+12. the ADR index has exactly one matching `Accepted` or `Superseded` status for
+    every numbered record.
 
 `FOUND-002` provides this structural gate. Requirement implementation statuses
 remain `planned`, not `tested`, until their owner tasks and linked suites pass.

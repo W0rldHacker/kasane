@@ -97,6 +97,7 @@ export function mergeConfigNodes(input: MergeInput): MergeOutput {
     '',
     {
       layerId: input.layerId,
+      originPool: new Map(),
       provenanceMode,
       registry: input.registry,
       rules: input.rules,

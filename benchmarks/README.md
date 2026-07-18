@@ -8,9 +8,15 @@ time and retained heap deltas are medians.
 
 Run `pnpm bench` to write `benchmarks/results/latest.json` with runtime, CPU,
 operating-system, runner, and methodology metadata. Run `pnpm bench:check` to
-compare it with `baseline.json` and the hosted Ubuntu Node 24 hard budgets.
+compare it with `baseline.json` and the hosted Ubuntu Node 24 hard budgets. Run
+`pnpm bench:compare` for a fresh budget-checked run plus a before/after summary;
+`KASANE_BENCH_BEFORE` and `KASANE_BENCH_AFTER` may select two existing schema-v1
+reports for local investigation.
 
 The committed baseline is a regression-control artifact, not a universal
 performance claim. Results vary with hardware, operating system, Node/V8,
 virtualization, thermal state, and concurrent workload. Update it only after a
 reviewed reference run and never use production data or secrets as fixtures.
+
+The measured PERF-002 decisions and their rejected alternatives are recorded in
+[ADR-0007](../docs/adr/0007-measured-hotspot-optimization.md).

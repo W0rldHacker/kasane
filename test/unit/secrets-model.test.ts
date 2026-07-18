@@ -18,6 +18,7 @@ import type {
 import {
   applySecretPathPolicy,
   createSecretPathMatcher,
+  isInSecretSubtree,
   secretValue,
 } from '../../src/secrets/index.js';
 
@@ -65,12 +66,23 @@ function apply(
 }
 
 describe('secrets model', () => {
+  it('represents empty secret indexes as constant-time misses', () => {
+    const matcher = createSecretPathMatcher(undefined);
+    const emptyDeclarations = createSecretPathMatcher([]);
+
+    expect(matcher.size).toBe(0);
+    expect(emptyDeclarations).toBe(matcher);
+    expect(matcher.matches('deeply.nested.value')).toBe(false);
+    expect(isInSecretSubtree(new Set(), 'deeply.nested.value')).toBe(false);
+  });
+
   it('matches exact, escaped, and one-segment wildcard subtree policies', () => {
     const matcher = createSecretPathMatcher([
       'integrations.*.token',
       'service\\.internal.credentials',
     ]);
 
+    expect(matcher.size).toBe(2);
     expect(matcher.matches('integrations.github.token')).toBe(true);
     expect(matcher.matches('integrations.github.token.value')).toBe(true);
     expect(matcher.matches('integrations.github.v2.token')).toBe(false);

@@ -1,0 +1,1 @@
+{"origin":{"kind":"custom","name":"runtime-discovery"},"service":{"retries":3,"endpoint":"https://service.example.test","region":"test-region-1"}}

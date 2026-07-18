@@ -437,9 +437,13 @@ describe('provenance registry and immutable tree boundaries', () => {
       secret: false,
     });
     const leaf = createLeafProvenanceNode(leafOrigin);
-    const container = createContainerProvenanceNode('object', containerOrigin, [
-      ['value', leaf],
-    ]);
+    const mutableChildren = new Map([['value', leaf] as const]);
+    const container = createContainerProvenanceNode(
+      'object',
+      containerOrigin,
+      mutableChildren,
+    );
+    mutableChildren.clear();
     const visited: string[] = [];
     expect([...container.children.entries()]).toEqual([['value', leaf]]);
     expect([...container.children.keys()]).toEqual(['value']);

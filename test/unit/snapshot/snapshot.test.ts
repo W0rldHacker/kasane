@@ -102,6 +102,20 @@ describe('ConfigSnapshot', () => {
     expect(snapshot.get('nested.items.2')).toBeUndefined();
   });
 
+  it('takes ownership only of an internally canonical freeze-on value', () => {
+    const owned = { nested: { count: 1 } };
+    const frozen = createConfigSnapshot(owned, { takeValueOwnership: true });
+    const mutable = { nested: { count: 1 } };
+    const unfrozen = createConfigSnapshot(mutable, {
+      freeze: false,
+      takeValueOwnership: true,
+    });
+
+    expect(frozen.value).toBe(owned);
+    expect(Object.isFrozen(owned.nested)).toBe(true);
+    expect(unfrozen.value).not.toBe(mutable);
+  });
+
   it('allows runtime mutation only when freeze is explicitly disabled', () => {
     const input = { nested: { count: 1 } };
     const snapshot = createConfigSnapshot(input, { freeze: false });

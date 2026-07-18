@@ -44,6 +44,8 @@ interface ConfigSnapshotOptions {
   readonly registry?: LayerRegistry;
   /** Internal current-value digests; the fingerprint key is never retained. */
   readonly secretFingerprints?: SecretFingerprintIndex;
+  /** Internal canonical value whose ownership may transfer before freezing. */
+  readonly takeValueOwnership?: boolean;
 }
 
 /** Immutable read facade over one detached configuration value. */
@@ -59,7 +61,10 @@ class ConfigSnapshotImplementation<
   readonly #value: ConfigNode;
 
   constructor(value: T & ConfigNode, options: ConfigSnapshotOptions = {}) {
-    const detached = cloneConfigNode(value);
+    const detached =
+      options.takeValueOwnership === true && options.freeze !== false
+        ? value
+        : cloneConfigNode(value);
     this.#value =
       options.freeze === false ? detached : deepFreezeConfigNode(detached);
     this.#provenance = options.provenance;

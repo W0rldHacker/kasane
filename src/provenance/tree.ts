@@ -116,6 +116,7 @@ function immutableChildren(
     | ReadonlyMap<string, ProvenanceNode>
     | Iterable<readonly [string, ProvenanceNode]>,
 ): ReadonlyMap<string, ProvenanceNode> {
+  if (children instanceof ImmutableChildren) return children;
   return new ImmutableChildren(children);
 }
 

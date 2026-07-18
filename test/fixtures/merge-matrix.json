@@ -1,0 +1,52 @@
+{
+  "incomingKinds": [
+    "undefined",
+    "remove",
+    "null",
+    "boolean",
+    "number",
+    "string",
+    "array",
+    "object"
+  ],
+  "defaultRows": [
+    {
+      "existing": "absent",
+      "outcomes": ["no-op", "remove", "set", "set", "set", "set", "set", "set"]
+    },
+    {
+      "existing": "null",
+      "outcomes": ["no-op", "remove", "replace", "replace", "replace", "replace", "replace", "replace"]
+    },
+    {
+      "existing": "boolean",
+      "outcomes": ["no-op", "remove", "replace", "replace", "replace", "replace", "replace", "replace"]
+    },
+    {
+      "existing": "number",
+      "outcomes": ["no-op", "remove", "replace", "replace", "replace", "replace", "replace", "replace"]
+    },
+    {
+      "existing": "string",
+      "outcomes": ["no-op", "remove", "replace", "replace", "replace", "replace", "replace", "replace"]
+    },
+    {
+      "existing": "array",
+      "outcomes": ["no-op", "remove", "replace", "replace", "replace", "replace", "replace", "replace"]
+    },
+    {
+      "existing": "object",
+      "outcomes": ["no-op", "remove", "replace", "replace", "replace", "replace", "replace", "merge"]
+    }
+  ],
+  "explicitCases": [
+    ["replace", "object", "array", "replace"],
+    ["replace", "null", "object", "replace"],
+    ["merge", "object", "object", "merge"],
+    ["merge", "array", "object", "merge-requires-object-pair"],
+    ["append", "array", "array", "append"],
+    ["append", "array", "object", "append-requires-array-pair"],
+    ["prepend", "array", "array", "prepend"],
+    ["prepend", "string", "array", "prepend-requires-array-pair"]
+  ]
+}

@@ -1,0 +1,1 @@
+{"config":{"format":"json","loggingLevel":"warn","minify":true,"output":"./release","serverPort":5000},"portHistory":["defaults","project-file","environment"]}

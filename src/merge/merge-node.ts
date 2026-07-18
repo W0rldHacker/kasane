@@ -17,6 +17,10 @@ import {
 } from '../provenance/origin.js';
 import type {
   LeafOperation,
+  LeafOriginRecord,
+  OriginRecord,
+  RemoveOriginRecord,
+  StructuralOriginRecord,
   StructuralOperation,
 } from '../provenance/origin.js';
 import type {
@@ -47,6 +51,8 @@ export interface MergeNodeContext {
   readonly inputReferenceId?: SourceReferenceId;
   readonly inputReferenceIds?: ReadonlyMap<string, SourceReferenceId>;
   readonly layerId: LayerId;
+  /** Fixed-cardinality pool for path-independent immutable origin records. */
+  readonly originPool: Map<string, OriginRecord>;
   readonly provenanceMode: ProvenanceMode;
   readonly registry: LayerRegistry;
   readonly rules: MergeRuleIndex;
@@ -200,13 +206,28 @@ function createLeafOrigin(
   path: string,
   operation: LeafOperation,
   annotationPath = path,
-) {
-  return createOriginRecord(context.registry, context.layerId, {
+): LeafOriginRecord {
+  const secret = secretForPath(context, path, annotationPath);
+  const reference = originReference(context, path);
+  if (reference.inputReferenceId !== undefined) {
+    return createOriginRecord(context.registry, context.layerId, {
+      operation,
+      scope: 'leaf',
+      secret,
+      ...reference,
+    });
+  }
+
+  const cacheKey = `leaf:${operation}:${secret ? 'secret' : 'public'}`;
+  const cached = context.originPool.get(cacheKey);
+  if (cached !== undefined) return cached as LeafOriginRecord;
+  const origin = createOriginRecord(context.registry, context.layerId, {
     operation,
     scope: 'leaf',
-    secret: secretForPath(context, path, annotationPath),
-    ...originReference(context, path),
+    secret,
   });
+  context.originPool.set(cacheKey, origin);
+  return origin;
 }
 
 function createStructuralOrigin(
@@ -214,26 +235,55 @@ function createStructuralOrigin(
   path: string,
   operation: StructuralOperation,
   annotationPath = path,
-) {
-  return createOriginRecord(context.registry, context.layerId, {
+): StructuralOriginRecord {
+  const secret = secretForPath(context, path, annotationPath);
+  const reference = originReference(context, path);
+  if (reference.inputReferenceId !== undefined) {
+    return createOriginRecord(context.registry, context.layerId, {
+      operation,
+      scope: 'container',
+      secret,
+      ...reference,
+    });
+  }
+
+  const cacheKey = `container:${operation}:${secret ? 'secret' : 'public'}`;
+  const cached = context.originPool.get(cacheKey);
+  if (cached !== undefined) return cached as StructuralOriginRecord;
+  const origin = createOriginRecord(context.registry, context.layerId, {
     operation,
     scope: 'container',
-    secret: secretForPath(context, path, annotationPath),
-    ...originReference(context, path),
+    secret,
   });
+  context.originPool.set(cacheKey, origin);
+  return origin;
 }
 
 function createRemovalOrigin(
   context: MergeNodeContext,
   path: string,
   secret: boolean,
-) {
-  return createOriginRecord(context.registry, context.layerId, {
+): RemoveOriginRecord {
+  const reference = originReference(context, path);
+  if (reference.inputReferenceId !== undefined) {
+    return createOriginRecord(context.registry, context.layerId, {
+      operation: 'remove',
+      scope: 'tombstone',
+      secret,
+      ...reference,
+    });
+  }
+
+  const cacheKey = `tombstone:remove:${secret ? 'secret' : 'public'}`;
+  const cached = context.originPool.get(cacheKey);
+  if (cached !== undefined) return cached as RemoveOriginRecord;
+  const origin = createOriginRecord(context.registry, context.layerId, {
     operation: 'remove',
     scope: 'tombstone',
     secret,
-    ...originReference(context, path),
   });
+  context.originPool.set(cacheKey, origin);
+  return origin;
 }
 
 function requireExistingProvenance(

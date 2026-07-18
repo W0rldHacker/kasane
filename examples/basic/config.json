@@ -1,0 +1,7 @@
+{
+  "format": "json",
+  "server": {
+    "host": "project.internal",
+    "port": 4000
+  }
+}

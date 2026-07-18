@@ -26,17 +26,20 @@ A materialized value has exactly one `ConfigNode` kind:
 
 ## Default decision table
 
-The table is exhaustive over every old state and incoming normalized kind.
+The table is exhaustive over every old state and incoming normalized kind. It
+is generated from the same fixture as the merge decision tests.
 
-| Old \ incoming | `undefined` | `remove` | `null` | `boolean` | `number` | `string` | `array` | `object` |
+<!-- merge-matrix:start -->
+| Existing \ incoming | `undefined` | `remove` | `null` | `boolean` | `number` | `string` | `array` | `object` |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `absent` | no-op | remove intent | set | set | set | set | set | set |
-| `null` | no-op | remove | replace | replace | replace | replace | replace | replace |
-| `boolean` | no-op | remove | replace | replace | replace | replace | replace | replace |
-| `number` | no-op | remove | replace | replace | replace | replace | replace | replace |
-| `string` | no-op | remove | replace | replace | replace | replace | replace | replace |
-| `array` | no-op | remove | replace | replace | replace | replace | replace | replace |
-| `object` | no-op | remove | replace | replace | replace | replace | replace | recursive merge |
+| `absent` | `no-op` | `remove` | `set` | `set` | `set` | `set` | `set` | `set` |
+| `null` | `no-op` | `remove` | `replace` | `replace` | `replace` | `replace` | `replace` | `replace` |
+| `boolean` | `no-op` | `remove` | `replace` | `replace` | `replace` | `replace` | `replace` | `replace` |
+| `number` | `no-op` | `remove` | `replace` | `replace` | `replace` | `replace` | `replace` | `replace` |
+| `string` | `no-op` | `remove` | `replace` | `replace` | `replace` | `replace` | `replace` | `replace` |
+| `array` | `no-op` | `remove` | `replace` | `replace` | `replace` | `replace` | `replace` | `replace` |
+| `object` | `no-op` | `remove` | `replace` | `replace` | `replace` | `replace` | `replace` | `merge` |
+<!-- merge-matrix:end -->
 
 Consequences:
 
@@ -45,7 +48,7 @@ Consequences:
 - `null` is an explicit value and replaces every present old kind;
 - a defined incoming value initializes an absent path;
 - removing an absent path changes no materialized value but preserves removal
-  intent for the tombstone behavior owned by `MERGE-003` and provenance;
+  intent in provenance;
 - `undefined` neither changes a value nor creates provenance/history.
 
 ## Decision precedence

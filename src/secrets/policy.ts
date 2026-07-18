@@ -131,6 +131,8 @@ export function applySecretPathPolicy(
   matcher: SecretPathMatcher,
   fingerprintKey?: FingerprintKey,
 ): ProvenanceTree {
+  if (matcher.size === 0) return tree;
+
   return createProvenanceTree(
     tree.root === undefined
       ? undefined

@@ -129,6 +129,26 @@ describe('provenance-modes', () => {
     assertNoHistory(tree.root);
   });
 
+  it('shares only path-independent immutable origins within one layer', () => {
+    const registry = registryWith('defaults');
+    const result = applyLayer(
+      registry,
+      'defaults',
+      { left: 1, right: 2 },
+      undefined,
+      'full',
+    );
+    const left = requireNode(result, ['left']);
+    const right = requireNode(result, ['right']);
+    if (left.state !== 'value' || right.state !== 'value') {
+      throw new Error('Expected value provenance');
+    }
+
+    expect(left.current).toBe(right.current);
+    expect(left.history?.[0]?.origin).toBe(left.current);
+    expect(right.history?.[0]?.origin).toBe(right.current);
+  });
+
   it('keeps ordered leaf attempts, including equal replacements, in full mode', () => {
     const registry = registryWith('defaults', 'application', 'environment');
     const defaults = applyLayer(

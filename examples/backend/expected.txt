@@ -1,0 +1,1 @@
+{"failedValidation":{"code":"KASANE_VALIDATION_ERROR","kind":"standard-schema-failure","path":"server.port"},"server":{"host":"127.0.0.1","port":8080}}

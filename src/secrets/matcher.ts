@@ -3,6 +3,7 @@ import { isSafeConfigKey } from '../normalize/safe-key.js';
 import { parsePath, serializePath } from '../paths/index.js';
 
 export interface SecretPathMatcher {
+  readonly size?: number;
   matches(path: string): boolean;
 }
 
@@ -11,6 +12,7 @@ interface CompiledPattern {
 }
 
 const NEVER_MATCHES: SecretPathMatcher = Object.freeze({
+  size: 0,
   matches(): boolean {
     return false;
   },
@@ -75,7 +77,10 @@ export function createSecretPathMatcher(
       .sort(([left], [right]) => compareStrings(left, right))
       .map(([, pattern]) => pattern),
   );
+  if (patterns.length === 0) return NEVER_MATCHES;
+
   return Object.freeze({
+    size: patterns.length,
     matches(path: string): boolean {
       const segments = parsePath(path);
       return patterns.some((pattern) => {
@@ -107,7 +112,7 @@ export function isInSecretSubtree(
   roots: ReadonlySet<string> | undefined,
   path: string,
 ): boolean {
-  if (roots === undefined) return false;
+  if (roots === undefined || roots.size === 0) return false;
 
   let candidate = path;
   while (candidate.length > 0) {
