@@ -9,7 +9,12 @@ sensitive and must treat the raw snapshot as sensitive.
 Choose the narrowest useful annotation:
 
 ```ts
-import { kasane, secret, secretValue, value } from 'kasane';
+import {
+  kasane,
+  secret,
+  secretValue,
+  value,
+} from '@w0rldhacker/kasane';
 
 const snapshot = await kasane({
   layers: [
@@ -118,7 +123,7 @@ the same protected HMAC key.
 The invocation accepts `limits` for normalization and the built-in file source:
 
 ```ts
-import { kasane } from 'kasane';
+import { kasane } from '@w0rldhacker/kasane';
 
 const snapshot = await kasane({
   layers,

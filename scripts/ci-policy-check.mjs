@@ -117,6 +117,8 @@ requireAll(
     'name: Fast / static, docs, architecture',
     'pnpm docs:check',
     'pnpm security:policy-check',
+    'pnpm changeset:check',
+    'pnpm release:policy-check',
     'pnpm test:unit',
     'pnpm test:integration',
     'pnpm test:types',

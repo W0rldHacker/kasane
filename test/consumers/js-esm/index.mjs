@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 
-import { kasane, value } from 'kasane';
-import { isStandardSchemaV1 } from 'kasane/standard-schema';
+import { kasane, value } from '@w0rldhacker/kasane';
+import { isStandardSchemaV1 } from '@w0rldhacker/kasane/standard-schema';
 
 assert.equal(typeof kasane, 'function');
 assert.equal(typeof value, 'function');
@@ -13,17 +13,17 @@ const snapshot = await kasane({
 });
 assert.deepEqual(snapshot.value, { enabled: true });
 
-const dynamicRoot = await import('kasane');
-const dynamicSubpath = await import('kasane/standard-schema');
+const dynamicRoot = await import('@w0rldhacker/kasane');
+const dynamicSubpath = await import('@w0rldhacker/kasane/standard-schema');
 assert.equal(dynamicRoot.kasane, kasane);
 assert.equal(dynamicSubpath.isStandardSchemaV1, isStandardSchemaV1);
 
 for (const specifier of [
-  'kasane/dist/index.js',
-  'kasane/internal',
-  'kasane/snapshot/public',
-  'kasane/src/index.js',
-  'kasane/watch',
+  '@w0rldhacker/kasane/dist/index.js',
+  '@w0rldhacker/kasane/internal',
+  '@w0rldhacker/kasane/snapshot/public',
+  '@w0rldhacker/kasane/src/index.js',
+  '@w0rldhacker/kasane/watch',
 ]) {
   await assert.rejects(
     import(specifier),
@@ -33,6 +33,6 @@ for (const specifier of [
 
 const require = createRequire(import.meta.url);
 assert.throws(
-  () => require('kasane'),
+  () => require('@w0rldhacker/kasane'),
   (error) => error?.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED',
 );

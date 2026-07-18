@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url';
 
-import { env, file, kasane, value } from 'kasane';
+import { env, file, kasane, value } from '@w0rldhacker/kasane';
 
 const cwd = fileURLToPath(new URL('.', import.meta.url));
 const config = await kasane({

@@ -100,8 +100,8 @@ async function inspectExample(name) {
       /(?:from\s+|import\s*\()\s*['"]([^'"]+)['"]/gu,
     )) {
       const specifier = match[1];
-      if (specifier === 'kasane') importsPublicPackage = true;
-      if (specifier?.startsWith('kasane/')) {
+      if (specifier === '@w0rldhacker/kasane') importsPublicPackage = true;
+      if (specifier?.startsWith('@w0rldhacker/kasane/')) {
         throw new Error(`${name} uses a deep Kasane import: ${specifier}`);
       }
       if (specifier?.startsWith('..')) {
@@ -142,11 +142,20 @@ async function installPackedPackage(consumer, tarball, expectedVersion) {
   );
   const manifest = JSON.parse(
     await readFile(
-      path.join(consumer, 'node_modules', 'kasane', 'package.json'),
+      path.join(
+        consumer,
+        'node_modules',
+        '@w0rldhacker',
+        'kasane',
+        'package.json',
+      ),
       'utf8',
     ),
   );
-  if (manifest.name !== 'kasane' || manifest.version !== expectedVersion) {
+  if (
+    manifest.name !== '@w0rldhacker/kasane' ||
+    manifest.version !== expectedVersion
+  ) {
     throw new Error('Example did not install the packed Kasane artifact.');
   }
 }

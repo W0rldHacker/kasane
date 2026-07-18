@@ -10,7 +10,7 @@ The validator receives a detached mutable clone, may be synchronous or
 asynchronous, and returns the value that becomes `snapshot.value`:
 
 ```ts
-import { kasane, value } from 'kasane';
+import { kasane, value } from '@w0rldhacker/kasane';
 
 const snapshot = await kasane({
   layers: [value('environment', { port: '8080' })],
@@ -41,8 +41,8 @@ the schema package in the application and pass its schema directly; Kasane has
 no runtime dependency on that library.
 
 ```ts
-import { kasane, value } from 'kasane';
-import type { StandardSchemaV1 } from 'kasane/standard-schema';
+import { kasane, value } from '@w0rldhacker/kasane';
+import type { StandardSchemaV1 } from '@w0rldhacker/kasane/standard-schema';
 
 type Output = { port: number };
 
@@ -65,7 +65,8 @@ const snapshot = await kasane({
 });
 ```
 
-`isStandardSchemaV1` is available from `kasane/standard-schema` for structural
+`isStandardSchemaV1` is available from
+`@w0rldhacker/kasane/standard-schema` for structural
 detection. That is the only supported package subpath; do not import Kasane
 internals.
 
@@ -81,7 +82,7 @@ from JSON diagnostics. Catch the error by class and use its stable `code` and
 allowlisted `details`, not the schema library's prose:
 
 ```ts
-import { KasaneValidationError } from 'kasane';
+import { KasaneValidationError } from '@w0rldhacker/kasane';
 
 try {
   await loadConfiguration();
@@ -112,7 +113,7 @@ unknown data and do not independently determine the final type.
 Without validation, an explicit generic is an assertion made by the caller:
 
 ```ts
-import { kasane, value } from 'kasane';
+import { kasane, value } from '@w0rldhacker/kasane';
 
 interface AppConfig {
   readonly port: number;

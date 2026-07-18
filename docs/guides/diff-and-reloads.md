@@ -9,7 +9,7 @@ and whether to apply it.
 Call `before.diff(after)` after building both through the same public API:
 
 ```ts
-import { kasane, value } from 'kasane';
+import { kasane, value } from '@w0rldhacker/kasane';
 
 const before = await kasane({
   layers: [value('defaults', { port: 3000 })],

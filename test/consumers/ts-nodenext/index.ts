@@ -1,7 +1,7 @@
-import { kasane, value } from 'kasane';
-import { isStandardSchemaV1 } from 'kasane/standard-schema';
-import type { DeepReadonly } from 'kasane';
-import type { StandardSchemaV1 } from 'kasane/standard-schema';
+import { kasane, value } from '@w0rldhacker/kasane';
+import { isStandardSchemaV1 } from '@w0rldhacker/kasane/standard-schema';
+import type { DeepReadonly } from '@w0rldhacker/kasane';
+import type { StandardSchemaV1 } from '@w0rldhacker/kasane/standard-schema';
 
 interface SchemaOutput {
   readonly enabled: boolean;
@@ -57,8 +57,8 @@ const asserted = await kasane<AssertedOutput>({
 });
 assertEqual(asserted.value.server.port, 3000);
 
-const dynamicRoot = await import('kasane');
-const dynamicSubpath = await import('kasane/standard-schema');
+const dynamicRoot = await import('@w0rldhacker/kasane');
+const dynamicSubpath = await import('@w0rldhacker/kasane/standard-schema');
 assertEqual(dynamicRoot.kasane, kasane);
 assertEqual(dynamicSubpath.isStandardSchemaV1, isStandardSchemaV1);
 
@@ -68,7 +68,7 @@ if (false) {
   // @ts-expect-error Nested arrays must remain deeply readonly.
   inferred.value.nested.tags.push('mutable');
   // @ts-expect-error Deep package paths are not exported.
-  await import('kasane/dist/index.js');
+  await import('@w0rldhacker/kasane/dist/index.js');
   // @ts-expect-error Workspace source paths are not exported.
-  await import('kasane/src/index.js');
+  await import('@w0rldhacker/kasane/src/index.js');
 }

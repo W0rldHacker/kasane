@@ -46,6 +46,8 @@ installs, and runs the complete correctness/type surface.
 | Performance budgets               | `pnpm bench:check`                                     |
 | Before/after performance evidence | `pnpm bench:compare`                                   |
 | Create release classification     | `pnpm changeset`                                       |
+| Validate release policy           | `pnpm release:policy-check`                            |
+| Rehearse release scenarios        | `pnpm release:dry-run`                                 |
 
 Focused commands speed up iteration, but every pull request must end with
 `pnpm verify`. Performance, security, property, and nightly fuzz commands are
@@ -131,6 +133,12 @@ published package contract. Select:
 - minor for compatible new capability or deprecation;
 - major for a breaking stable change after `1.0`.
 
+Start the summary with `Added:`, `Changed:`, `Fixed:`, or `Security:`. A major
+classification also records `Breaking: true`, `Breaking-Approval:`, and a
+`Migration:` link. A pre-`1.0` breaking minor uses the same metadata. See
+[Versioning and releases](./docs/versioning.md) for beta approval, deprecation,
+prerelease, and npm tag rules.
+
 Internal tests/refactoring with no published effect normally need no Changeset.
 Explain the omission in the pull request when it is not obvious. Do not edit the
 package version directly.
@@ -149,14 +157,15 @@ The release owner uses the exact reviewed commit and:
    ESM/TypeScript consumers, and executable examples.
 5. For an RC or stable release, confirms migration/changelog, soak, rollback,
    package digest, and post-install smoke-test evidence.
-6. Publishes only through the protected trusted-publishing workflow when it is
-   available, then verifies the registry artifact and provenance.
+6. Publishes only through the protected trusted-publishing workflow, then
+   verifies the registry artifact and provenance.
 
 Current pull-request workflows are read-only and have no publish credentials.
-Protected Changesets/trusted-publishing automation is owned by `REL-001`; until
-it lands and is rehearsed, an ad-hoc `npm publish` is not an approved release
-path. A failed publication is corrected with a new version; routine rollback
-does not use `npm unpublish`.
+The release PR workflow cannot publish. The manual publish workflow has no
+long-lived npm token and remains blocked until its protected environment and npm
+trusted publisher are configured. An ad-hoc `npm publish` is not an approved
+release path. A failed publication is corrected with a new version; routine
+rollback does not use `npm unpublish`.
 
 ## Pull request checklist
 
