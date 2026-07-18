@@ -1,7 +1,3 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import path from 'node:path';
-
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -11,6 +7,7 @@ import {
   kasane,
   value,
 } from '../../src/index.js';
+import { withTempWorkspace } from './helpers/temp-workspace.js';
 
 describe('pipeline limits', () => {
   it('defines immutable security defaults', () => {
@@ -24,14 +21,15 @@ describe('pipeline limits', () => {
   });
 
   it('rejects a large file before invoking its parser', async () => {
-    const directory = await mkdtemp(path.join(tmpdir(), 'kasane-limits-'));
-    const filePath = path.join(directory, 'large.json');
-    const parse = vi.fn(() => ({ parsed: true }));
-    await writeFile(filePath, JSON.stringify({ value: 'x'.repeat(4_096) }));
+    await withTempWorkspace(async (workspace) => {
+      const filePath = await workspace.writeJson('large.json', {
+        value: 'x'.repeat(4_096),
+      });
+      const parse = vi.fn(() => ({ parsed: true }));
 
-    try {
       await expect(
         kasane({
+          cwd: workspace.cwd,
           layers: [file('large', filePath, { parse })],
           limits: { maxSourceBytes: 128 },
         }),
@@ -44,9 +42,7 @@ describe('pipeline limits', () => {
         },
       });
       expect(parse).not.toHaveBeenCalled();
-    } finally {
-      await rm(directory, { force: true, recursive: true });
-    }
+    });
   });
 
   it('applies limits independently to every source result', async () => {

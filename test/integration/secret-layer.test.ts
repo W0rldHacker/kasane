@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { REDACTED_VALUE } from '../../src/secrets/redact.js';
 import { kasane, secret, secretValue, value } from '../../src/index.js';
+
+const REDACTED_VALUE = '[REDACTED]';
 
 describe('secret layer', () => {
   it('marks scalar, object, and array descendants while preserving raw access', async () => {

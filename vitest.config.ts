@@ -16,6 +16,13 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       reportsDirectory: 'coverage',
+      thresholds: {
+        branches: 90,
+        functions: 95,
+        lines: 95,
+        'src/normalize/safe-key.ts': { branches: 100 },
+        'src/secrets/redact.ts': { branches: 100 },
+      },
     },
     projects: [
       {

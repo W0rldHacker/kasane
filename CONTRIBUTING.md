@@ -9,6 +9,11 @@ being implemented.
 4. Add or update tests for every behavioral change.
 5. Add a changeset for user-visible changes with `pnpm changeset`.
 
+Every production bug fix must include a deterministic regression test that fails
+without the fix and asserts the affected contract semantically. Reuse a minimal
+synthetic fixture; never copy production credentials or diagnostics into a
+snapshot.
+
 Architecture-sensitive changes must update the relevant accepted ADR and must
 not weaken the dependency, secret-redaction, or scope boundaries. Security
 issues must not include real credentials in fixtures, logs, or examples.

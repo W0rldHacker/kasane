@@ -10,7 +10,7 @@ import {
   kasane,
   value,
 } from '../../src/index.js';
-import { getSourceMetadataResolver } from '../../src/sources/index.js';
+import { withTempWorkspace } from './helpers/temp-workspace.js';
 
 const projectRoot = path.resolve('.');
 const fixtureDirectory = path.resolve('test', 'fixtures', 'file');
@@ -154,14 +154,19 @@ describe('file source', () => {
     });
   });
 
-  it('publishes only the resolved path as source metadata', () => {
-    const descriptor = file('metadata', 'test/fixtures/file/valid.json');
-    const resolver = getSourceMetadataResolver(descriptor.source);
-    const metadata = resolver?.call(descriptor.source, { cwd: projectRoot });
+  it('publishes only the resolved path through public provenance', async () => {
+    const absolutePath = fixture('valid.json');
+    const snapshot = await kasane({
+      cwd: projectRoot,
+      layers: [file('metadata', absolutePath)],
+    });
+    const origin = snapshot.origin('server.host');
 
-    expect(metadata).toEqual({ reference: fixture('valid.json') });
-    expect(Object.isFrozen(metadata)).toBe(true);
-    expect(JSON.stringify(metadata)).not.toContain('localhost');
+    expect(origin).toMatchObject({
+      layer: { id: 0, kind: 'file', name: 'metadata' },
+      sourceReference: absolutePath,
+    });
+    expect(JSON.stringify(origin)).not.toContain('localhost');
   });
 
   it('loads a larger JSON fixture without a separate merge path', async () => {
@@ -176,26 +181,31 @@ describe('file source', () => {
   it('reports permission errors where the platform enforces chmod', async () => {
     if (process.platform === 'win32') return;
 
-    const permissionPath = fixture('permission.json');
-    await chmod(permissionPath, 0o000);
-    try {
-      let failure: unknown;
+    await withTempWorkspace(async (workspace) => {
+      const permissionPath = await workspace.writeJson('permission.json', {
+        inaccessible: true,
+      });
+      await chmod(permissionPath, 0o000);
       try {
-        await kasane({
-          layers: [file('permission', permissionPath, { optional: true })],
-        });
-      } catch (error) {
-        failure = error;
-      }
+        let failure: unknown;
+        try {
+          await kasane({
+            cwd: workspace.cwd,
+            layers: [file('permission', permissionPath, { optional: true })],
+          });
+        } catch (error) {
+          failure = error;
+        }
 
-      if (failure !== undefined) {
-        expect(failure).toBeInstanceOf(KasaneSourceError);
-        expect(failure).toMatchObject({
-          details: { kind: 'file-read-error', operation: 'read-file' },
-        });
+        if (failure !== undefined) {
+          expect(failure).toBeInstanceOf(KasaneSourceError);
+          expect(failure).toMatchObject({
+            details: { kind: 'file-read-error', operation: 'read-file' },
+          });
+        }
+      } finally {
+        await chmod(permissionPath, 0o644);
       }
-    } finally {
-      await chmod(permissionPath, 0o644);
-    }
+    });
   });
 });

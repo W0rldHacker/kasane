@@ -3,7 +3,6 @@ import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
 import { KasaneSourceError, env, kasane, value } from '../../src/index.js';
-import { getSourceMetadataResolver } from '../../src/sources/index.js';
 import {
   caseCollisionOrders,
   parentChildCollisionOrders,
@@ -281,27 +280,32 @@ describe('env source', () => {
   });
 
   it('publishes one safe variable reference for every mapped path', async () => {
-    const descriptor = env('metadata', {
-      coerce: 'json',
-      prefix: 'APP_',
-      source: {
-        APP_FEATURE: '{"enabled":true}',
-        APP_SERVER__PORT: '8080',
-      },
-    });
-    const context = Object.freeze({ cwd: path.resolve('.') });
-    await descriptor.source.load(context);
-    const resolver = getSourceMetadataResolver(descriptor.source);
-    const metadata = resolver?.call(descriptor.source, context);
-
-    expect(metadata).toEqual({
-      inputReferences: ['APP_FEATURE', 'APP_SERVER__PORT'],
-      pathReferences: [
-        { path: 'feature', reference: 'APP_FEATURE' },
-        { path: 'server.port', reference: 'APP_SERVER__PORT' },
+    const snapshot = await kasane({
+      cwd: path.resolve('.'),
+      provenance: 'full',
+      layers: [
+        env('metadata', {
+          coerce: 'json',
+          prefix: 'APP_',
+          source: {
+            APP_FEATURE: '{"enabled":true}',
+            APP_SERVER__PORT: '8080',
+          },
+        }),
       ],
     });
-    expect(JSON.stringify(metadata)).not.toContain('8080');
-    expect(JSON.stringify(metadata)).not.toContain('enabled');
+    const origins = [
+      snapshot.origin('feature'),
+      snapshot.origin('feature.enabled'),
+      snapshot.origin('server.port'),
+    ];
+
+    expect(origins.map((origin) => origin?.inputReference)).toEqual([
+      'APP_FEATURE',
+      'APP_FEATURE',
+      'APP_SERVER__PORT',
+    ]);
+    expect(JSON.stringify(origins)).not.toContain('8080');
+    expect(JSON.stringify(origins)).not.toContain('enabled');
   });
 });

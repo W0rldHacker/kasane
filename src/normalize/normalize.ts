@@ -340,14 +340,19 @@ function processContainer(
 ): void {
   if (context.ancestors.has(value)) return failCycle(task.path);
 
-  const array = Array.isArray(value);
+  let array: boolean;
+  try {
+    array = Array.isArray(value);
+  } catch {
+    return failValue(task.path, 'uninspectable-object');
+  }
   if (!array && !isPlainObject(value)) {
     return failValue(task.path, 'non-plain-object');
   }
 
   const children = array
-    ? prepareArray(value, task.path)
-    : prepareObject(value, task.path);
+    ? prepareArray(value as unknown[], task.path)
+    : prepareObject(value as Record<string, unknown>, task.path);
   const output: ConfigArray | NormalizedObject = array ? [] : {};
 
   assignValue(task.assignment, output, setRoot);

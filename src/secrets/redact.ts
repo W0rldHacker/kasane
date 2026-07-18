@@ -100,10 +100,13 @@ function ownDataDescriptor(
 
 function ownEnumerableStringKeys(value: object): readonly string[] | null {
   try {
-    return Reflect.ownKeys(value)
-      .filter((key): key is string => typeof key === 'string')
-      .filter((key) => ownDataDescriptor(value, key)?.enumerable === true)
-      .sort((left, right) => (left < right ? -1 : left > right ? 1 : 0));
+    return (
+      Reflect.ownKeys(value)
+        .filter((key): key is string => typeof key === 'string')
+        .filter((key) => ownDataDescriptor(value, key)?.enumerable === true)
+        // Own property names are unique, so the comparator never receives equals.
+        .sort((left, right) => (left < right ? -1 : 1))
+    );
   } catch {
     return null;
   }
@@ -433,10 +436,7 @@ export class Redactor {
 
     const output = detachedObject();
     const length = Math.min(keys.length, this.#limits.maxObjectKeys);
-    for (let index = 0; index < length; index += 1) {
-      const key = keys[index];
-      if (key === undefined) continue;
-
+    for (const key of keys.slice(0, length)) {
       const descriptor = ownDataDescriptor(value, key);
       const child =
         descriptor !== null && descriptor !== undefined && 'value' in descriptor
