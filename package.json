@@ -68,6 +68,8 @@
     "test:consumer": "pnpm build && node scripts/test-consumers.mjs",
     "test:packed": "pnpm test:consumer",
     "docs:check": "node scripts/docs-check.mjs",
+    "security:policy-check": "node scripts/security-policy-check.mjs",
+    "ci:policy-check": "node scripts/ci-policy-check.mjs",
     "examples:test": "pnpm build && node scripts/test-examples.mjs",
     "architecture:check": "node scripts/architecture-check.mjs",
     "bench": "pnpm build && node --expose-gc scripts/bench.mjs",
@@ -75,7 +77,7 @@
     "bench:compare": "pnpm bench && node scripts/check-benchmarks.mjs && node scripts/compare-benchmarks.mjs",
     "bench:ci": "pnpm bench:check",
     "changeset": "changeset",
-    "verify": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm docs:check && pnpm architecture:check && pnpm build:check && pnpm examples:test && node scripts/test-package.mjs && node scripts/test-consumers.mjs && publint && attw --pack . && pnpm test && pnpm test:types"
+    "verify": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm docs:check && pnpm security:policy-check && pnpm ci:policy-check && pnpm architecture:check && pnpm build:check && pnpm examples:test && node scripts/test-package.mjs && node scripts/test-consumers.mjs && publint && attw --pack . && pnpm test && pnpm test:types"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "0.18.5",

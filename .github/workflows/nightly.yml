@@ -1,0 +1,119 @@
+name: Nightly quality
+
+on:
+  schedule:
+    - cron: '23 2 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: nightly-quality
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  CI: 'true'
+
+jobs:
+  property:
+    name: Nightly / extended property
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          run_install: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24.x
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:property:nightly
+      - if: ${{ failure() }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: property-failure-${{ github.run_id }}
+          path: test/property/regressions/last-failure.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  fuzz:
+    name: Nightly / extended fuzz
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          run_install: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24.x
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:fuzz:nightly
+      - if: ${{ failure() }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: minimized-fuzz-corpus-${{ github.run_id }}
+          path: test/fuzz-corpus/generated/last-failure.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  performance:
+    name: Nightly / performance budget
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      KASANE_BENCH_REFERENCE: '1'
+      KASANE_BENCH_OUTPUT: benchmarks/results/nightly.json
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          run_install: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24.x
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm bench:ci
+      - if: ${{ always() }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: nightly-benchmark-${{ github.run_id }}
+          path: benchmarks/results/nightly.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  required:
+    name: Nightly summary
+    if: ${{ always() }}
+    needs:
+      - property
+      - fuzz
+      - performance
+    permissions: {}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Make failures visible in the workflow conclusion
+        env:
+          NIGHTLY_RESULTS: ${{ toJSON(needs) }}
+        run: |
+          node --input-type=module -e "
+            const jobs = JSON.parse(process.env.NIGHTLY_RESULTS);
+            const failures = Object.entries(jobs)
+              .filter(([, job]) => job.result !== 'success')
+              .map(([name, job]) => name + '=' + job.result);
+            if (failures.length > 0) {
+              console.error('Nightly jobs did not pass: ' + failures.join(', '));
+              process.exit(1);
+            }
+            console.log('All nightly jobs passed.');
+          "
