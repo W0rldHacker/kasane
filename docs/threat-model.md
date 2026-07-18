@@ -68,8 +68,12 @@ the signal and rejects without publishing partial configuration.
   and must review those capabilities separately.
 - Resource overrides are an explicit application decision; raising them also
   raises worst-case CPU and memory use.
-- Security vulnerability disclosure policy and fuzz-suite implementation are
-  owned by separate tasks.
+- Direct raw access through `snapshot.value`, `get()`, or `require()` can expose
+  correctly annotated secrets.
+- Fingerprints are comparison metadata, not password hashes or secret storage.
+
+Report a suspected boundary failure through the private channel and coordinated
+workflow in the [security policy](../SECURITY.md).
 
 ## Verification
 
