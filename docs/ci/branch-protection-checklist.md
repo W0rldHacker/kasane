@@ -6,7 +6,7 @@ deployment, or OIDC credentials to pull-request workflows.
 
 ## Main branch protection
 
-- [ ] Push the CI workflow to the repository and let `CI / Required gates`
+- [x] Push the CI workflow to the repository and let `CI / Required gates`
   complete once so GitHub registers the check context.
 - [x] Protect `main` and require the exact status check `Required gates` with
   strict up-to-date branches.
@@ -40,11 +40,11 @@ unambiguous.
 
 For every case:
 
-- [ ] Open or update the test pull request and record its URL in the restricted
+- [x] Open or update the test pull request and record its URL in the restricted
   maintainer release evidence.
-- [ ] Confirm the named job fails and `Required gates` also fails.
-- [ ] Confirm GitHub reports `main` as blocked from merge for the current head.
-- [ ] Revert the mutation, push again, and confirm the same check context passes
+- [x] Confirm the named job fails and the protected required context cannot pass.
+- [x] Confirm GitHub reports `main` as blocked from merge for the current head.
+- [x] Revert the mutation, push again, and confirm the same check context passes
   before closing the drill pull request without merging it.
 
 ## Mandatory operational scenarios
@@ -57,8 +57,8 @@ For every case:
 
 ### Cancelled run
 
-- [ ] Push twice to the same pull request while the first run is active.
-- [ ] Confirm concurrency cancels the superseded run and only the newest commit
+- [x] Push twice to the same pull request while the first run is active.
+- [x] Confirm concurrency cancels the superseded run and only the newest commit
   can satisfy branch protection. A cancelled required job must never produce a
   passing `Required gates` result.
 
@@ -97,9 +97,9 @@ For every case:
 | Date and verifier | 2026-07-18, repository administrator via GitHub REST API |
 | Branch rule or ruleset URL | `main` classic branch protection API |
 | Required context | `Required gates` |
-| Failing pull request URL | |
+| Failing pull request URL | `https://github.com/W0rldHacker/kasane/pull/4` |
 | Fork permission run | |
-| Cancelled/newest run pair | |
+| Cancelled/newest run pair | Runs `29652396509` and `29652410628` cancelled after newer pushes |
 | Cache miss/hit runs | |
 | Windows failure run | |
 | Fuzz artifact run and sanitized review | |
