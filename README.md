@@ -11,7 +11,7 @@ Kasane is ESM-only and supports Node.js 22 and 24.
 Install the package:
 
 ```bash
-pnpm add kasane
+pnpm add @w0rldhacker/kasane
 ```
 
 Create `config.json`:
@@ -33,7 +33,7 @@ The last layer that supplies `server.port` wins:
 ```js
 import { fileURLToPath } from 'node:url';
 
-import { env, file, kasane, value } from 'kasane';
+import { env, file, kasane, value } from '@w0rldhacker/kasane';
 
 const cwd = fileURLToPath(new URL('.', import.meta.url));
 const config = await kasane({
@@ -159,6 +159,9 @@ for the complete boundary.
 - [Public API map](./docs/guides/public-api.md)
 - [Limitations and non-goals](./docs/guides/limitations.md)
 - [Platform support](./docs/platform-support.md)
+- [Versioning and releases](./docs/versioning.md)
+- [Migration policy and guide](./docs/migrations.md)
+- [Changelog](./CHANGELOG.md)
 - [Security policy](./SECURITY.md)
 - [Contributing](./CONTRIBUTING.md)
 - [Public API reference](./docs/api.md)

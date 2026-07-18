@@ -72,11 +72,20 @@ async function installTarball(consumer, tarball, expectedVersion) {
 
   const manifest = JSON.parse(
     await readFile(
-      path.join(consumer, 'node_modules', 'kasane', 'package.json'),
+      path.join(
+        consumer,
+        'node_modules',
+        '@w0rldhacker',
+        'kasane',
+        'package.json',
+      ),
       'utf8',
     ),
   );
-  if (manifest.name !== 'kasane' || manifest.version !== expectedVersion) {
+  if (
+    manifest.name !== '@w0rldhacker/kasane' ||
+    manifest.version !== expectedVersion
+  ) {
     throw new Error('Consumer did not install the packed kasane artifact');
   }
 }

@@ -1,5 +1,5 @@
 {
-  "name": "kasane",
+  "name": "@w0rldhacker/kasane",
   "version": "0.0.0",
   "description": "Explainable layered configuration for Node.js and TypeScript.",
   "keywords": [
@@ -17,6 +17,10 @@
   "homepage": "https://github.com/W0rldHacker/kasane#readme",
   "bugs": {
     "url": "https://github.com/W0rldHacker/kasane/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "type": "module",
   "sideEffects": false,
@@ -70,6 +74,11 @@
     "docs:check": "node scripts/docs-check.mjs",
     "security:policy-check": "node scripts/security-policy-check.mjs",
     "ci:policy-check": "node scripts/ci-policy-check.mjs",
+    "changeset:check": "node scripts/changeset-check.mjs",
+    "release:policy-check": "node scripts/release-policy-check.mjs",
+    "release:version": "node scripts/release-version.mjs",
+    "release:dry-run": "node scripts/release-dry-run.mjs",
+    "release:publish": "node scripts/release-publish.mjs",
     "examples:test": "pnpm build && node scripts/test-examples.mjs",
     "architecture:check": "node scripts/architecture-check.mjs",
     "bench": "pnpm build && node --expose-gc scripts/bench.mjs",
@@ -77,7 +86,7 @@
     "bench:compare": "pnpm bench && node scripts/check-benchmarks.mjs && node scripts/compare-benchmarks.mjs",
     "bench:ci": "pnpm bench:check",
     "changeset": "changeset",
-    "verify": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm docs:check && pnpm security:policy-check && pnpm ci:policy-check && pnpm architecture:check && pnpm build:check && pnpm examples:test && node scripts/test-package.mjs && node scripts/test-consumers.mjs && publint && attw --pack . && pnpm test && pnpm test:types"
+    "verify": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm docs:check && pnpm security:policy-check && pnpm ci:policy-check && pnpm changeset:check && pnpm release:policy-check && pnpm architecture:check && pnpm build:check && pnpm examples:test && node scripts/test-package.mjs && node scripts/test-consumers.mjs && publint && attw --pack . && pnpm test && pnpm test:types"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "0.18.5",

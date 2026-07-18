@@ -1,4 +1,4 @@
-# Scope for `kasane@1.0.0`
+# Scope for `@w0rldhacker/kasane@1.0.0`
 
 Baseline: [requirements](./requirements.md) · **scope** ·
 [assumptions](./assumptions.md) · [traceability](./traceability.md)
@@ -31,7 +31,8 @@ the source registry in [requirements.md](./requirements.md).
 
 ## Public surface boundary
 
-Stable exports are limited to `kasane` and `kasane/standard-schema`. Deep
+Stable exports are limited to `@w0rldhacker/kasane` and
+`@w0rldhacker/kasane/standard-schema`. Deep
 imports and `internal`, `watch`, CLI, provider, or format subpaths are outside
 the `1.0` contract. Exact signatures remain owned by `TYPE-001` and `PKG-001`;
 this baseline fixes capability boundaries, not internal classes.

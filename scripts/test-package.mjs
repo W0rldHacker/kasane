@@ -104,19 +104,19 @@ try {
   const consumerSource = `
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { kasane } from 'kasane';
-import { isStandardSchemaV1 } from 'kasane/standard-schema';
+import { kasane } from '@w0rldhacker/kasane';
+import { isStandardSchemaV1 } from '@w0rldhacker/kasane/standard-schema';
 
 assert.equal(typeof kasane, 'function');
 assert.equal(typeof isStandardSchemaV1, 'function');
-assert.equal(typeof (await import('kasane')).kasane, 'function');
+assert.equal(typeof (await import('@w0rldhacker/kasane')).kasane, 'function');
 
 for (const specifier of [
-  'kasane/dist/index.js',
-  'kasane/internal',
-  'kasane/snapshot/public',
-  'kasane/src/index.js',
-  'kasane/watch',
+  '@w0rldhacker/kasane/dist/index.js',
+  '@w0rldhacker/kasane/internal',
+  '@w0rldhacker/kasane/snapshot/public',
+  '@w0rldhacker/kasane/src/index.js',
+  '@w0rldhacker/kasane/watch',
 ]) {
   await assert.rejects(
     import(specifier),
@@ -126,7 +126,7 @@ for (const specifier of [
 
 const require = createRequire(import.meta.url);
 assert.throws(
-  () => require('kasane'),
+  () => require('@w0rldhacker/kasane'),
   (error) => error?.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED',
 );
 `;
@@ -136,7 +136,13 @@ assert.throws(
 
   const installedManifest = JSON.parse(
     await readFile(
-      path.join(consumer, 'node_modules/kasane/package.json'),
+      path.join(
+        consumer,
+        'node_modules',
+        '@w0rldhacker',
+        'kasane',
+        'package.json',
+      ),
       'utf8',
     ),
   );

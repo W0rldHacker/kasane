@@ -1,5 +1,5 @@
-import { ConfigSnapshot, kasane, value } from 'kasane';
-import type { DeepReadonly } from 'kasane';
+import { ConfigSnapshot, kasane, value } from '@w0rldhacker/kasane';
+import type { DeepReadonly } from '@w0rldhacker/kasane';
 
 type Digit = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9';
 type SectionName = `section-${Digit}${Digit}`;

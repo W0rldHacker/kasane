@@ -9,8 +9,8 @@ signature drift. Semantic guarantees link to the user guides and accepted
 The only supported import specifiers are:
 
 ```ts
-import { kasane } from 'kasane';
-import type { StandardSchemaV1 } from 'kasane/standard-schema';
+import { kasane } from '@w0rldhacker/kasane';
+import type { StandardSchemaV1 } from '@w0rldhacker/kasane/standard-schema';
 ```
 
 Generated files under `dist`, source-tree modules, and any other subpath are
@@ -214,7 +214,7 @@ information is explicit and is never inferred.
 results become sorted, safe `ConfigIssue` records; `ConfigIssuePrevious`
 describes prior redacted value/origin context when available.
 
-The `kasane/standard-schema` subpath exports:
+The `@w0rldhacker/kasane/standard-schema` subpath exports:
 
 ### `isStandardSchemaV1(value)`
 

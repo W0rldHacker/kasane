@@ -1,6 +1,6 @@
 ---
-'kasane': patch
+'@w0rldhacker/kasane': patch
 ---
 
-Reject revoked or otherwise uninspectable proxy containers with a sanitized
-normalization error instead of leaking a native exception.
+Fixed: Reject revoked or otherwise uninspectable proxy containers with a
+sanitized normalization error instead of leaking a native exception.

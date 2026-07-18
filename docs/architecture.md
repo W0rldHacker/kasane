@@ -27,8 +27,8 @@ explicitly changes the contract:
 7. Paths have one parser and canonical serializer across merge, secrets,
    validation, provenance, snapshot access, and diff.
 8. Failure and abort are atomic: no partial `ConfigSnapshot` is returned.
-9. Stable package imports are limited to `kasane` and
-   `kasane/standard-schema`.
+9. Stable package imports are limited to `@w0rldhacker/kasane` and
+   `@w0rldhacker/kasane/standard-schema`.
 10. Complexity and caching require measured benefit, bounded ownership, and
     unchanged public semantics.
 
