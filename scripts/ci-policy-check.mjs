@@ -100,6 +100,17 @@ function assertInstallAndCache(workflow, name) {
   }
 }
 
+function assertVerifyJobsHaveHistory(workflow, name) {
+  for (const [jobName, job] of jobs(workflow)) {
+    if (!job.includes('pnpm verify')) continue;
+    requireAll(
+      job,
+      ['fetch-depth: 0'],
+      `${name} job ${jobName} Changeset diff checkout`,
+    );
+  }
+}
+
 for (const [name, workflow] of [
   ['CI', ci],
   ['Nightly', nightly],
@@ -108,6 +119,7 @@ for (const [name, workflow] of [
   assertReadOnly(workflow, name);
   assertInstallAndCache(workflow, name);
 }
+assertVerifyJobsHaveHistory(ci, 'CI');
 
 requireAll(
   ci,
