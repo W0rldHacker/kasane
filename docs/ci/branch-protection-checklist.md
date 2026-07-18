@@ -64,9 +64,9 @@ For every case:
 
 ### Cache miss
 
-- [ ] Run once with an empty GitHub Actions cache.
-- [ ] Confirm pnpm installs successfully with `--frozen-lockfile`.
-- [ ] Confirm a later cache hit restores only the pnpm store; installation still
+- [x] Run once with an empty GitHub Actions cache.
+- [x] Confirm pnpm installs successfully with `--frozen-lockfile`.
+- [x] Confirm a later cache hit restores only the pnpm store; installation still
   runs and no `dist`, coverage, tarball, or test output is restored as build
   input.
 
@@ -95,13 +95,14 @@ For every case:
 | Field | Value |
 | --- | --- |
 | Date and verifier | 2026-07-18, repository administrator via GitHub REST API |
-| Branch rule or ruleset URL | `main` classic branch protection API |
+| Branch rule or ruleset URL | `https://api.github.com/repos/W0rldHacker/kasane/branches/main/protection` |
 | Required context | `Required gates` |
 | Failing pull request URL | `https://github.com/W0rldHacker/kasane/pull/4` |
 | Fork permission run | |
 | Cancelled/newest run pair | Runs `29652396509` and `29652410628` cancelled after newer pushes |
-| Cache miss/hit runs | |
+| Cache miss/hit runs | Miss `29652305396`; hit `29652591479`; frozen install ran in both |
 | Windows failure run | |
 | Fuzz artifact run and sanitized review | |
 | Documentation drift run | |
 | Nightly notification recipients checked | |
+| Coverage and tarball artifacts | Run `29652591479`, artifacts `coverage-29652591479` and `packed-tarball-29652591479` |
