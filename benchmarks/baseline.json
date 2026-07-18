@@ -1,0 +1,199 @@
+{
+  "schemaVersion": 1,
+  "approvedAt": "2026-07-18",
+  "environment": {
+    "architecture": "x64",
+    "ci": false,
+    "cpuCount": 4,
+    "cpuModel": "Intel(R) Core(TM) i3-9100F CPU @ 3.60GHz",
+    "gcExposed": true,
+    "generatedAt": "2026-07-18T11:15:43.321Z",
+    "node": "24.4.1",
+    "operatingSystem": "win32 10.0.19045",
+    "runner": null,
+    "runnerImage": null,
+    "totalMemoryBytes": 17119821824,
+    "v8": "13.6.233.10-node.17"
+  },
+  "methodology": {
+    "source": "benchmarks/results/latest.json",
+    "warmupRuns": 1,
+    "measuredRuns": 3,
+    "statistic": "median",
+    "note": "Initial synthetic baseline captured before optimization; reference hard budgets are enforced separately on hosted Ubuntu Node 24."
+  },
+  "noiseFloors": {
+    "durationMs": 5,
+    "heapDeltaBytes": 1048576
+  },
+  "scenarios": {
+    "load/l1/n100/d5/none/freeze-on": {
+      "durationMedianMs": 0.908,
+      "heapDeltaMedianBytes": 13312
+    },
+    "load/l1/n100/d5/origin-only/freeze-on": {
+      "durationMedianMs": 0.748,
+      "heapDeltaMedianBytes": 33504
+    },
+    "load/l1/n100/d5/full/freeze-on": {
+      "durationMedianMs": 2.105,
+      "heapDeltaMedianBytes": 37384
+    },
+    "load/l1/n100/d20/none/freeze-on": {
+      "durationMedianMs": 2.397,
+      "heapDeltaMedianBytes": 8576
+    },
+    "load/l1/n100/d20/origin-only/freeze-on": {
+      "durationMedianMs": 1.305,
+      "heapDeltaMedianBytes": 36240
+    },
+    "load/l1/n100/d20/full/freeze-on": {
+      "durationMedianMs": 1.367,
+      "heapDeltaMedianBytes": 44944
+    },
+    "load/l1/n1000/d5/none/freeze-on": {
+      "durationMedianMs": 7.962,
+      "heapDeltaMedianBytes": 17952
+    },
+    "load/l1/n1000/d5/origin-only/freeze-on": {
+      "durationMedianMs": 6.714,
+      "heapDeltaMedianBytes": 184424
+    },
+    "load/l1/n1000/d5/full/freeze-on": {
+      "durationMedianMs": 6.922,
+      "heapDeltaMedianBytes": 297432
+    },
+    "load/l1/n1000/d20/none/freeze-on": {
+      "durationMedianMs": 12.271,
+      "heapDeltaMedianBytes": 20088
+    },
+    "load/l1/n1000/d20/origin-only/freeze-on": {
+      "durationMedianMs": 12.327,
+      "heapDeltaMedianBytes": 192840
+    },
+    "load/l1/n1000/d20/full/freeze-on": {
+      "durationMedianMs": 12.097,
+      "heapDeltaMedianBytes": 297208
+    },
+    "load/l1/n10000/d5/none/freeze-on": {
+      "durationMedianMs": 119.194,
+      "heapDeltaMedianBytes": 789576
+    },
+    "load/l1/n10000/d5/origin-only/freeze-on": {
+      "durationMedianMs": 82.264,
+      "heapDeltaMedianBytes": 2318376
+    },
+    "load/l1/n10000/d5/full/freeze-on": {
+      "durationMedianMs": 80.011,
+      "heapDeltaMedianBytes": 3342016
+    },
+    "load/l1/n10000/d20/none/freeze-on": {
+      "durationMedianMs": 144.78,
+      "heapDeltaMedianBytes": 790240
+    },
+    "load/l1/n10000/d20/origin-only/freeze-on": {
+      "durationMedianMs": 119.267,
+      "heapDeltaMedianBytes": 2306864
+    },
+    "load/l1/n10000/d20/full/freeze-on": {
+      "durationMedianMs": 118.541,
+      "heapDeltaMedianBytes": 3344112
+    },
+    "load/l10/n100/d5/none/freeze-on": {
+      "durationMedianMs": 5.073,
+      "heapDeltaMedianBytes": 13456
+    },
+    "load/l10/n100/d5/origin-only/freeze-on": {
+      "durationMedianMs": 6.033,
+      "heapDeltaMedianBytes": 26680
+    },
+    "load/l10/n100/d5/full/freeze-on": {
+      "durationMedianMs": 6.575,
+      "heapDeltaMedianBytes": 159704
+    },
+    "load/l10/n100/d20/none/freeze-on": {
+      "durationMedianMs": 10.702,
+      "heapDeltaMedianBytes": 9680
+    },
+    "load/l10/n100/d20/origin-only/freeze-on": {
+      "durationMedianMs": 10.911,
+      "heapDeltaMedianBytes": 40168
+    },
+    "load/l10/n100/d20/full/freeze-on": {
+      "durationMedianMs": 13.142,
+      "heapDeltaMedianBytes": 182912
+    },
+    "load/l10/n1000/d5/none/freeze-on": {
+      "durationMedianMs": 61.556,
+      "heapDeltaMedianBytes": 23768
+    },
+    "load/l10/n1000/d5/origin-only/freeze-on": {
+      "durationMedianMs": 60.928,
+      "heapDeltaMedianBytes": 192984
+    },
+    "load/l10/n1000/d5/full/freeze-on": {
+      "durationMedianMs": 74.225,
+      "heapDeltaMedianBytes": 1489056
+    },
+    "load/l10/n1000/d20/none/freeze-on": {
+      "durationMedianMs": 145.845,
+      "heapDeltaMedianBytes": 58168
+    },
+    "load/l10/n1000/d20/origin-only/freeze-on": {
+      "durationMedianMs": 149.449,
+      "heapDeltaMedianBytes": 195488
+    },
+    "load/l10/n1000/d20/full/freeze-on": {
+      "durationMedianMs": 157.316,
+      "heapDeltaMedianBytes": 1484608
+    },
+    "load/l10/n10000/d5/none/freeze-on": {
+      "durationMedianMs": 487.304,
+      "heapDeltaMedianBytes": 788720
+    },
+    "load/l10/n10000/d5/origin-only/freeze-on": {
+      "durationMedianMs": 455.134,
+      "heapDeltaMedianBytes": 2297808
+    },
+    "load/l10/n10000/d5/full/freeze-on": {
+      "durationMedianMs": 516.532,
+      "heapDeltaMedianBytes": 14865064
+    },
+    "load/l10/n10000/d20/none/freeze-on": {
+      "durationMedianMs": 867.51,
+      "heapDeltaMedianBytes": 791816
+    },
+    "load/l10/n10000/d20/origin-only/freeze-on": {
+      "durationMedianMs": 985.013,
+      "heapDeltaMedianBytes": 2303448
+    },
+    "load/l10/n10000/d20/full/freeze-on": {
+      "durationMedianMs": 928.164,
+      "heapDeltaMedianBytes": 14888688
+    },
+    "path-cache/n1000/d20/lookups1024": {
+      "durationMedianMs": 4.831,
+      "heapDeltaMedianBytes": 280
+    },
+    "explain/full/n1000/d20/calls256": {
+      "durationMedianMs": 2.186,
+      "heapDeltaMedianBytes": 5816
+    },
+    "diff/public/n10000/d5": {
+      "durationMedianMs": 80.652,
+      "heapDeltaMedianBytes": 3531416
+    },
+    "diff/secret-fingerprint/n1000/d5": {
+      "durationMedianMs": 9.173,
+      "heapDeltaMedianBytes": 396168
+    },
+    "freeze/off/l10/n10000/d5/origin-only": {
+      "durationMedianMs": 450.411,
+      "heapDeltaMedianBytes": 2297488
+    },
+    "large-array/n50000/replace/freeze-on": {
+      "durationMedianMs": 233.073,
+      "heapDeltaMedianBytes": 10669272
+    }
+  }
+}

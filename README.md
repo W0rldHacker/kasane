@@ -18,6 +18,9 @@ pnpm install --frozen-lockfile
 pnpm verify
 ```
 
+Supported platforms, CI coverage, and filesystem/environment limitations are
+documented in [Platform support](./docs/platform-support.md).
+
 The package is ESM-only and is built with `tsc` without bundling.
 
 ## Environment variables

@@ -1,0 +1,54 @@
+{
+  "controlStrings": [
+    "\u001b[31mred\u001b[0m",
+    "line-one\nline-two\r\u0000",
+    "\u0001\u0002\u0008\u000b\u000c\u007f"
+  ],
+  "deepWideTrees": [
+    { "breadth": 2000, "depth": 0, "maxDepth": 64, "maxNodes": 128 },
+    { "breadth": 1, "depth": 10000, "maxDepth": 64, "maxNodes": 100000 }
+  ],
+  "encodedDangerousKeys": [
+    "{\"\\u005f\\u005fproto\\u005f\\u005f\":{\"polluted\":true}}",
+    "{\"safe\":{\"constr\\u0075ctor\":{\"polluted\":true}}}",
+    "{\"safe\":{\"proto\\u0074ype\":{\"polluted\":true}}}"
+  ],
+  "envCollisions": [
+    {
+      "case": "lower",
+      "expectedKind": "env-parent-child-collision",
+      "prefix": "APP__",
+      "source": [
+        ["APP__PARENT", "parent-value"],
+        ["APP__PARENT__CHILD", "child-value"]
+      ]
+    },
+    {
+      "case": "lower",
+      "expectedKind": "env-case-collision",
+      "prefix": "APP__",
+      "source": [
+        ["APP__TOKEN", "upper-value"],
+        ["APP__token", "lower-value"]
+      ]
+    },
+    {
+      "case": "preserve",
+      "expectedKind": "dangerous-env-segment",
+      "prefix": "APP__",
+      "source": [["APP__constructor", "dangerous-value"]]
+    },
+    {
+      "case": "preserve",
+      "expectedKind": "empty-env-segment",
+      "prefix": "APP__",
+      "source": [["APP____TOKEN", "empty-value"]]
+    }
+  ],
+  "invalidUtf16": ["\ud800", "\udfff", "prefix-\ud800-suffix", "\udbff\udfff"],
+  "paths": [
+    { "kind": "path-too-long", "repeat": 4097, "token": "a" },
+    { "kind": "too-many-segments", "repeat": 257, "token": "a." },
+    { "kind": "dangling-escape", "repeat": 1, "token": "a\\" }
+  ]
+}

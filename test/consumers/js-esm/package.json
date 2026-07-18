@@ -1,0 +1,5 @@
+{
+  "name": "kasane-js-esm-consumer",
+  "private": true,
+  "type": "module"
+}

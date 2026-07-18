@@ -1,4 +1,4 @@
-import { chmod } from 'node:fs/promises';
+import { chmod, symlink } from 'node:fs/promises';
 import path from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
@@ -11,6 +11,11 @@ import {
   value,
 } from '../../src/index.js';
 import { withTempWorkspace } from './helpers/temp-workspace.js';
+import {
+  crlfParserInput,
+  symlinkUnavailableCodes,
+  unicodePathSegments,
+} from '../fixtures/platform.js';
 
 const projectRoot = path.resolve('.');
 const fixtureDirectory = path.resolve('test', 'fixtures', 'file');
@@ -47,6 +52,73 @@ describe('file source', () => {
     });
 
     expect(snapshot.get('server.port')).toBe(3000);
+  });
+
+  it('loads relative file paths containing spaces and Unicode', async () => {
+    await withTempWorkspace(async (workspace) => {
+      const relativePath = path.join(...unicodePathSegments);
+      await workspace.writeJson(relativePath, {
+        platform: { label: 'spaces-and-unicode' },
+      });
+
+      const snapshot = await kasane({
+        cwd: workspace.cwd,
+        layers: [file('unicode-path', relativePath)],
+      });
+
+      expect(snapshot.value).toEqual({
+        platform: { label: 'spaces-and-unicode' },
+      });
+    });
+  });
+
+  it('passes CRLF input to custom parsers without newline rewriting', async () => {
+    await withTempWorkspace(async (workspace) => {
+      const relativePath = path.join('line endings', 'windows-style.txt');
+      await workspace.writeText(relativePath, crlfParserInput);
+      let observed = '';
+      const snapshot = await kasane({
+        cwd: workspace.cwd,
+        layers: [
+          file('crlf', relativePath, {
+            parse(contents) {
+              observed = contents;
+              return { lines: contents.split('\r\n').filter(Boolean) };
+            },
+          }),
+        ],
+      });
+
+      expect(observed).toBe(crlfParserInput);
+      expect(snapshot.value).toEqual({ lines: ['first', 'second'] });
+    });
+  });
+
+  it('follows file symlinks when the host permits their creation', async () => {
+    await withTempWorkspace(async (workspace) => {
+      const targetPath = await workspace.writeJson('target/config.json', {
+        via: 'symlink',
+      });
+      const linkPath = workspace.resolve('linked config.json');
+      try {
+        await symlink(targetPath, linkPath, 'file');
+      } catch (error) {
+        const code =
+          typeof error === 'object' && error !== null && 'code' in error
+            ? String(error.code)
+            : '';
+        expect(process.platform).toBe('win32');
+        expect(symlinkUnavailableCodes).toContain(code);
+        return;
+      }
+
+      const snapshot = await kasane({
+        cwd: workspace.cwd,
+        layers: [file('symlink', path.basename(linkPath))],
+      });
+      expect(snapshot.value).toEqual({ via: 'symlink' });
+      expect(snapshot.origin('via')?.sourceReference).toBe(linkPath);
+    });
   });
 
   it('suppresses only ENOENT for optional files', async () => {

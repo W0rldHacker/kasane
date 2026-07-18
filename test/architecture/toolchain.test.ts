@@ -6,6 +6,18 @@ import { ESLint } from 'eslint';
 import { describe, expect, it } from 'vitest';
 
 const fixtureUrl = new URL('../fixtures/toolchain/', import.meta.url);
+const portableScriptCommands = new Set([
+  'attw',
+  'changeset',
+  'eslint',
+  'markdownlint-cli2',
+  'node',
+  'pnpm',
+  'prettier',
+  'publint',
+  'tsc',
+  'vitest',
+]);
 
 describe('toolchain failure probes', () => {
   it('rejects an intentional TypeScript error', () => {
@@ -34,4 +46,21 @@ describe('toolchain failure probes', () => {
       ),
     ).toBe(true);
   }, 15_000);
+
+  it('keeps package scripts independent of POSIX-only shells and utilities', async () => {
+    const manifest = JSON.parse(
+      await readFile(new URL('../../package.json', import.meta.url), 'utf8'),
+    ) as { scripts?: Record<string, string> };
+
+    for (const [name, script] of Object.entries(manifest.scripts ?? {})) {
+      expect(script, name).not.toMatch(/(?:^|\s)(?:ba|z|fi)?sh(?:\s|$)/u);
+      expect(script, name).not.toMatch(/\.sh(?:\s|$)/u);
+      for (const command of script.split(/\s*&&\s*/u)) {
+        const executable = command.trim().split(/\s+/u)[0];
+        expect(portableScriptCommands, `${name}: ${command}`).toContain(
+          executable,
+        );
+      }
+    }
+  });
 });

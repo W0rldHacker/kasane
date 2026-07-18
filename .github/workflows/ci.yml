@@ -5,17 +5,100 @@ on:
   push:
     branches:
       - main
+      - 'release/**'
+      - 'prerelease/**'
+  workflow_dispatch:
+    inputs:
+      full_matrix:
+        description: Run the pre-RC full operating-system and Node matrix
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
 jobs:
-  verify:
-    name: Node.js ${{ matrix.node-version }}
+  linux-required:
+    name: Required / Ubuntu / Node.js ${{ matrix.node-version }}
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
+        node-version:
+          - 22.x
+          - 24.x
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm verify
+
+  platform-required:
+    name: Required / ${{ matrix.os }} / Node.js 24
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-latest
+          - windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:integration
+      - run: pnpm test:consumer
+
+  node-26-advisory:
+    name: Advisory / Ubuntu / Node.js 26
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 26.x
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm verify
+
+  performance-budget:
+    name: Required / Ubuntu / Node.js 24 / performance
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      KASANE_BENCH_REFERENCE: '1'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm bench:ci
+
+  pre-rc-full-matrix:
+    name: Pre-RC / ${{ matrix.os }} / Node.js ${{ matrix.node-version }}
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.full_matrix }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
         node-version:
           - 22.x
           - 24.x

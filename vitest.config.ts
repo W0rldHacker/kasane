@@ -43,7 +43,16 @@ export default defineConfig({
         test: {
           ...shared,
           include: ['test/security/**/*.test.ts'],
+          exclude: ['test/security/**/*.fuzz.test.ts'],
           name: 'security',
+        },
+      },
+      {
+        test: {
+          ...shared,
+          fileParallelism: false,
+          include: ['test/security/**/*.fuzz.test.ts'],
+          name: 'fuzz',
         },
       },
       {
