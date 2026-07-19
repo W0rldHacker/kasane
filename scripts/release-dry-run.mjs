@@ -7,10 +7,17 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 import { npmTagForVersion, parseChangeset } from './release-policy.mjs';
-import { pack } from './check-tarball.mjs';
+import { npmPublishDryRunArgs, pack } from './check-tarball.mjs';
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const versionScript = path.join(root, 'scripts', 'release-version.mjs');
+const prettierCli = path.join(
+  root,
+  'node_modules',
+  'prettier',
+  'bin',
+  'prettier.cjs',
+);
 const changesetCli = path.join(
   root,
   'node_modules',
@@ -96,6 +103,12 @@ async function fixture(name, type, expected, options = {}) {
     changelog.includes('### Changed'),
     `${name} changelog category is missing`,
   );
+  const format = spawnSync(
+    process.execPath,
+    [prettierCli, '--check', path.join(directory, 'CHANGELOG.md')],
+    { cwd: directory, encoding: 'utf8' },
+  );
+  assert.equal(format.status, 0, format.stderr || format.stdout);
 }
 
 try {
@@ -129,6 +142,10 @@ try {
   assert.equal(npmTagForVersion('1.1.0-alpha.0'), 'next');
   assert.equal(npmTagForVersion('1.1.0-beta.0'), 'beta');
   assert.equal(npmTagForVersion('1.1.0-rc.0'), 'rc');
+  assert.deepEqual(
+    npmPublishDryRunArgs('kasane-0.1.0-alpha.0.tgz', '0.1.0-alpha.0').slice(-3),
+    ['--tag', 'next', '--provenance'],
+  );
   assert.throws(
     () => npmTagForVersion('1.1.0-canary.0'),
     /Unsupported prerelease channel/u,
