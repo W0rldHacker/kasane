@@ -4,5 +4,11 @@
   "initialVersions": {
     "@w0rldhacker/kasane": "0.0.0"
   },
-  "changesets": []
+  "changesets": [
+    "alpha-evaluation",
+    "calm-trees-merge",
+    "small-clouds-pack",
+    "swift-layers-explain",
+    "warm-rivers-release"
+  ]
 }
