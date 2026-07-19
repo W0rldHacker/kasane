@@ -22,7 +22,7 @@ Open Critical: **0**. Open High: **0**.
 
 | Finding | Area | Severity | Owner | Target | Disposition | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| Add a backup private-advisory/release maintainer | Security operations | Medium | `W0rldHacker` | Before RC | Improve maintainer continuity without changing package API | Open |
+| Solo-maintainer advisory/release continuity | Security operations | Medium | `W0rldHacker` | RC review | Accept availability risk; never bypass protected disclosure or release gates | Risk accepted |
 | No public beta reports yet | — | — | `W0rldHacker` | Continuous through RC | Triage new issue-form submissions | Monitoring |
 
 ## Alpha disposition

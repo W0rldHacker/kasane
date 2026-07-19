@@ -37,56 +37,56 @@ Baseline: [requirements](./requirements.md) · [scope](./scope.md) ·
 | `TS-PERF` | Published latency/throughput/memory budgets | `pnpm bench`; `pnpm bench:ci` | `PERF-001` |
 | `TS-DOCS` | Baseline consistency, links, API drift, doctests, examples | `pnpm docs:check`; `pnpm lint:markdown`; `pnpm examples:test` | `DOC-001`–`DOC-003` |
 | `TS-POLICY` | Security policy and private-disclosure tabletop | `pnpm security:policy-check` | `SEC-005` |
-| `TS-RELEASE` | Gate checklist, artifact identity, provenance, smoke tests | `pnpm release:verify`; release records | `REL-001`–`REL-006` |
+| `TS-RELEASE` | Gate checklist, artifact identity, provenance, smoke tests | `pnpm verify`; `pnpm release:rehearse`; release records | `REL-001`–`REL-006` |
 | `TS-ABSENCE` | No non-goal/post-1.0 export, dependency, or tarball content | API report plus packed allowlist tests | `TYPE-001`, `PKG-001`, `REL-002` |
 
 ## Mandatory `1.0` coverage matrix
 
-| Requirement | Priority | Owner tasks | Test suites | Release gate | Initial status |
+| Requirement | Priority | Owner tasks | Test suites | Release gate | RC status |
 | --- | --- | --- | --- | --- | --- |
-| `REQ-CORE-001` | `P0` | `ARCH-001`, `SRC-001`, `QA-002` | `TS-ARCH`, `TS-SOURCES` | Foundation → MVP | `planned` |
-| `REQ-CORE-002` | `P1` | `ARCH-001`, `TYPE-001`, `PKG-001`, `REL-002` | `TS-ARCH`, `TS-PACKAGE`, `TS-ABSENCE` | Beta → RC | `planned` |
-| `REQ-DATA-001` | `P0` | `MODEL-001`, `MERGE-001`, `SNAP-001`, `QA-001` | `TS-NORMALIZE`, `TS-MERGE`, `TS-SNAPSHOT` | Foundation → MVP | `planned` |
-| `REQ-DATA-002` | `P0` | `MODEL-001`, `QA-001`, `QA-004` | `TS-NORMALIZE`, `TS-SECURITY` | Foundation → MVP | `planned` |
-| `REQ-DATA-003` | `P0` | `MODEL-001`, `MERGE-001`, `QA-003` | `TS-NORMALIZE`, `TS-MERGE`, `TS-PROPERTY` | Foundation → MVP | `planned` |
-| `REQ-SNAP-001` | `P1` | `SNAP-001`, `QA-001`, `QA-002` | `TS-SNAPSHOT`, `TS-SOURCES` | Foundation → MVP | `planned` |
-| `REQ-MERGE-001` | `P0` | `MERGE-001`, `MERGE-002`, `QA-001`, `QA-003` | `TS-MERGE`, `TS-PROPERTY` | Foundation → MVP | `planned` |
-| `REQ-MERGE-002` | `P0` | `MERGE-001`, `MERGE-003`, `QA-001`, `QA-003` | `TS-MERGE`, `TS-PROPERTY` | Foundation → MVP | `planned` |
-| `REQ-MERGE-003` | `P0` | `ARCH-002`, `MERGE-003`, `PROV-001`, `QA-001` | `TS-MERGE`, `TS-PROVENANCE`, `TS-SNAPSHOT` | Foundation → MVP | `planned` |
-| `REQ-MERGE-004` | `P0` | `ARCH-001`, `MERGE-002`, `PROV-001`, `QA-001` | `TS-ARCH`, `TS-MERGE`, `TS-PROVENANCE` | Foundation → MVP | `planned` |
-| `REQ-PROV-001` | `P0` | `PROV-002`, `SNAP-002`, `QA-001` | `TS-PROVENANCE`, `TS-PROPERTY` | Foundation → MVP | `planned` |
-| `REQ-PROV-002` | `P1` | `PROV-001`, `PROV-002`, `SNAP-002`, `QA-001` | `TS-PROVENANCE`, `TS-SNAPSHOT` | MVP → Alpha | `planned` |
-| `REQ-PROV-003` | `P1` | `PROV-001`, `SEC-001`, `QA-004` | `TS-PROVENANCE`, `TS-REDACTION` | MVP → Alpha | `planned` |
-| `REQ-PATH-001` | `P0` | `ARCH-002`, `SNAP-001`, `QA-001` | `TS-SNAPSHOT` | Foundation → MVP | `planned` |
-| `REQ-PATH-002` | `P1` | `SNAP-001`, `SNAP-002`, `ERR-001`, `QA-001` | `TS-SNAPSHOT`, `TS-ERRORS` | Foundation → MVP | `planned` |
-| `REQ-SNAP-002` | `P0` | `ARCH-002`, `SNAP-001`, `SEC-002`, `QA-004` | `TS-SNAPSHOT`, `TS-REDACTION` | MVP → Alpha | `planned` |
-| `REQ-ERR-001` | `P1` | `ERR-001`, `VAL-002`, `SEC-004`, `QA-001`, `QA-004` | `TS-ERRORS`, `TS-SECURITY` | MVP → Alpha | `planned` |
-| `REQ-SRC-001` | `P0` | `ARCH-001`, `SRC-001`, `MODEL-001`, `QA-002` | `TS-ARCH`, `TS-SOURCES`, `TS-NORMALIZE` | Foundation → MVP | `planned` |
-| `REQ-SRC-002` | `P1` | `SRC-002`, `MODEL-001`, `QA-002`, `QA-006` | `TS-SOURCES`, `TS-PLATFORM` | MVP → Alpha | `planned` |
-| `REQ-SRC-003` | `P0` | `SRC-003`, `DOC-002`, `QA-002`, `QA-006` | `TS-SOURCES`, `TS-PLATFORM`, `TS-DOCS` | MVP → Alpha | `planned` |
-| `REQ-SRC-004` | `P1` | `SRC-003`, `PROV-001`, `QA-002`, `QA-004` | `TS-SOURCES`, `TS-SECURITY` | MVP → Alpha | `planned` |
-| `REQ-SRC-005` | `P1` | `SRC-001`, `SRC-002`, `SRC-003`, `SEC-001`, `REL-002`, `QA-002` | `TS-SOURCES`, `TS-PACKAGE`, `TS-ABSENCE` | MVP → Alpha | `planned` |
-| `REQ-VAL-001` | `P1` | `VAL-001`, `TYPE-001`, `QA-001`, `QA-005` | `TS-VALIDATION`, `TS-TYPES`, `TS-PACKAGE` | MVP → Alpha | `planned` |
-| `REQ-VAL-002` | `P0` | `ARCH-002`, `VAL-001`, `SEC-001`, `QA-001`, `QA-004` | `TS-VALIDATION`, `TS-NORMALIZE`, `TS-REDACTION` | MVP → Alpha | `planned` |
-| `REQ-VAL-003` | `P1` | `VAL-002`, `SEC-002`, `QA-002`, `QA-004` | `TS-VALIDATION`, `TS-REDACTION` | MVP → Alpha | `planned` |
-| `REQ-SEC-001` | `P0` | `MODEL-002`, `SEC-004`, `QA-004` | `TS-NORMALIZE`, `TS-SECURITY` | Foundation → MVP | `planned` |
-| `REQ-SEC-002` | `P0` | `SEC-001`, `QA-004` | `TS-SOURCES`, `TS-PROVENANCE`, `TS-REDACTION` | MVP → Alpha | `planned` |
-| `REQ-SEC-003` | `P0` | `SEC-002`, `SEC-004`, `QA-004` | `TS-REDACTION`, `TS-ARCH`, `TS-SECURITY` | MVP → Alpha | `planned` |
-| `REQ-SEC-004` | `P1` | `SEC-003`, `SEC-005`, `QA-004` | `TS-REDACTION`, `TS-DIFF`, `TS-SECURITY` | Alpha → Beta | `planned` |
-| `REQ-SEC-005` | `P1` | `SEC-004`, `QA-004`, `DOC-002` | `TS-SECURITY`, `TS-ERRORS`, `TS-DOCS` | Alpha → Beta | `planned` |
-| `REQ-DIFF-001` | `P1` | `DIFF-001`, `QA-001`, `QA-002` | `TS-DIFF` | MVP → Alpha | `planned` |
-| `REQ-DIFF-002` | `P1` | `DIFF-001`, `SEC-003`, `QA-004` | `TS-DIFF`, `TS-REDACTION` | MVP → Alpha | `planned` |
-| `REQ-TYPE-001` | `P1` | `TYPE-001`, `QA-005` | `TS-TYPES`, `TS-PACKAGE` | Alpha → Beta | `planned` |
-| `REQ-TYPE-002` | `P1` | `TYPE-001`, `QA-005`, `POST-004` | `TS-TYPES`, `TS-ABSENCE` | Alpha → Beta | `planned` |
-| `REQ-PKG-001` | `P0` | `PKG-001`, `QA-005`, `QA-006`, `REL-002` | `TS-PACKAGE`, `TS-PLATFORM`, `TS-ABSENCE` | MVP → Alpha | `planned` |
-| `REQ-PKG-002` | `P1` | `FOUND-002`, `PKG-001`, `REL-002`, `SEC-004` | `TS-PACKAGE`, `TS-ABSENCE` | Beta → RC | `planned` |
-| `REQ-QUAL-001` | `P1` | `QA-001`–`QA-005`, `CI-001` | `TS-PROPERTY`, `TS-SECURITY`, `TS-TYPES`, `TS-PACKAGE` | Beta → RC | `planned` |
-| `REQ-QUAL-002` | `P1` | `QA-001`, `QA-006`, `CI-001` | `TS-PLATFORM`, `TS-SECURITY` | Beta → RC | `planned` |
-| `REQ-QUAL-003` | `P1` | `PERF-001`, `PERF-002`, `QA-003`, `QA-004` | `TS-PERF`, `TS-PROPERTY`, `TS-SECURITY` | Alpha → Beta | `planned` |
-| `REQ-DOC-001` | `P1` | `DOC-001`, `DOC-002`, `DOC-003`, `QA-002` | `TS-DOCS`, `TS-PACKAGE` | Alpha → Beta | `planned` |
-| `REQ-SEC-006` | `P1` | `SEC-005`, `REL-002`, `QA-004` | `TS-POLICY`, `TS-PACKAGE`, `TS-SECURITY` | Alpha → Beta | `planned` |
-| `REQ-REL-001` | `P1` | `REL-001`, `REL-003`–`REL-006`, `MAINT-001` | `TS-RELEASE` | RC → 1.0 | `planned` |
-| `REQ-REL-002` | `P1` | `REL-002`, `REL-005`, `REL-006`, `CI-001` | `TS-PACKAGE`, `TS-RELEASE` | RC → 1.0 | `planned` |
+| `REQ-CORE-001` | `P0` | `ARCH-001`, `SRC-001`, `QA-002` | `TS-ARCH`, `TS-SOURCES` | Foundation → MVP | `accepted` |
+| `REQ-CORE-002` | `P1` | `ARCH-001`, `TYPE-001`, `PKG-001`, `REL-002` | `TS-ARCH`, `TS-PACKAGE`, `TS-ABSENCE` | Beta → RC | `accepted` |
+| `REQ-DATA-001` | `P0` | `MODEL-001`, `MERGE-001`, `SNAP-001`, `QA-001` | `TS-NORMALIZE`, `TS-MERGE`, `TS-SNAPSHOT` | Foundation → MVP | `accepted` |
+| `REQ-DATA-002` | `P0` | `MODEL-001`, `QA-001`, `QA-004` | `TS-NORMALIZE`, `TS-SECURITY` | Foundation → MVP | `accepted` |
+| `REQ-DATA-003` | `P0` | `MODEL-001`, `MERGE-001`, `QA-003` | `TS-NORMALIZE`, `TS-MERGE`, `TS-PROPERTY` | Foundation → MVP | `accepted` |
+| `REQ-SNAP-001` | `P1` | `SNAP-001`, `QA-001`, `QA-002` | `TS-SNAPSHOT`, `TS-SOURCES` | Foundation → MVP | `accepted` |
+| `REQ-MERGE-001` | `P0` | `MERGE-001`, `MERGE-002`, `QA-001`, `QA-003` | `TS-MERGE`, `TS-PROPERTY` | Foundation → MVP | `accepted` |
+| `REQ-MERGE-002` | `P0` | `MERGE-001`, `MERGE-003`, `QA-001`, `QA-003` | `TS-MERGE`, `TS-PROPERTY` | Foundation → MVP | `accepted` |
+| `REQ-MERGE-003` | `P0` | `ARCH-002`, `MERGE-003`, `PROV-001`, `QA-001` | `TS-MERGE`, `TS-PROVENANCE`, `TS-SNAPSHOT` | Foundation → MVP | `accepted` |
+| `REQ-MERGE-004` | `P0` | `ARCH-001`, `MERGE-002`, `PROV-001`, `QA-001` | `TS-ARCH`, `TS-MERGE`, `TS-PROVENANCE` | Foundation → MVP | `accepted` |
+| `REQ-PROV-001` | `P0` | `PROV-002`, `SNAP-002`, `QA-001` | `TS-PROVENANCE`, `TS-PROPERTY` | Foundation → MVP | `accepted` |
+| `REQ-PROV-002` | `P1` | `PROV-001`, `PROV-002`, `SNAP-002`, `QA-001` | `TS-PROVENANCE`, `TS-SNAPSHOT` | MVP → Alpha | `accepted` |
+| `REQ-PROV-003` | `P1` | `PROV-001`, `SEC-001`, `QA-004` | `TS-PROVENANCE`, `TS-REDACTION` | MVP → Alpha | `accepted` |
+| `REQ-PATH-001` | `P0` | `ARCH-002`, `SNAP-001`, `QA-001` | `TS-SNAPSHOT` | Foundation → MVP | `accepted` |
+| `REQ-PATH-002` | `P1` | `SNAP-001`, `SNAP-002`, `ERR-001`, `QA-001` | `TS-SNAPSHOT`, `TS-ERRORS` | Foundation → MVP | `accepted` |
+| `REQ-SNAP-002` | `P0` | `ARCH-002`, `SNAP-001`, `SEC-002`, `QA-004` | `TS-SNAPSHOT`, `TS-REDACTION` | MVP → Alpha | `accepted` |
+| `REQ-ERR-001` | `P1` | `ERR-001`, `VAL-002`, `SEC-004`, `QA-001`, `QA-004` | `TS-ERRORS`, `TS-SECURITY` | MVP → Alpha | `accepted` |
+| `REQ-SRC-001` | `P0` | `ARCH-001`, `SRC-001`, `MODEL-001`, `QA-002` | `TS-ARCH`, `TS-SOURCES`, `TS-NORMALIZE` | Foundation → MVP | `accepted` |
+| `REQ-SRC-002` | `P1` | `SRC-002`, `MODEL-001`, `QA-002`, `QA-006` | `TS-SOURCES`, `TS-PLATFORM` | MVP → Alpha | `accepted` |
+| `REQ-SRC-003` | `P0` | `SRC-003`, `DOC-002`, `QA-002`, `QA-006` | `TS-SOURCES`, `TS-PLATFORM`, `TS-DOCS` | MVP → Alpha | `accepted` |
+| `REQ-SRC-004` | `P1` | `SRC-003`, `PROV-001`, `QA-002`, `QA-004` | `TS-SOURCES`, `TS-SECURITY` | MVP → Alpha | `accepted` |
+| `REQ-SRC-005` | `P1` | `SRC-001`, `SRC-002`, `SRC-003`, `SEC-001`, `REL-002`, `QA-002` | `TS-SOURCES`, `TS-PACKAGE`, `TS-ABSENCE` | MVP → Alpha | `accepted` |
+| `REQ-VAL-001` | `P1` | `VAL-001`, `TYPE-001`, `QA-001`, `QA-005` | `TS-VALIDATION`, `TS-TYPES`, `TS-PACKAGE` | MVP → Alpha | `accepted` |
+| `REQ-VAL-002` | `P0` | `ARCH-002`, `VAL-001`, `SEC-001`, `QA-001`, `QA-004` | `TS-VALIDATION`, `TS-NORMALIZE`, `TS-REDACTION` | MVP → Alpha | `accepted` |
+| `REQ-VAL-003` | `P1` | `VAL-002`, `SEC-002`, `QA-002`, `QA-004` | `TS-VALIDATION`, `TS-REDACTION` | MVP → Alpha | `accepted` |
+| `REQ-SEC-001` | `P0` | `MODEL-002`, `SEC-004`, `QA-004` | `TS-NORMALIZE`, `TS-SECURITY` | Foundation → MVP | `accepted` |
+| `REQ-SEC-002` | `P0` | `SEC-001`, `QA-004` | `TS-SOURCES`, `TS-PROVENANCE`, `TS-REDACTION` | MVP → Alpha | `accepted` |
+| `REQ-SEC-003` | `P0` | `SEC-002`, `SEC-004`, `QA-004` | `TS-REDACTION`, `TS-ARCH`, `TS-SECURITY` | MVP → Alpha | `accepted` |
+| `REQ-SEC-004` | `P1` | `SEC-003`, `SEC-005`, `QA-004` | `TS-REDACTION`, `TS-DIFF`, `TS-SECURITY` | Alpha → Beta | `accepted` |
+| `REQ-SEC-005` | `P1` | `SEC-004`, `QA-004`, `DOC-002` | `TS-SECURITY`, `TS-ERRORS`, `TS-DOCS` | Alpha → Beta | `accepted` |
+| `REQ-DIFF-001` | `P1` | `DIFF-001`, `QA-001`, `QA-002` | `TS-DIFF` | MVP → Alpha | `accepted` |
+| `REQ-DIFF-002` | `P1` | `DIFF-001`, `SEC-003`, `QA-004` | `TS-DIFF`, `TS-REDACTION` | MVP → Alpha | `accepted` |
+| `REQ-TYPE-001` | `P1` | `TYPE-001`, `QA-005` | `TS-TYPES`, `TS-PACKAGE` | Alpha → Beta | `accepted` |
+| `REQ-TYPE-002` | `P1` | `TYPE-001`, `QA-005`, `POST-004` | `TS-TYPES`, `TS-ABSENCE` | Alpha → Beta | `accepted` |
+| `REQ-PKG-001` | `P0` | `PKG-001`, `QA-005`, `QA-006`, `REL-002` | `TS-PACKAGE`, `TS-PLATFORM`, `TS-ABSENCE` | MVP → Alpha | `accepted` |
+| `REQ-PKG-002` | `P1` | `FOUND-002`, `PKG-001`, `REL-002`, `SEC-004` | `TS-PACKAGE`, `TS-ABSENCE` | Beta → RC | `accepted` |
+| `REQ-QUAL-001` | `P1` | `QA-001`–`QA-005`, `CI-001` | `TS-PROPERTY`, `TS-SECURITY`, `TS-TYPES`, `TS-PACKAGE` | Beta → RC | `accepted` |
+| `REQ-QUAL-002` | `P1` | `QA-001`, `QA-006`, `CI-001` | `TS-PLATFORM`, `TS-SECURITY` | Beta → RC | `accepted` |
+| `REQ-QUAL-003` | `P1` | `PERF-001`, `PERF-002`, `QA-003`, `QA-004` | `TS-PERF`, `TS-PROPERTY`, `TS-SECURITY` | Alpha → Beta | `accepted` |
+| `REQ-DOC-001` | `P1` | `DOC-001`, `DOC-002`, `DOC-003`, `QA-002` | `TS-DOCS`, `TS-PACKAGE` | Alpha → Beta | `accepted` |
+| `REQ-SEC-006` | `P1` | `SEC-005`, `REL-002`, `QA-004` | `TS-POLICY`, `TS-PACKAGE`, `TS-SECURITY` | Alpha → Beta | `accepted` |
+| `REQ-REL-001` | `P1` | `REL-001`, `REL-003`–`REL-006`, `MAINT-001` | `TS-RELEASE` | RC → 1.0 | `accepted` |
+| `REQ-REL-002` | `P1` | `REL-002`, `REL-005`, `REL-006`, `CI-001` | `TS-PACKAGE`, `TS-RELEASE` | RC → 1.0 | `accepted` |
 
 ## Optional and post-1.0 tracking
 
@@ -189,8 +189,10 @@ security suite. `P0` is stronger than `P1` for this audit.
 12. the ADR index has exactly one matching `Accepted` or `Superseded` status for
     every numbered record.
 
-`FOUND-002` provides this structural gate. Requirement implementation statuses
-remain `planned`, not `tested`, until their owner tasks and linked suites pass.
+`FOUND-002` provides this structural gate. The baseline statuses remained
+`planned` until their owner tasks and linked suites passed. All mandatory rows
+are now `accepted` against the immutable `1.0.0-rc.1` evidence; optional and
+post-1.0 rows retain their independent status.
 
 ## Release sign-off
 
