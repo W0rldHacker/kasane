@@ -1,7 +1,6 @@
 # Beta compatibility and gate report
 
-Status: pre-publication review complete; registry evidence is added after the
-protected beta workflow.
+Status: accepted after protected publication and registry verification.
 
 ## Requirement and defect review
 
@@ -34,6 +33,21 @@ remain gated by their later release stages.
 The required CI matrix runs packed consumers on Node.js 22 and 24, repeats
 runtime consumers on Windows and macOS with Node.js 24, and runs post-publish
 registry plus alpha-to-beta upgrade consumers on Node.js 22 and 24.
+
+The required
+[main CI run](https://github.com/W0rldHacker/kasane/actions/runs/29684680110)
+and protected
+[release run](https://github.com/W0rldHacker/kasane/actions/runs/29684760236)
+passed. Registry consumers covered all five scenarios on Node.js 22.23.1 and
+24.18.0 with TypeScript 6.0.3 and no dev dependencies. Backend and
+test-infrastructure projects also upgraded successfully from the published
+`0.1.0-alpha.0` to `0.1.0-beta.1` on both Node.js versions.
+
+The release workflow artifact and downloaded registry archive were compared
+byte for byte. Both have SHA-256
+`dfbbfc67b8f4ec5ac0e2ff1dd7cc4334b87b01329b0a128e902a3a471d079c62`.
+The published package contains 126 files and has an unpacked size of 268,197
+bytes, within the 500 KB budget.
 
 ## Performance report
 

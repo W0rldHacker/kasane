@@ -28,6 +28,7 @@ Open Critical: **0**. Open High: **0**.
 ## Alpha disposition
 
 No P0/P1 product defect was reported during the alpha evaluation. Backend and
-test-infrastructure compatibility projects must still prove the published
-alpha-to-beta upgrade in the protected registry workflow before this beta is
-accepted.
+test-infrastructure compatibility projects passed the published
+`0.1.0-alpha.0` to `0.1.0-beta.1` upgrade on Node.js 22.23.1 and 24.18.0 in the
+protected registry workflow. No migration note was required because the frozen
+public API and option names did not change.
