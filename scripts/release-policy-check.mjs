@@ -114,10 +114,11 @@ includesAll(
     'package-manager-cache: false',
     'pnpm install --frozen-lockfile',
     'pnpm release:dry-run',
+    'pnpm release:rehearse',
     'pnpm release:publish',
     'name: release-tarball-${{ github.run_id }}',
     'pnpm release:published-check',
-    'Registry prerelease smoke / Node.js ${{ matrix.node-version }}',
+    'Registry release smoke / Node.js ${{ matrix.node-version }}',
     'pnpm test:consumer:registry',
     'pnpm test:consumer:upgrade:registry',
   ],
@@ -151,6 +152,10 @@ const manifest = JSON.parse(packageJson);
 assert.equal(manifest.name, '@worldhacker/kasane');
 assert.equal(manifest.publishConfig?.access, 'public');
 assert.equal(manifest.publishConfig?.provenance, true);
+assert.equal(
+  manifest.scripts?.['release:rehearse'],
+  'node scripts/release-rehearse.mjs',
+);
 console.log(
   'Release policy check passed: SemVer, changelog, migration, release PR, and OIDC publish controls',
 );

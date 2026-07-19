@@ -7,6 +7,7 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 import {
+  assertVersionTag,
   npmTagForVersion,
   parseChangeset,
   pendingChangesetFiles,
@@ -66,7 +67,7 @@ async function fixture(name, type, expected, options = {}) {
   if (options.prerelease) {
     const pre = spawnSync(
       process.execPath,
-      [changesetCli, 'pre', 'enter', 'alpha'],
+      [changesetCli, 'pre', 'enter', options.prereleaseTag ?? 'alpha'],
       {
         cwd: directory,
         encoding: 'utf8',
@@ -78,8 +79,9 @@ async function fixture(name, type, expected, options = {}) {
       pre.stderr || 'Could not enter prerelease mode',
     );
   }
-  const metadata =
-    type === 'major'
+  const metadata = options.promotion
+    ? '\n\nPromotion: 1.0\n\nPromotion-Approval: release-manager-reviewed\n\nMigration: docs/migrations.md#01-beta-to-10-release-candidate'
+    : type === 'major'
       ? '\nBreaking: true\nBreaking-Approval: maintainer-reviewed\nMigration: docs/migrations.md#fixture'
       : '';
   await writeFile(
@@ -124,6 +126,17 @@ try {
     prerelease: true,
     startVersion: '0.0.0',
   });
+  await fixture('channel-transition-rc', 'major', '1.0.0-rc.1', {
+    prerelease: true,
+    prereleaseTag: 'rc',
+    promotion: true,
+    startVersion: '0.1.0-beta.1',
+  });
+  await fixture('next-rc-after-fix', 'patch', '1.0.0-rc.2', {
+    prerelease: true,
+    prereleaseTag: 'rc',
+    startVersion: '1.0.0-rc.1',
+  });
 
   const missing = path.join(temporaryRoot, 'missing');
   await mkdir(path.join(missing, '.changeset'), { recursive: true });
@@ -146,6 +159,22 @@ try {
   assert.equal(npmTagForVersion('1.1.0-alpha.0'), 'next');
   assert.equal(npmTagForVersion('1.1.0-beta.0'), 'beta');
   assert.equal(npmTagForVersion('1.1.0-rc.0'), 'rc');
+  assert.equal(
+    assertVersionTag('1.0.0-rc.1', {
+      latest: '0.1.0-beta.1',
+      rc: '1.0.0-rc.1',
+    }),
+    'rc',
+  );
+  assert.throws(
+    () =>
+      assertVersionTag('1.0.0-rc.1', {
+        latest: '0.1.0-beta.1',
+        rc: '1.0.0-rc.0',
+      }),
+    /rc points to/u,
+    'A mismatched registry tag must block release verification',
+  );
   assert.deepEqual(
     npmPublishDryRunArgs('kasane-0.1.0-alpha.0.tgz', '0.1.0-alpha.0').slice(-3),
     ['--tag', 'next', '--provenance'],
@@ -262,7 +291,7 @@ try {
     publishDryRun.stderr || publishDryRun.stdout,
   );
   console.log(
-    'Release dry-run passed: patch, minor, major, initial alpha, prerelease, missing changeset, package publish rehearsal, and failed publish plan',
+    'Release dry-run passed: patch, minor, major, initial alpha, RC channel transition, new RC after fix, tag mismatch, prerelease, missing changeset, package publish rehearsal, and failed publish plan',
   );
 } finally {
   await rm(temporaryRoot, { recursive: true, force: true });

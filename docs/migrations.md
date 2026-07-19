@@ -4,6 +4,25 @@ This guide is the durable index for incompatible changes. There are no released
 migrations yet. A release that changes a public contract adds a section here
 before its release PR can be approved.
 
+## 0.1 beta to 1.0 release candidate
+
+- First affected version: `1.0.0-rc.1`
+- Last version before promotion: `0.1.0-beta.1`
+- Affected users: prerelease evaluators following the `beta` dist-tag
+- Why it changed: the frozen feature-complete API is entering final 1.0 audit
+
+There is no public export, option, default, runtime, diagnostic, or type
+contract change in this promotion. Replace a pinned beta version or the beta
+tag with the RC tag:
+
+```bash
+npm install @worldhacker/kasane@rc
+```
+
+Applications can roll back with
+`npm install @worldhacker/kasane@0.1.0-beta.1`. The protected release workflow
+executes both directions against backend and test-infrastructure consumers.
+
 ## What must a migration entry contain?
 
 Each entry identifies the first affected version, old and new behavior, who is

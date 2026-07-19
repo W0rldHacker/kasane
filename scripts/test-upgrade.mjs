@@ -16,7 +16,8 @@ const manifest = JSON.parse(
   await readFile(path.join(workspace, 'package.json'), 'utf8'),
 );
 const parsedVersion = parseVersion(String(manifest.version));
-if (parsedVersion.prerelease?.split('.')[0] === 'alpha') {
+const releaseChannel = parsedVersion.prerelease?.split('.')[0] ?? 'stable';
+if (releaseChannel === 'alpha') {
   console.log(
     'Published-alpha upgrade is pending the Changesets beta version commit',
   );
@@ -105,7 +106,16 @@ const registry = process.argv.includes('--registry');
 if (packed === registry) {
   throw new Error('Choose exactly one of --packed or --registry');
 }
-const fromSpec = '@worldhacker/kasane@0.1.0-alpha.0';
+const sourceVersions = {
+  beta: '0.1.0-alpha.0',
+  rc: '0.1.0-beta.1',
+  stable: '1.0.0-rc.1',
+};
+const sourceVersion = sourceVersions[releaseChannel];
+if (sourceVersion === undefined) {
+  throw new Error(`Unsupported upgrade source for ${releaseChannel}`);
+}
+const fromSpec = `@worldhacker/kasane@${sourceVersion}`;
 const toSpec = registry
   ? `${String(manifest.name)}@${npmTagForVersion(String(manifest.version))}`
   : path.join(workspace, `kasane-${String(manifest.version)}.tgz`);
@@ -118,8 +128,8 @@ try {
     await cp(path.join(fixtures, name), consumer, { recursive: true });
 
     install(consumer, fromSpec);
-    if ((await installedVersion(consumer)) !== '0.1.0-alpha.0') {
-      throw new Error(`${name} did not install the published alpha`);
+    if ((await installedVersion(consumer)) !== sourceVersion) {
+      throw new Error(`${name} did not install ${sourceVersion}`);
     }
     run(process.execPath, ['index.mjs'], consumer);
 
@@ -129,10 +139,19 @@ try {
     }
     await assertDependencyBoundary(consumer);
     run(process.execPath, ['index.mjs'], consumer);
+
+    if (releaseChannel === 'rc' || releaseChannel === 'stable') {
+      install(consumer, fromSpec);
+      if ((await installedVersion(consumer)) !== sourceVersion) {
+        throw new Error(`${name} did not roll back to ${sourceVersion}`);
+      }
+      await assertDependencyBoundary(consumer);
+      run(process.execPath, ['index.mjs'], consumer);
+    }
   }
 
   console.log(
-    `Published-alpha upgrade passed for backend and test-infrastructure consumers on Node ${process.versions.node}: 0.1.0-alpha.0 -> ${String(manifest.version)}`,
+    `${releaseChannel === 'beta' ? 'Published-alpha upgrade' : 'Upgrade and rollback rehearsal'} passed for backend and test-infrastructure consumers on Node ${process.versions.node}: ${sourceVersion} -> ${String(manifest.version)}${releaseChannel === 'beta' ? '' : ` -> ${sourceVersion}`}`,
   );
 } finally {
   await rm(temporaryRoot, { force: true, recursive: true });

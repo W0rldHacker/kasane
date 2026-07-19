@@ -84,6 +84,7 @@
     "release:policy-check": "node scripts/release-policy-check.mjs",
     "release:version": "node scripts/release-version.mjs",
     "release:dry-run": "node scripts/release-dry-run.mjs",
+    "release:rehearse": "node scripts/release-rehearse.mjs",
     "release:published-check": "node scripts/check-published-release.mjs",
     "release:publish": "node scripts/release-publish.mjs",
     "examples:test": "pnpm build && node scripts/test-examples.mjs",
@@ -93,7 +94,7 @@
     "bench:compare": "pnpm bench && node scripts/check-benchmarks.mjs && node scripts/compare-benchmarks.mjs",
     "bench:ci": "pnpm bench:check",
     "changeset": "changeset",
-    "verify": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm docs:check && pnpm security:policy-check && pnpm ci:policy-check && pnpm changeset:check && pnpm release:policy-check && pnpm architecture:check && pnpm build:check && pnpm examples:test && pnpm test:package && pnpm test && pnpm test:types"
+    "verify": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm docs:check && pnpm security:policy-check && pnpm ci:policy-check && pnpm changeset:check && pnpm release:policy-check && pnpm architecture:check && pnpm build:check && pnpm examples:test && pnpm test:package && pnpm release:rehearse && pnpm test && pnpm test:types"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "0.18.5",

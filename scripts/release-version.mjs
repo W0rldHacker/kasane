@@ -5,7 +5,11 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
-import { changelogCategories, parseChangeset } from './release-policy.mjs';
+import {
+  changelogCategories,
+  parseChangeset,
+  parseVersion,
+} from './release-policy.mjs';
 
 const root = process.cwd();
 const scriptRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -29,6 +33,35 @@ const entries = await Promise.all(
 const before = JSON.parse(
   await readFile(path.join(root, 'package.json'), 'utf8'),
 );
+const preState = await readFile(
+  path.join(changesetDirectory, 'pre.json'),
+  'utf8',
+)
+  .then((source) => JSON.parse(source))
+  .catch((error) => {
+    if (error?.code === 'ENOENT') return null;
+    throw error;
+  });
+const promotionEntries = entries.filter(
+  (entry) => entry.metadata.Promotion === '1.0',
+);
+if (promotionEntries.length > 0) {
+  assert.equal(
+    promotionEntries.length,
+    1,
+    'Only one 1.0 promotion Changeset is allowed',
+  );
+  assert.equal(
+    parseVersion(before.version).major,
+    0,
+    'Promotion: 1.0 is allowed only from a 0.x version',
+  );
+  assert.equal(
+    preState?.tag,
+    'rc',
+    'Promotion: 1.0 requires Changesets RC prerelease mode',
+  );
+}
 const cli = path.join(
   scriptRoot,
   'node_modules',
@@ -45,9 +78,24 @@ if (result.stdout) process.stdout.write(result.stdout);
 if (result.stderr) process.stderr.write(result.stderr);
 assert.equal(result.status, 0, 'Changesets version command failed');
 
-const after = JSON.parse(
-  await readFile(path.join(root, 'package.json'), 'utf8'),
-);
+let after = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
+const beforeChannel = parseVersion(before.version).prerelease?.split('.')[0];
+const generated = parseVersion(after.version);
+if (
+  preState?.mode === 'pre' &&
+  preState.tag === 'rc' &&
+  beforeChannel !== 'rc' &&
+  generated.major === 1 &&
+  generated.minor === 0 &&
+  generated.patch === 0 &&
+  generated.prerelease?.startsWith('rc.')
+) {
+  after = { ...after, version: '1.0.0-rc.1' };
+  await writeFile(
+    path.join(root, 'package.json'),
+    `${JSON.stringify(after, null, 2)}\n`,
+  );
+}
 assert.notEqual(
   after.version,
   before.version,
