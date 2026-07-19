@@ -7,6 +7,8 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+import { npmTagForVersion } from './release-policy.mjs';
+
 const workspace = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   '..',
@@ -295,7 +297,21 @@ async function checkReproducible(tarball) {
   }
 }
 
-function runPackageTools(tarball) {
+export function npmPublishDryRunArgs(tarball, version) {
+  return [
+    'publish',
+    tarball,
+    '--dry-run',
+    '--ignore-scripts',
+    '--access',
+    'public',
+    '--tag',
+    npmTagForVersion(version),
+    '--provenance',
+  ];
+}
+
+function runPackageTools(tarball, version) {
   const publint = path.join(
     workspace,
     'node_modules',
@@ -318,15 +334,7 @@ function runPackageTools(tarball) {
     '--config-path',
     path.join(workspace, '.attw.json'),
   ]);
-  run('npm', [
-    'publish',
-    tarball,
-    '--dry-run',
-    '--ignore-scripts',
-    '--access',
-    'public',
-    '--provenance',
-  ]);
+  run('npm', npmPublishDryRunArgs(tarball, version));
 }
 
 async function main() {
@@ -337,7 +345,7 @@ async function main() {
   await pack(workspace, tarball);
   const audit = await auditTarball(tarball);
   const hash = await checkReproducible(tarball);
-  runPackageTools(tarball);
+  runPackageTools(tarball, manifest.version);
   console.log(
     `Tarball check passed: ${path.basename(tarball)}, ` +
       `${String(audit.files.length)} files, ${String(audit.unpackedSize)} bytes unpacked, ` +

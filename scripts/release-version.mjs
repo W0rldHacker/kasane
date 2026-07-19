@@ -82,6 +82,25 @@ await writeFile(
   changelogPath,
   changelog.replace(marker, `${marker}\n\n${release.trimEnd()}`),
 );
+const prettier = path.join(
+  scriptRoot,
+  'node_modules',
+  'prettier',
+  'bin',
+  'prettier.cjs',
+);
+const format = spawnSync(
+  process.execPath,
+  [prettier, '--write', changelogPath],
+  {
+    cwd: root,
+    encoding: 'utf8',
+    stdio: 'pipe',
+  },
+);
+if (format.stdout) process.stdout.write(format.stdout);
+if (format.stderr) process.stderr.write(format.stderr);
+assert.equal(format.status, 0, 'CHANGELOG.md formatting failed');
 console.log(
   `Prepared @w0rldhacker/kasane ${after.version} and updated CHANGELOG.md`,
 );
