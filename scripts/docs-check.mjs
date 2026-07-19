@@ -472,8 +472,8 @@ for (const [document, text] of [
   ['docs/guides/public-api.md', publicApiGuide],
 ]) {
   for (const [specifier, exports] of [
-    ['@w0rldhacker/kasane', rootExports],
-    ['@w0rldhacker/kasane/standard-schema', standardSchemaExports],
+    ['@worldhacker/kasane', rootExports],
+    ['@worldhacker/kasane/standard-schema', standardSchemaExports],
   ]) {
     for (const name of exports) {
       assert(
@@ -500,16 +500,16 @@ for (const file of snippetFiles) {
       importSnippets += 1;
       const specifier = imported[2];
       if (
-        specifier !== '@w0rldhacker/kasane' &&
-        !specifier.startsWith('@w0rldhacker/kasane/')
+        specifier !== '@worldhacker/kasane' &&
+        !specifier.startsWith('@worldhacker/kasane/')
       ) {
         importSnippets -= 1;
         continue;
       }
       const available =
-        specifier === '@w0rldhacker/kasane'
+        specifier === '@worldhacker/kasane'
           ? rootExports
-          : specifier === '@w0rldhacker/kasane/standard-schema'
+          : specifier === '@worldhacker/kasane/standard-schema'
             ? standardSchemaExports
             : undefined;
       assert(

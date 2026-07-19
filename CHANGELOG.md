@@ -22,7 +22,7 @@ SemVer level. The release PR generates dated entries from pending Changesets.
 - Improve configuration loading and provenance performance with bounded internal
   reuse, and add executable examples plus complete user, API, architecture, and
   contributor documentation without changing public semantics.
-- Adopt the selected `@w0rldhacker/kasane` package scope, gate its first release
+- Adopt the selected `@worldhacker/kasane` package scope, gate its first release
   on ownership confirmation, and define the SemVer, deprecation, migration,
   changelog, prerelease, and trusted-publishing release process.
 

@@ -9,7 +9,7 @@ import {
   secret,
   secretValue,
   value,
-} from '@w0rldhacker/kasane';
+} from '@worldhacker/kasane';
 import type {
   ConfigDiff,
   EnvLayerOptions,
@@ -26,7 +26,7 @@ import type {
   Origin,
   SourceContext,
   SecretValue,
-} from '@w0rldhacker/kasane';
+} from '@worldhacker/kasane';
 
 expectAssignable<FingerprintKey>('application-key');
 expectAssignable<FingerprintKey>(new Uint8Array([1, 2, 3]));

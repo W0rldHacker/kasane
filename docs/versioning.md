@@ -22,7 +22,7 @@ Major Changesets must include both fields after the answer-first summary:
 
 ```markdown
 ---
-'@w0rldhacker/kasane': major
+'@worldhacker/kasane': major
 ---
 
 Changed: Remove the deprecated option and use the replacement by default.
@@ -112,8 +112,8 @@ non-`main` ref, or a job without GitHub's OIDC request context.
 npm provenance is requested through `publishConfig` and the OIDC publish. npm
 can issue provenance only for a public package built from a public repository.
 The repository satisfies the public-source prerequisite; publication remains
-blocked until the maintainer confirms `@w0rldhacker` organization access and
-configures the npm trusted publisher for the newly selected scoped package.
+blocked until the maintainer confirms control of the `worldhacker` npm user
+scope and configures the trusted publisher for the newly selected package.
 This repository never stores a long-lived npm automation token.
 
 ## How is the release tarball audited?
@@ -138,8 +138,8 @@ Repository administrators complete and periodically rehearse this checklist:
   configure an available required reviewer (a solo maintainer may use the
   environment approval allowed by the repository plan, but must not weaken the
   branch and CI gates);
-- confirm that the maintainer controls the `@w0rldhacker` npm organization and
-  register the trusted publisher for `@w0rldhacker/kasane` with the exact
+- confirm that the maintainer controls the `worldhacker` npm user scope and
+  register the trusted publisher for `@worldhacker/kasane` with the exact
   repository, workflow filename, and environment above before any release;
 - keep Actions pinned to reviewed commit SHAs and default workflow permissions
   read-only;

@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { kasane, value } from '@w0rldhacker/kasane';
+import { kasane, value } from '@worldhacker/kasane';
 
 const cwd = fileURLToPath(new URL('.', import.meta.url));
 const runtimeSource = {

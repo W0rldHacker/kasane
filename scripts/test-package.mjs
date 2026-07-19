@@ -12,7 +12,7 @@ const allowlist = await loadAllowlist();
 
 function manifest(overrides = {}) {
   return {
-    name: '@w0rldhacker/kasane',
+    name: '@worldhacker/kasane',
     version: '1.0.0-test.0',
     type: 'module',
     sideEffects: false,

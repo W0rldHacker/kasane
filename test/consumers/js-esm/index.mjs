@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 
-import { kasane, secret, value } from '@w0rldhacker/kasane';
-import { isStandardSchemaV1 } from '@w0rldhacker/kasane/standard-schema';
+import { kasane, secret, value } from '@worldhacker/kasane';
+import { isStandardSchemaV1 } from '@worldhacker/kasane/standard-schema';
 
 assert.equal(typeof kasane, 'function');
 assert.equal(typeof value, 'function');
@@ -23,17 +23,17 @@ assert.equal(explanation.found, true);
 assert.equal(explanation.found ? explanation.value : undefined, '[REDACTED]');
 assert(!JSON.stringify(explanation).includes(secretCanary));
 
-const dynamicRoot = await import('@w0rldhacker/kasane');
-const dynamicSubpath = await import('@w0rldhacker/kasane/standard-schema');
+const dynamicRoot = await import('@worldhacker/kasane');
+const dynamicSubpath = await import('@worldhacker/kasane/standard-schema');
 assert.equal(dynamicRoot.kasane, kasane);
 assert.equal(dynamicSubpath.isStandardSchemaV1, isStandardSchemaV1);
 
 for (const specifier of [
-  '@w0rldhacker/kasane/dist/index.js',
-  '@w0rldhacker/kasane/internal',
-  '@w0rldhacker/kasane/snapshot/public',
-  '@w0rldhacker/kasane/src/index.js',
-  '@w0rldhacker/kasane/watch',
+  '@worldhacker/kasane/dist/index.js',
+  '@worldhacker/kasane/internal',
+  '@worldhacker/kasane/snapshot/public',
+  '@worldhacker/kasane/src/index.js',
+  '@worldhacker/kasane/watch',
 ]) {
   await assert.rejects(
     import(specifier),
@@ -43,6 +43,6 @@ for (const specifier of [
 
 const require = createRequire(import.meta.url);
 assert.throws(
-  () => require('@w0rldhacker/kasane'),
+  () => require('@worldhacker/kasane'),
   (error) => error?.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED',
 );

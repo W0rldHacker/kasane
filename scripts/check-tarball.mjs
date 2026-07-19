@@ -126,7 +126,7 @@ function scanSecrets(packedPath, source) {
 }
 
 function assertManifest(manifest, paths, allowlist) {
-  assert.equal(manifest.name, '@w0rldhacker/kasane');
+  assert.equal(manifest.name, '@worldhacker/kasane');
   assert.equal(manifest.type, 'module', 'Packed package must be ESM');
   assert.equal(
     manifest.sideEffects,

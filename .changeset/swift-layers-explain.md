@@ -1,5 +1,5 @@
 ---
-'@w0rldhacker/kasane': patch
+'@worldhacker/kasane': patch
 ---
 
 Changed: Improve configuration loading and provenance performance with bounded

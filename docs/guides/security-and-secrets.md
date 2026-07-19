@@ -14,7 +14,7 @@ import {
   secret,
   secretValue,
   value,
-} from '@w0rldhacker/kasane';
+} from '@worldhacker/kasane';
 
 const snapshot = await kasane({
   layers: [
@@ -123,7 +123,7 @@ the same protected HMAC key.
 The invocation accepts `limits` for normalization and the built-in file source:
 
 ```ts
-import { kasane } from '@w0rldhacker/kasane';
+import { kasane } from '@worldhacker/kasane';
 
 const snapshot = await kasane({
   layers,

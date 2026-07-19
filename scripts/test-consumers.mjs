@@ -75,7 +75,7 @@ async function installPackage(consumer, packageReference, expectedVersion) {
       path.join(
         consumer,
         'node_modules',
-        '@w0rldhacker',
+        '@worldhacker',
         'kasane',
         'package.json',
       ),
@@ -83,7 +83,7 @@ async function installPackage(consumer, packageReference, expectedVersion) {
     ),
   );
   if (
-    manifest.name !== '@w0rldhacker/kasane' ||
+    manifest.name !== '@worldhacker/kasane' ||
     (expectedVersion === undefined
       ? !/^0\.1\.0-alpha\.\d+$/u.test(manifest.version)
       : manifest.version !== expectedVersion)
@@ -93,7 +93,7 @@ async function installPackage(consumer, packageReference, expectedVersion) {
 
   const installedEntries = await readdir(path.join(consumer, 'node_modules'));
   const unexpected = installedEntries.filter(
-    (entry) => entry !== '.package-lock.json' && entry !== '@w0rldhacker',
+    (entry) => entry !== '.package-lock.json' && entry !== '@worldhacker',
   );
   if (unexpected.length > 0) {
     throw new Error(
@@ -116,7 +116,7 @@ try {
     throw new Error('--packed and --registry are mutually exclusive');
   }
   const registrySpec = registry
-    ? (process.argv[registryArgument + 1] ?? '@w0rldhacker/kasane@next')
+    ? (process.argv[registryArgument + 1] ?? '@worldhacker/kasane@next')
     : undefined;
   const tarball = packed
     ? path.join(workspace, `kasane-${String(workspaceManifest.version)}.tgz`)

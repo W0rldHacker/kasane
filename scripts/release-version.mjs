@@ -102,5 +102,5 @@ if (format.stdout) process.stdout.write(format.stdout);
 if (format.stderr) process.stderr.write(format.stderr);
 assert.equal(format.status, 0, 'CHANGELOG.md formatting failed');
 console.log(
-  `Prepared @w0rldhacker/kasane ${after.version} and updated CHANGELOG.md`,
+  `Prepared @worldhacker/kasane ${after.version} and updated CHANGELOG.md`,
 );

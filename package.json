@@ -1,5 +1,5 @@
 {
-  "name": "@w0rldhacker/kasane",
+  "name": "@worldhacker/kasane",
   "version": "0.1.0-alpha.0",
   "description": "Explainable layered configuration for Node.js and TypeScript.",
   "keywords": [
@@ -72,7 +72,7 @@
     "test:package": "pnpm pack:check && node scripts/test-package.mjs && node scripts/test-consumers.mjs --packed",
     "test:types": "pnpm build && node scripts/test-types.mjs && node scripts/check-public-api.mjs && node scripts/check-type-performance.mjs",
     "test:consumer": "pnpm test:consumer:packed",
-    "test:consumer:alpha": "node scripts/test-consumers.mjs --registry @w0rldhacker/kasane@next",
+    "test:consumer:alpha": "node scripts/test-consumers.mjs --registry @worldhacker/kasane@next",
     "test:consumer:packed": "pnpm pack:check && node scripts/test-consumers.mjs --packed",
     "test:packed": "pnpm test:consumer:packed",
     "docs:check": "node scripts/docs-check.mjs",

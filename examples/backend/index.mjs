@@ -1,4 +1,4 @@
-import { KasaneValidationError, kasane, value } from '@w0rldhacker/kasane';
+import { KasaneValidationError, kasane, value } from '@worldhacker/kasane';
 
 const backendSchema = {
   '~standard': {

@@ -1,5 +1,5 @@
 ---
-'@w0rldhacker/kasane': patch
+'@worldhacker/kasane': patch
 ---
 
 Changed: Audit the exact reproducible npm tarball, enforce its file and size

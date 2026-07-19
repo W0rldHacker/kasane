@@ -147,7 +147,7 @@ includesAll(
 );
 
 const manifest = JSON.parse(packageJson);
-assert.equal(manifest.name, '@w0rldhacker/kasane');
+assert.equal(manifest.name, '@worldhacker/kasane');
 assert.equal(manifest.publishConfig?.access, 'public');
 assert.equal(manifest.publishConfig?.provenance, true);
 console.log(
