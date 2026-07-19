@@ -78,6 +78,11 @@ async function fixture(name, type, expected, options = {}) {
       0,
       pre.stderr || 'Could not enter prerelease mode',
     );
+  } else if (options.preState) {
+    await writeFile(
+      path.join(directory, '.changeset', 'pre.json'),
+      `${JSON.stringify(options.preState, null, 2)}\n`,
+    );
   }
   const metadata = options.promotion
     ? '\n\nPromotion: 1.0\n\nPromotion-Approval: release-manager-reviewed\n\nMigration: docs/migrations.md#01-beta-to-10-release-candidate'
@@ -131,6 +136,16 @@ try {
     prereleaseTag: 'rc',
     promotion: true,
     startVersion: '0.1.0-beta.1',
+  });
+  await fixture('stable-from-approved-rc', 'major', '1.0.0', {
+    promotion: true,
+    startVersion: '1.0.0-rc.1',
+    preState: {
+      mode: 'exit',
+      tag: 'rc',
+      initialVersions: { '@worldhacker/kasane': '0.1.0-alpha.0' },
+      changesets: ['stable-from-approved-rc'],
+    },
   });
   await fixture('next-rc-after-fix', 'patch', '1.0.0-rc.2', {
     prerelease: true,
@@ -291,7 +306,7 @@ try {
     publishDryRun.stderr || publishDryRun.stdout,
   );
   console.log(
-    'Release dry-run passed: patch, minor, major, initial alpha, RC channel transition, new RC after fix, tag mismatch, prerelease, missing changeset, package publish rehearsal, and failed publish plan',
+    'Release dry-run passed: patch, minor, major, initial alpha, RC channel transition, stable exit from approved RC, new RC after fix, tag mismatch, prerelease, missing changeset, package publish rehearsal, and failed publish plan',
   );
 } finally {
   await rm(temporaryRoot, { recursive: true, force: true });
