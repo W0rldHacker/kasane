@@ -1,5 +1,5 @@
 ---
-'@w0rldhacker/kasane': patch
+'@worldhacker/kasane': patch
 ---
 
 Fixed: Reject revoked or otherwise uninspectable proxy containers with a

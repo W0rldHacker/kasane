@@ -15,7 +15,7 @@ body:
     id: version
     attributes:
       label: Installed version
-      description: Output of npm view @w0rldhacker/kasane@next version.
+      description: Output of npm view @worldhacker/kasane@next version.
       placeholder: 0.1.0-alpha.0
     validations:
       required: true

@@ -34,12 +34,12 @@ export function parseChangeset(source, filename = '<changeset>') {
   );
   assert(match, `${filename} must contain YAML frontmatter and a summary`);
   const declaration =
-    /^['"]?@w0rldhacker\/kasane['"]?:\s*(patch|minor|major)\s*$/mu.exec(
+    /^['"]?@worldhacker\/kasane['"]?:\s*(patch|minor|major)\s*$/mu.exec(
       match[1],
     );
   assert(
     declaration,
-    `${filename} must classify @w0rldhacker/kasane as patch, minor, or major`,
+    `${filename} must classify @worldhacker/kasane as patch, minor, or major`,
   );
 
   const body = match[2].trim();

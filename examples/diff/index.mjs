@@ -1,4 +1,4 @@
-import { kasane, value } from '@w0rldhacker/kasane';
+import { kasane, value } from '@worldhacker/kasane';
 
 const before = await kasane({
   layers: [value('project-file', { mode: 'stable' })],

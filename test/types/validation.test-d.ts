@@ -1,13 +1,13 @@
 import { expectError, expectType } from 'tsd';
 
-import { kasane, value } from '@w0rldhacker/kasane';
+import { kasane, value } from '@worldhacker/kasane';
 import type {
   ConfigIssue,
   DeepReadonly,
   FunctionValidator,
   KasaneValidationError,
-} from '@w0rldhacker/kasane';
-import type { StandardSchemaV1 } from '@w0rldhacker/kasane/standard-schema';
+} from '@worldhacker/kasane';
+import type { StandardSchemaV1 } from '@worldhacker/kasane/standard-schema';
 
 interface ValidatedConfig {
   enabled: boolean;

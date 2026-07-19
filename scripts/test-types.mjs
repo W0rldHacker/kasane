@@ -17,7 +17,7 @@ const typeTestFiles = (await readdir(typeTestDirectory))
   .filter((file) => selector === undefined || file === `${selector}.test-d.ts`);
 for (const file of typeTestFiles) {
   const source = await readFile(path.join(typeTestDirectory, file), 'utf8');
-  if (source.includes('../src') || source.includes('@w0rldhacker/kasane/src')) {
+  if (source.includes('../src') || source.includes('@worldhacker/kasane/src')) {
     throw new Error(`Type test imports workspace source: test/types/${file}`);
   }
 }

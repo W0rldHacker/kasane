@@ -42,7 +42,7 @@ for its unvisited children do not run.
 Declare exact canonical paths through `merge`:
 
 ```ts
-import { kasane, value } from '@w0rldhacker/kasane';
+import { kasane, value } from '@worldhacker/kasane';
 
 const snapshot = await kasane({
   layers: [

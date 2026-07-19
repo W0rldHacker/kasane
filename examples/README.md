@@ -1,6 +1,6 @@
 # Executable examples
 
-Every example imports only the public `@w0rldhacker/kasane` package entry and
+Every example imports only the public `@worldhacker/kasane` package entry and
 prints one deterministic JSON line. The committed expected-output file beside
 each script is its smoke-test contract.
 

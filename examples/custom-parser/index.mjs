@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url';
 
-import { file, kasane } from '@w0rldhacker/kasane';
+import { file, kasane } from '@worldhacker/kasane';
 
 function parseSettings(source) {
   const entries = Object.fromEntries(

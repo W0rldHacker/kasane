@@ -1,7 +1,7 @@
-import { kasane, secret, value } from '@w0rldhacker/kasane';
-import { isStandardSchemaV1 } from '@w0rldhacker/kasane/standard-schema';
-import type { DeepReadonly } from '@w0rldhacker/kasane';
-import type { StandardSchemaV1 } from '@w0rldhacker/kasane/standard-schema';
+import { kasane, secret, value } from '@worldhacker/kasane';
+import { isStandardSchemaV1 } from '@worldhacker/kasane/standard-schema';
+import type { DeepReadonly } from '@worldhacker/kasane';
+import type { StandardSchemaV1 } from '@worldhacker/kasane/standard-schema';
 
 interface SchemaOutput {
   readonly enabled: boolean;
@@ -67,8 +67,8 @@ assertEqual(explanation.found, true);
 assertEqual(explanation.found ? explanation.value : undefined, '[REDACTED]');
 assertEqual(JSON.stringify(explanation).includes(secretCanary), false);
 
-const dynamicRoot = await import('@w0rldhacker/kasane');
-const dynamicSubpath = await import('@w0rldhacker/kasane/standard-schema');
+const dynamicRoot = await import('@worldhacker/kasane');
+const dynamicSubpath = await import('@worldhacker/kasane/standard-schema');
 assertEqual(dynamicRoot.kasane, kasane);
 assertEqual(dynamicSubpath.isStandardSchemaV1, isStandardSchemaV1);
 
@@ -78,7 +78,7 @@ if (false) {
   // @ts-expect-error Nested arrays must remain deeply readonly.
   inferred.value.nested.tags.push('mutable');
   // @ts-expect-error Deep package paths are not exported.
-  await import('@w0rldhacker/kasane/dist/index.js');
+  await import('@worldhacker/kasane/dist/index.js');
   // @ts-expect-error Workspace source paths are not exported.
-  await import('@w0rldhacker/kasane/src/index.js');
+  await import('@worldhacker/kasane/src/index.js');
 }

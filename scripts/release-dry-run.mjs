@@ -34,7 +34,7 @@ async function fixture(name, type, expected, options = {}) {
     path.join(directory, 'package.json'),
     `${JSON.stringify(
       {
-        name: '@w0rldhacker/kasane',
+        name: '@worldhacker/kasane',
         version: options.startVersion ?? '1.0.0',
       },
       null,
@@ -80,7 +80,7 @@ async function fixture(name, type, expected, options = {}) {
       : '';
   await writeFile(
     path.join(directory, '.changeset', `${name}.md`),
-    `---\n'@w0rldhacker/kasane': ${type}\n---\n\nChanged: Exercise ${type} release classification.${metadata}\n`,
+    `---\n'@worldhacker/kasane': ${type}\n---\n\nChanged: Exercise ${type} release classification.${metadata}\n`,
   );
   const result = spawnSync(process.execPath, [versionScript], {
     cwd: directory,
@@ -125,7 +125,7 @@ try {
   await mkdir(path.join(missing, '.changeset'), { recursive: true });
   await writeFile(
     path.join(missing, 'package.json'),
-    '{"name":"@w0rldhacker/kasane","version":"1.0.0"}\n',
+    '{"name":"@worldhacker/kasane","version":"1.0.0"}\n',
   );
   await writeFile(path.join(missing, 'CHANGELOG.md'), '# Changelog\n');
   const missingResult = spawnSync(process.execPath, [versionScript], {
@@ -154,7 +154,7 @@ try {
   assert.throws(
     () =>
       parseChangeset(
-        "---\n'@w0rldhacker/kasane': minor\n---\n\nChanged: Break beta users.\nBreaking: true\n",
+        "---\n'@worldhacker/kasane': minor\n---\n\nChanged: Break beta users.\nBreaking: true\n",
         'unapproved-beta.md',
       ),
     /Breaking-Approval/u,
@@ -168,7 +168,7 @@ try {
   await writeFile(
     path.join(blockedPublishDirectory, 'package.json'),
     JSON.stringify({
-      name: '@w0rldhacker/kasane',
+      name: '@worldhacker/kasane',
       version: '1.0.1',
       publishConfig: { access: 'public', provenance: true },
     }),
@@ -179,7 +179,7 @@ try {
   );
   await writeFile(
     path.join(blockedPublishDirectory, '.changeset', 'pending.md'),
-    "---\n'@w0rldhacker/kasane': patch\n---\n\nFixed: Pending release.\n",
+    "---\n'@worldhacker/kasane': patch\n---\n\nFixed: Pending release.\n",
   );
   const blockedPublish = spawnSync(
     process.execPath,

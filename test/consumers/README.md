@@ -15,4 +15,4 @@ operating-system coverage belongs to `QA-006`.
 ATTW uses its `node16` profile because Kasane requires Node 22 and has an
 `exports` map. The expected `cjs-resolves-to-esm` diagnostic is ignored because
 Kasane is intentionally ESM-only; the JavaScript fixture separately proves that
-`require('@w0rldhacker/kasane')` is rejected rather than promised.
+`require('@worldhacker/kasane')` is rejected rather than promised.

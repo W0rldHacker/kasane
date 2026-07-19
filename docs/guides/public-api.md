@@ -1,8 +1,8 @@
 # Public API map
 
 This page is an orientation map for the stable `1.0` surface, not generated API
-reference. The supported import paths are only `@w0rldhacker/kasane` and
-`@w0rldhacker/kasane/standard-schema`; signatures in the installed declarations remain the
+reference. The supported import paths are only `@worldhacker/kasane` and
+`@worldhacker/kasane/standard-schema`; signatures in the installed declarations remain the
 source of truth.
 
 ## Which functions and values are runtime exports?
@@ -99,7 +99,7 @@ Provenance output is represented by `Origin`, `OriginLayer`, `Explanation`,
 accepted validators and inferred output. Failures can expose `ConfigIssue` and
 `ConfigIssuePrevious` records.
 
-The `@w0rldhacker/kasane/standard-schema` subpath exports runtime
+The `@worldhacker/kasane/standard-schema` subpath exports runtime
 `isStandardSchemaV1(value)` and the `StandardSchemaV1` interface plus namespace
 types. Schema libraries remain consumer dependencies.
 
@@ -131,16 +131,16 @@ The specific records are `SourceStartEvent`, `SourceEndEvent`,
 Use ESM public exports and TypeScript's type-only syntax:
 
 ```ts
-import { env, kasane } from '@w0rldhacker/kasane';
+import { env, kasane } from '@worldhacker/kasane';
 import type {
   ConfigSnapshot,
   EnvLayerOptions,
   KasaneOptions,
   LayerSource,
-} from '@w0rldhacker/kasane';
-import type { StandardSchemaV1 } from '@w0rldhacker/kasane/standard-schema';
+} from '@worldhacker/kasane';
+import type { StandardSchemaV1 } from '@worldhacker/kasane/standard-schema';
 ```
 
-Do not import `@w0rldhacker/kasane/dist/*`,
-`@w0rldhacker/kasane/internal/*`, or source-tree paths. Those
+Do not import `@worldhacker/kasane/dist/*`,
+`@worldhacker/kasane/internal/*`, or source-tree paths. Those
 are implementation details and are not present in the stable export map.

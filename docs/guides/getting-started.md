@@ -9,7 +9,7 @@ the shortest working program, start with the [README quick start](../../README.m
 defaults first and the most specific overrides last:
 
 ```ts
-import { env, file, kasane, value } from '@w0rldhacker/kasane';
+import { env, file, kasane, value } from '@worldhacker/kasane';
 
 const snapshot = await kasane({
   layers: [
@@ -41,7 +41,7 @@ other read failures still fail the layer. JSON is the default parser and files
 are read as bounded UTF-8 input.
 
 ```ts
-import { file, kasane } from '@w0rldhacker/kasane';
+import { file, kasane } from '@worldhacker/kasane';
 
 const snapshot = await kasane({
   cwd: process.cwd(),
@@ -58,7 +58,7 @@ Explicit mode is recommended for application configuration. Once `map` is
 present, only declared variable names are read:
 
 ```ts
-import { env } from '@w0rldhacker/kasane';
+import { env } from '@worldhacker/kasane';
 
 const environment = env('environment', {
   map: {
@@ -104,7 +104,7 @@ Provide `parse` to the built-in file layer. It receives the complete UTF-8 text
 after the byte limit has been enforced and may return a value or promise:
 
 ```ts
-import { file, kasane } from '@w0rldhacker/kasane';
+import { file, kasane } from '@worldhacker/kasane';
 
 const snapshot = await kasane({
   layers: [
@@ -132,7 +132,7 @@ A `LayerDescriptor` contains a name, optional `enabled` and `secret` flags, and
 a `LayerSource`. `load(context)` may be synchronous or asynchronous:
 
 ```ts
-import { kasane, type LayerDescriptor } from '@w0rldhacker/kasane';
+import { kasane, type LayerDescriptor } from '@worldhacker/kasane';
 
 const remote: LayerDescriptor = {
   name: 'application-provider',

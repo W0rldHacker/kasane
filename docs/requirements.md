@@ -1,4 +1,4 @@
-# Normative requirements for `@w0rldhacker/kasane@1.0.0`
+# Normative requirements for `@worldhacker/kasane@1.0.0`
 
 Baseline: **requirements** · [scope](./scope.md) ·
 [assumptions](./assumptions.md) · [traceability](./traceability.md)
@@ -6,7 +6,7 @@ Baseline: **requirements** · [scope](./scope.md) ·
 ## Status and use
 
 This document is the normative product baseline for
-`@w0rldhacker/kasane@1.0.0`. PR reviews
+`@worldhacker/kasane@1.0.0`. PR reviews
 and release gates MUST use the requirement IDs below. Descriptive examples in
 the source documents are informative unless a row in this document promotes
 them to a requirement.
@@ -107,7 +107,7 @@ are defined and audited in `traceability.md`.
 | --- | --- | --- | --- | --- | --- | --- |
 | `REQ-TYPE-001` | `explicit` | `P1` | Validator output type MUST be inferred; without validation an explicit generic MUST be documented as a compile-time assertion only. `snapshot.value` and public models MUST be deeply readonly; `get` and `require` return `unknown`; declarations MUST expose neither `any`, private classes, nor dependencies. | SPEC §16; BACKLOG `TYPE-001` | Type fixtures cover schema/function inference, generic assertion, mutation errors, API report, and compile-time budget. | `TYPE-001`, `QA-005` |
 | `REQ-TYPE-002` | `explicit` | `P1` | Stable core MUST use plain string paths and MUST NOT include recursive typed-path inference. | SPEC §16.3, §37; BACKLOG `TYPE-001`, `POST-004` | Type/API absence tests show `get(string): unknown` and no typed-path export. | `TYPE-001`, `QA-005`, `POST-004` |
-| `REQ-PKG-001` | `inferred implementation decision` | `P0` | `1.0` MUST be ESM-only, built without bundling, and support Node.js `>=22`; required CI covers latest Node 22 and 24 patches. Stable exports MUST be only `@w0rldhacker/kasane` and `@w0rldhacker/kasane/standard-schema`; deep/internal/watch exports are forbidden. | ARCH §B; BACKLOG `FOUND-001`, `PKG-001`, `QA-006`; decision `DEC-003` | Packed consumers import every export on Node 22/24 and fail deep/CJS/watch imports; publint and attw pass. | `PKG-001`, `QA-005`, `QA-006`, `REL-002` |
+| `REQ-PKG-001` | `inferred implementation decision` | `P0` | `1.0` MUST be ESM-only, built without bundling, and support Node.js `>=22`; required CI covers latest Node 22 and 24 patches. Stable exports MUST be only `@worldhacker/kasane` and `@worldhacker/kasane/standard-schema`; deep/internal/watch exports are forbidden. | ARCH §B; BACKLOG `FOUND-001`, `PKG-001`, `QA-006`; decision `DEC-003` | Packed consumers import every export on Node 22/24 and fail deep/CJS/watch imports; publint and attw pass. | `PKG-001`, `QA-005`, `QA-006`, `REL-002` |
 | `REQ-PKG-002` | `inferred implementation decision` | `P1` | Zero runtime dependencies is the `1.0` target. Any exception MUST have an accepted supply-chain ADR and updated lockfile, license, security, and tarball audits. | SPEC §9.2, §32; ARCH §B; BACKLOG `FOUND-001`; decision `DEC-004` | Manifest/lock/tarball audit reports zero runtime dependencies or the required accepted exception record. | `FOUND-002`, `PKG-001`, `REL-002`, `SEC-004` |
 | `REQ-QUAL-001` | `explicit` | `P1` | Unit, integration, property, security/fuzz, type-level, and packed-consumer suites MUST be green. Property runs MUST preserve failing seeds/minimized regressions. | SPEC §31–32; MATRIX §G–H; BACKLOG `QA-001`–`QA-005` | CI executes all named suites; required jobs and retained regression artifacts are auditable. | `QA-001`, `QA-002`, `QA-003`, `QA-004`, `QA-005`, `CI-001` |
 | `REQ-QUAL-002` | `explicit` | `P1` | RC coverage MUST be at least 95% lines/functions and 90% branches; redaction and dangerous-key branches MUST reach 100%. Required cross-platform CI MUST cover Linux, macOS, and Windows on the supported Node matrix. | MATRIX §G–H; BACKLOG `QA-001`, `QA-006` | Coverage and CI matrix gates reject lower values or a missing required platform/runtime job. | `QA-001`, `QA-006`, `CI-001` |

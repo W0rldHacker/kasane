@@ -1,4 +1,4 @@
-import { kasane, secret, value } from '@w0rldhacker/kasane';
+import { kasane, secret, value } from '@worldhacker/kasane';
 
 const secretCanary = 'EXAMPLE_SECRET_CANARY';
 const snapshot = await kasane({

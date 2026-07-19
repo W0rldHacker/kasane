@@ -1,5 +1,5 @@
 ---
-'@w0rldhacker/kasane': minor
+'@worldhacker/kasane': minor
 ---
 
 Added: Publish the first architecture-evaluation alpha with ESM and NodeNext
