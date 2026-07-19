@@ -51,13 +51,24 @@ if (promotionEntries.length > 0) {
     1,
     'Only one 1.0 promotion Changeset is allowed',
   );
-  assert.equal(
-    parseVersion(before.version).major,
-    0,
-    'Promotion: 1.0 is allowed only from a 0.x version',
+  const beforeVersion = parseVersion(before.version);
+  const entersReleaseCandidate =
+    beforeVersion.major === 0 &&
+    preState?.mode === 'pre' &&
+    preState.tag === 'rc';
+  const exitsReleaseCandidate =
+    beforeVersion.major === 1 &&
+    beforeVersion.minor === 0 &&
+    beforeVersion.patch === 0 &&
+    beforeVersion.prerelease?.startsWith('rc.') === true &&
+    preState?.mode === 'exit' &&
+    preState.tag === 'rc';
+  assert(
+    entersReleaseCandidate || exitsReleaseCandidate,
+    'Promotion: 1.0 requires entering the 1.0 RC line from 0.x or exiting an approved 1.0.0 RC',
   );
   assert.equal(
-    preState?.tag,
+    preState.tag,
     'rc',
     'Promotion: 1.0 requires Changesets RC prerelease mode',
   );
