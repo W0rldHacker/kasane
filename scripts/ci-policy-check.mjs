@@ -179,7 +179,7 @@ requireAll(
     'name: coverage-${{ github.run_id }}',
     'path: coverage/',
     'name: packed-tarball-${{ github.run_id }}',
-    'path: artifacts/*.tgz',
+    'path: kasane-*.tgz',
   ],
   'Required CI artifacts',
 );

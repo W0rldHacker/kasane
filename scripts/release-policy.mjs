@@ -25,7 +25,7 @@ export function npmTagForVersion(version) {
     ['alpha', 'beta', 'rc'].includes(channel),
     `Unsupported prerelease channel "${channel}"; use alpha, beta, or rc`,
   );
-  return channel;
+  return channel === 'alpha' ? 'next' : channel;
 }
 
 export function parseChangeset(source, filename = '<changeset>') {

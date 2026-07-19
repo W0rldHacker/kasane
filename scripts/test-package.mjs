@@ -1,160 +1,107 @@
-import { spawnSync } from 'node:child_process';
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import assert from 'node:assert/strict';
+import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import process from 'node:process';
 
-const workspace = process.cwd();
-const npm = process.platform === 'win32' ? process.execPath : 'npm';
-const npmArguments =
-  process.platform === 'win32'
-    ? [
-        path.join(
-          path.dirname(process.execPath),
-          'node_modules/npm/bin/npm-cli.js',
-        ),
-      ]
-    : [];
+import { auditTarball, loadAllowlist, pack } from './check-tarball.mjs';
 
-function run(command, arguments_, options = {}) {
-  const result = spawnSync(command, arguments_, {
-    cwd: options.cwd ?? workspace,
-    encoding: 'utf8',
-    env: process.env,
-  });
-  if (result.status !== 0) {
-    throw new Error(
-      [
-        `Command failed: ${command} ${arguments_.join(' ')}`,
-        result.stdout,
-        result.stderr,
-        result.error?.message,
-      ]
-        .filter(Boolean)
-        .join('\n'),
-    );
-  }
-  return result.stdout.trim();
-}
-
-const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), 'kasane-package-'));
-try {
-  const packedOutput = run(npm, [
-    ...npmArguments,
-    'pack',
-    '--ignore-scripts',
-    '--json',
-    '--pack-destination',
-    temporaryRoot,
-  ]);
-  const packed = JSON.parse(packedOutput)[0];
-  if (packed === undefined || typeof packed.filename !== 'string') {
-    throw new Error('npm pack did not produce package metadata');
-  }
-
-  const paths = new Set(packed.files.map((file) => file.path));
-  const required = [
-    'LICENSE',
-    'README.md',
-    'SECURITY.md',
-    'dist/index.d.ts',
-    'dist/index.js',
-    'dist/standard-schema.d.ts',
-    'dist/standard-schema.js',
-    'package.json',
-  ];
-  for (const requiredPath of required) {
-    if (!paths.has(requiredPath)) {
-      throw new Error(`Packed package is missing ${requiredPath}`);
-    }
-  }
-  for (const packedPath of paths) {
-    if (
-      packedPath !== 'package.json' &&
-      packedPath !== 'README.md' &&
-      packedPath !== 'LICENSE' &&
-      packedPath !== 'SECURITY.md' &&
-      !packedPath.startsWith('dist/')
-    ) {
-      throw new Error(`Unexpected packed file: ${packedPath}`);
-    }
-  }
-
-  const consumer = path.join(temporaryRoot, 'consumer');
-  await mkdir(consumer);
-  await writeFile(
-    path.join(consumer, 'package.json'),
-    `${JSON.stringify({ name: 'kasane-package-consumer', private: true, type: 'module' }, null, 2)}\n`,
-  );
-  const tarball = path.join(temporaryRoot, packed.filename);
-  run(
-    npm,
-    [
-      ...npmArguments,
-      'install',
-      '--ignore-scripts',
-      '--no-audit',
-      '--no-fund',
-      '--package-lock=false',
-      tarball,
-    ],
-    { cwd: consumer },
-  );
-
-  const consumerSource = `
-import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
-import { kasane } from '@w0rldhacker/kasane';
-import { isStandardSchemaV1 } from '@w0rldhacker/kasane/standard-schema';
-
-assert.equal(typeof kasane, 'function');
-assert.equal(typeof isStandardSchemaV1, 'function');
-assert.equal(typeof (await import('@w0rldhacker/kasane')).kasane, 'function');
-
-for (const specifier of [
-  '@w0rldhacker/kasane/dist/index.js',
-  '@w0rldhacker/kasane/internal',
-  '@w0rldhacker/kasane/snapshot/public',
-  '@w0rldhacker/kasane/src/index.js',
-  '@w0rldhacker/kasane/watch',
-]) {
-  await assert.rejects(
-    import(specifier),
-    (error) => error?.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED',
-  );
-}
-
-const require = createRequire(import.meta.url);
-assert.throws(
-  () => require('@w0rldhacker/kasane'),
-  (error) => error?.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED',
+const temporaryRoot = await mkdtemp(
+  path.join(os.tmpdir(), 'kasane-package-tests-'),
 );
-`;
-  const consumerEntry = path.join(consumer, 'index.mjs');
-  await writeFile(consumerEntry, consumerSource);
-  run(process.execPath, [consumerEntry], { cwd: consumer });
+const allowlist = await loadAllowlist();
 
-  const installedManifest = JSON.parse(
-    await readFile(
-      path.join(
-        consumer,
-        'node_modules',
-        '@w0rldhacker',
-        'kasane',
-        'package.json',
-      ),
-      'utf8',
-    ),
-  );
-  if (
-    installedManifest.dependencies !== undefined &&
-    Object.keys(installedManifest.dependencies).length !== 0
-  ) {
-    throw new Error('Packed package has runtime dependencies');
+function manifest(overrides = {}) {
+  return {
+    name: '@w0rldhacker/kasane',
+    version: '1.0.0-test.0',
+    type: 'module',
+    sideEffects: false,
+    engines: { node: '>=22' },
+    types: './dist/index.d.ts',
+    exports: allowlist.exports,
+    files: ['**/*'],
+    publishConfig: { access: 'public', provenance: true },
+    repository: {
+      type: 'git',
+      url: 'git+https://github.com/W0rldHacker/kasane.git',
+    },
+    devDependencies: { 'fixture-only-dev-dependency': '1.0.0' },
+    ...overrides,
+  };
+}
+
+async function fixture(name, options = {}) {
+  const directory = path.join(temporaryRoot, name);
+  await mkdir(path.join(directory, 'dist'), { recursive: true });
+  const files = {
+    LICENSE: 'MIT\n',
+    'README.md': '# Fixture\n',
+    'SECURITY.md': '# Security\n',
+    'dist/index.d.ts': 'export declare const kasane: unknown;\n',
+    'dist/index.js': 'export const kasane = true;\n',
+    'dist/standard-schema.d.ts':
+      'export declare const isStandardSchemaV1: unknown;\n',
+    'dist/standard-schema.js': 'export const isStandardSchemaV1 = true;\n',
+    ...options.files,
+  };
+  for (const [relative, source] of Object.entries(files)) {
+    if (options.omit?.includes(relative)) continue;
+    const destination = path.join(directory, relative);
+    await mkdir(path.dirname(destination), { recursive: true });
+    await writeFile(destination, source);
   }
+  await writeFile(
+    path.join(directory, 'package.json'),
+    `${JSON.stringify(manifest(options.manifest), null, 2)}\n`,
+  );
+  const tarball = path.join(temporaryRoot, `${name}.tgz`);
+  await pack(directory, tarball);
+  return tarball;
+}
 
+async function rejects(name, expected, options) {
+  const tarball = await fixture(name, options);
+  await assert.rejects(() => auditTarball(tarball, allowlist), expected);
+}
+
+try {
+  await auditTarball(await fixture('valid'), allowlist);
+  await rejects(
+    'forbidden-file',
+    /Unexpected packed file: coverage\/report\.json/u,
+    {
+      files: { 'coverage/report.json': '{"private":true}\n' },
+    },
+  );
+  await rejects('missing-readme', /Missing required file: README\.md/u, {
+    omit: ['README.md'],
+  });
+  await rejects('broken-type-export', /Packed exports differ/u, {
+    manifest: {
+      exports: {
+        ...allowlist.exports,
+        '.': {
+          types: './dist/missing.d.ts',
+          import: './dist/index.js',
+        },
+      },
+    },
+  });
+  await rejects(
+    'source-map-secret',
+    /npm access token in dist\/index\.js\.map/u,
+    {
+      files: {
+        'dist/index.js.map':
+          '{"version":3,"sourcesContent":["npm_abcdefghijklmnopqrstuvwxyzABCDEFGHIJ"]}\n',
+      },
+    },
+  );
+  await rejects('install-script', /forbidden lifecycle script: install/u, {
+    manifest: { scripts: { install: 'node install.js' } },
+  });
   console.log(
-    `Packed ESM consumer passed on Node ${process.versions.node} (${String(paths.size)} files)`,
+    'Tarball negative tests passed: forbidden file, missing README, broken types, source-map secret, and install script',
   );
 } finally {
   await rm(temporaryRoot, { force: true, recursive: true });

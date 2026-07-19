@@ -76,13 +76,14 @@ arbitrary tag:
 
 | SemVer channel | npm tag  | Intended audience                    |
 | -------------- | -------- | ------------------------------------ |
-| `-alpha.N`     | `alpha`  | early development and API discovery  |
+| `-alpha.N`     | `next`   | early development and API discovery  |
 | `-beta.N`      | `beta`   | beta compatibility and integration   |
 | `-rc.N`        | `rc`     | release-candidate verification       |
 | no prerelease  | `latest` | stable release after explicit review |
 
 Other prerelease channel names fail before `npm publish`. Prerelease packages
-never use `latest`.
+never use `latest`. The shared `next` tag deliberately identifies the current
+alpha evaluation build; beta and RC keep their channel-specific tags.
 
 ## What does release automation trust?
 
@@ -114,6 +115,22 @@ The repository satisfies the public-source prerequisite; publication remains
 blocked until the maintainer confirms `@w0rldhacker` organization access and
 configures the npm trusted publisher for the newly selected scoped package.
 This repository never stores a long-lived npm automation token.
+
+## How is the release tarball audited?
+
+`pnpm pack:check` builds with `pnpm pack`, retains the audited
+`kasane-<version>.tgz`, and rejects any file outside the checked-in allowlist.
+The exact archive is scanned for credential patterns, install lifecycle scripts,
+runtime dependencies, broken export targets, and an unpacked size at or above
+500 KiB. Source maps are intentionally excluded from the release artifact; a
+different size or source-map policy requires an ADR.
+
+The same archive must pass publint, attw, a provenance-enabled npm publish
+dry-run, and a byte-for-byte repeated-pack check. `pnpm test:consumer:packed`
+installs that archive with dev dependencies omitted and exercises the JavaScript
+ESM and TypeScript NodeNext consumers. Required CI repeats the consumer gate on
+the latest Node 22 and 24 patches and uploads the already-audited archive rather
+than packing a second artifact.
 
 Repository administrators complete and periodically rehearse this checklist:
 

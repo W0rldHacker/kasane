@@ -28,5 +28,36 @@ jobs:
           package-manager-cache: false
       - run: pnpm install --frozen-lockfile
       - run: pnpm verify
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: release-tarball-${{ github.run_id }}
+          path: kasane-*.tgz
+          if-no-files-found: error
+          retention-days: 90
       - run: pnpm release:dry-run
       - run: pnpm release:publish
+      - run: pnpm release:published-check
+
+  alpha-smoke:
+    name: Registry alpha smoke / Node.js ${{ matrix.node-version }}
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version:
+          - 22.x
+          - 24.x
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+        with:
+          run_install: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:consumer:alpha

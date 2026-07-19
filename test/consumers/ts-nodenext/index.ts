@@ -1,4 +1,4 @@
-import { kasane, value } from '@w0rldhacker/kasane';
+import { kasane, secret, value } from '@w0rldhacker/kasane';
 import { isStandardSchemaV1 } from '@w0rldhacker/kasane/standard-schema';
 import type { DeepReadonly } from '@w0rldhacker/kasane';
 import type { StandardSchemaV1 } from '@w0rldhacker/kasane/standard-schema';
@@ -56,6 +56,16 @@ const asserted = await kasane<AssertedOutput>({
   layers: [value('asserted', { server: { port: 3000 } })],
 });
 assertEqual(asserted.value.server.port, 3000);
+
+const secretCanary = 'PACKED_TYPESCRIPT_SECRET_CANARY';
+const secretSnapshot = await kasane({
+  layers: [secret('consumer-secret', { token: secretCanary })],
+  provenance: 'full',
+});
+const explanation = secretSnapshot.explain('token');
+assertEqual(explanation.found, true);
+assertEqual(explanation.found ? explanation.value : undefined, '[REDACTED]');
+assertEqual(JSON.stringify(explanation).includes(secretCanary), false);
 
 const dynamicRoot = await import('@w0rldhacker/kasane');
 const dynamicSubpath = await import('@w0rldhacker/kasane/standard-schema');
