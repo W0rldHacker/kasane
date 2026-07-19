@@ -68,12 +68,12 @@ x64 Node.js 24 additionally enforces hard duration and retained-heap budgets.
 - Security/fuzz canaries, dangerous-key rejection, redaction, tarball secret
   scan, and incident tabletop checks are automated.
 
-Maintainer redundancy is the only open operational follow-up: the repository
-currently has one admin maintainer. Owner: `W0rldHacker`; severity: Medium;
-target: before RC; outcome required: grant a trusted backup maintainer the
-minimum access needed for private advisory and coordinated release continuity.
-This does not disable the active private reporting channel or weaken the beta
-artifact gates.
+The repository intentionally remains a solo-maintainer project. At RC the
+release manager accepted the lack of maintainer redundancy as a Medium
+operational availability risk: security triage and releases pause if the owner
+is unavailable rather than bypassing private reporting, protected CI, or OIDC
+controls. This does not weaken the package's security boundaries or artifact
+gates.
 
 ## Documentation review
 

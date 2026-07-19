@@ -1,7 +1,6 @@
 # RC soak-equivalent test record
 
-Status: planned equivalent-volume evaluation; final release-manager acceptance
-is pending the exact RC runs.
+Status: equivalent-volume evaluation accepted by the release manager.
 
 REL-005 permits either seven elapsed days or a documented equivalent amount of
 real testing. This RC uses the equivalent-volume path. Acceptance requires all
@@ -26,3 +25,27 @@ and three application roles. Any failure invalidates the equivalent and any
 code change requires a new RC and a complete rerun. The final record adds run
 URLs, exact runtime patches, seeds/workload counts, digest, and the protected
 environment approval that constitutes release-manager acceptance.
+
+## Exact candidate evidence
+
+- Immutable commit: `7357246220e7c4b582b54d0d2a79aa4fa43aa2a8`.
+- Full matrix run:
+  [`29685981147`](https://github.com/W0rldHacker/kasane/actions/runs/29685981147),
+  all six Ubuntu/macOS/Windows and Node.js 22/24 combinations passed.
+- Extended run:
+  [`29685982092`](https://github.com/W0rldHacker/kasane/actions/runs/29685982092),
+  nightly property profile, 100,000-run fuzz profile, and hosted performance
+  budget passed.
+- Registry run:
+  [`29692739675`](https://github.com/W0rldHacker/kasane/actions/runs/29692739675),
+  all five clean consumer profiles passed without dev dependencies on Node.js
+  22.23.1 and 24.18.0.
+- Backend and test-infrastructure projects passed
+  `0.1.0-beta.1 → 1.0.0-rc.1 → 0.1.0-beta.1` on both Node lines.
+- Canonical workflow/registry SHA-256:
+  `9097a10e7d321ccec837bb015d75293e04a48a97fc3da40240d6d4746513c067`.
+
+Release manager `W0rldHacker` accepted this evidence as the documented
+seven-day-soak equivalent through protected-environment approval on 2026-07-19.
+No code change is permitted without producing a new RC and repeating the
+record.
