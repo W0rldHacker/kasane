@@ -1,6 +1,6 @@
 {
   "name": "@worldhacker/kasane",
-  "version": "1.0.0-rc.1",
+  "version": "1.0.0",
   "description": "Explainable layered configuration for Node.js and TypeScript.",
   "keywords": [
     "configuration",
