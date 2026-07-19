@@ -44,6 +44,30 @@ async function registryMetadata() {
   throw lastError;
 }
 
+async function registryPack(temporaryRoot) {
+  let lastError;
+  for (let attempt = 1; attempt <= 6; attempt += 1) {
+    try {
+      return JSON.parse(
+        run('npm', [
+          'pack',
+          packageSpec,
+          '--ignore-scripts',
+          '--json',
+          '--pack-destination',
+          temporaryRoot,
+        ]).stdout,
+      )[0];
+    } catch (error) {
+      lastError = error;
+      if (attempt < 6) {
+        await new Promise((resolve) => setTimeout(resolve, 5_000));
+      }
+    }
+  }
+  throw lastError;
+}
+
 const metadata = await registryMetadata();
 assert.equal(
   metadata.version,
@@ -61,16 +85,7 @@ if (parseVersion(manifest.version).prerelease !== null) {
 
 const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), 'kasane-registry-'));
 try {
-  const packed = JSON.parse(
-    run('npm', [
-      'pack',
-      packageSpec,
-      '--ignore-scripts',
-      '--json',
-      '--pack-destination',
-      temporaryRoot,
-    ]).stdout,
-  )[0];
+  const packed = await registryPack(temporaryRoot);
   assert(packed?.filename, 'npm pack did not return the registry tarball');
   const [local, registry] = await Promise.all([
     readFile(localTarball),

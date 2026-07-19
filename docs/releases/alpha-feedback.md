@@ -13,8 +13,8 @@ reports belong in the private channel documented by [SECURITY.md](../../SECURITY
 | Medium | Localized friction with a safe workaround | Document and prioritize before feature freeze |
 | Low | Ergonomics or documentation refinement | Track without blocking alpha |
 
-Critical open findings: **0**. This count reflects pre-publish sample evaluation
-only and must be updated when registry consumers or public reports arrive.
+Critical open findings: **0**. This count includes the initial packed and
+registry consumer evaluation and must be updated when public reports arrive.
 
 ## Pre-publish sample evaluation
 
@@ -29,7 +29,7 @@ only and must be updated when registry consumers or public reports arrive.
 
 | Version | Commit | Required CI | Workflow SHA-256 | Registry SHA-256 | Node 22 | Node 24 | Critical findings |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `0.1.0-alpha.0` | Pending | Pending | Pending | Pending | Pending | Pending | 0 pre-publish |
+| `0.1.0-alpha.0` | `f5bf1f4d` | CI `29682525315` | `174a8de2960a…` | `174a8de2960a…` | 22.23.1 passed | 24.18.0 passed | 0 |
 
 ## Feedback queue
 
