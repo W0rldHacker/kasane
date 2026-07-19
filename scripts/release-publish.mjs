@@ -4,7 +4,7 @@ import path from 'node:path';
 import process from 'node:process';
 
 import { auditTarball } from './check-tarball.mjs';
-import { npmTagForVersion } from './release-policy.mjs';
+import { npmTagForVersion, pendingChangesetFiles } from './release-policy.mjs';
 
 const dryRun = process.argv.includes('--dry-run');
 const packageJson = JSON.parse(
@@ -20,15 +20,22 @@ if (packageJson.publishConfig?.access !== 'public') {
 }
 const tag = npmTagForVersion(packageJson.version);
 const tarball = path.join(process.cwd(), `kasane-${packageJson.version}.tgz`);
-const pendingChangesets = await readdir(
-  path.join(process.cwd(), '.changeset'),
-).catch((error) => {
+const changesetDirectory = path.join(process.cwd(), '.changeset');
+const changesetFiles = await readdir(changesetDirectory).catch((error) => {
   if (error?.code === 'ENOENT') return [];
   throw error;
 });
-if (
-  pendingChangesets.some((file) => file.endsWith('.md') && file !== 'README.md')
-) {
+const preState = await readFile(
+  path.join(changesetDirectory, 'pre.json'),
+  'utf8',
+)
+  .then((source) => JSON.parse(source))
+  .catch((error) => {
+    if (error?.code === 'ENOENT') return null;
+    throw error;
+  });
+const pendingChangesets = pendingChangesetFiles(changesetFiles, preState);
+if (pendingChangesets.length > 0) {
   throw new Error('Pending Changesets must be consumed by the release PR');
 }
 const changelog = await readFile(

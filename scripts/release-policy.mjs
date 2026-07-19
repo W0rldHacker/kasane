@@ -28,6 +28,18 @@ export function npmTagForVersion(version) {
   return channel === 'alpha' ? 'next' : channel;
 }
 
+export function pendingChangesetFiles(files, preState = null) {
+  const consumed = new Set(
+    preState?.mode === 'pre' && Array.isArray(preState.changesets)
+      ? preState.changesets.map((id) => `${id}.md`)
+      : [],
+  );
+  return files.filter(
+    (file) =>
+      file.endsWith('.md') && file !== 'README.md' && !consumed.has(file),
+  );
+}
+
 export function parseChangeset(source, filename = '<changeset>') {
   const match = /^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]+)$/u.exec(
     source.trim(),

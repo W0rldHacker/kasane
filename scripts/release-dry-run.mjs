@@ -6,7 +6,11 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
-import { npmTagForVersion, parseChangeset } from './release-policy.mjs';
+import {
+  npmTagForVersion,
+  parseChangeset,
+  pendingChangesetFiles,
+} from './release-policy.mjs';
 import { npmPublishDryRunArgs, pack } from './check-tarball.mjs';
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -159,6 +163,19 @@ try {
       ),
     /Breaking-Approval/u,
     'A breaking prerelease change without explicit approval must fail',
+  );
+  assert.deepEqual(
+    pendingChangesetFiles(['README.md', 'consumed.md', 'pending.md'], {
+      mode: 'pre',
+      changesets: ['consumed'],
+    }),
+    ['pending.md'],
+    'Prerelease changesets recorded in pre.json must be treated as consumed',
+  );
+  assert.deepEqual(
+    pendingChangesetFiles(['README.md', 'pending.md']),
+    ['pending.md'],
+    'Ordinary pending changesets must continue to block publication',
   );
 
   const blockedPublishDirectory = path.join(temporaryRoot, 'blocked-publish');
