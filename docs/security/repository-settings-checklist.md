@@ -6,24 +6,23 @@ beta and after ownership, hosting, or release-workflow changes.
 
 ## Private reporting
 
-- [ ] The repository is public before beta. GitHub Private Vulnerability
+- [x] The repository is public before beta. GitHub Private Vulnerability
   Reporting is available to external researchers only for public repositories.
-- [ ] In **Settings → Code security → Private vulnerability reporting**, the
+- [x] In **Settings → Code security → Private vulnerability reporting**, the
   setting is enabled.
 - [ ] From an account without repository access, **Security → Advisories** shows
   **Report a vulnerability** and opens the private advisory form.
-- [ ] `SECURITY.md` is detected by GitHub and its report link opens
+- [x] `SECURITY.md` is detected by GitHub and its report link opens
   `https://github.com/W0rldHacker/kasane/security/advisories/new`.
 - [ ] Maintainers who own security triage receive new-advisory notifications,
   and at least two maintainers can access the private advisory workspace.
-- [ ] No public issue form or pull request template asks for a reproduction,
+- [x] No public issue form or pull request template asks for a reproduction,
   exploit details, credentials, or other vulnerability evidence. Public
   templates direct security reports to the private advisory form only.
 
-Current verification note: the repository was private when this checklist was
-added, so GitHub Private Vulnerability Reporting could not yet be enabled or
-externally exercised. Do not mark the first four items complete until the
-pre-beta visibility change and the external-account test have both succeeded.
+Current verification note: repository visibility and private reporting were
+verified through the GitHub repository API on 2026-07-19. The second-account
+form exercise and backup-maintainer access remain explicit pre-RC follow-ups.
 
 ## Advisory and patch controls
 
@@ -48,11 +47,11 @@ Record evidence without copying vulnerability details or secrets:
 
 | Field | Value |
 | --- | --- |
-| Date and verifier | |
-| Repository visibility | |
-| Private reporting enabled | |
-| External-account report-form check | |
-| Notification recipients checked | |
-| Backup incident owner checked | |
-| Branch/release protection evidence | Link to restricted maintainer record |
-| Follow-up actions and owners | |
+| Date and verifier | 2026-07-19, `W0rldHacker` release review |
+| Repository visibility | Public; GitHub API verified |
+| Private reporting enabled | Yes; GitHub API returned `enabled: true` |
+| External-account report-form check | Pending a second account before RC |
+| Notification recipients checked | Primary maintainer only; backup pending |
+| Backup incident owner checked | Pending before RC |
+| Branch/release protection evidence | Required CI and protected `npm` environment exercised by alpha release |
+| Follow-up actions and owners | `W0rldHacker`: add and rehearse a backup advisory/release maintainer before RC |

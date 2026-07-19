@@ -38,8 +38,8 @@ jobs:
       - run: pnpm release:publish
       - run: pnpm release:published-check
 
-  alpha-smoke:
-    name: Registry alpha smoke / Node.js ${{ matrix.node-version }}
+  prerelease-smoke:
+    name: Registry prerelease smoke / Node.js ${{ matrix.node-version }}
     needs: publish
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -60,4 +60,5 @@ jobs:
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
-      - run: pnpm test:consumer:alpha
+      - run: pnpm test:consumer:registry
+      - run: pnpm test:consumer:upgrade:registry

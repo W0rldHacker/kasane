@@ -1,8 +1,8 @@
 {
   "mode": "pre",
-  "tag": "alpha",
+  "tag": "beta",
   "initialVersions": {
-    "@worldhacker/kasane": "0.0.0"
+    "@worldhacker/kasane": "0.1.0-alpha.0"
   },
   "changesets": [
     "alpha-evaluation",

@@ -1,0 +1,5 @@
+{
+  "name": "kasane-tooling-consumer",
+  "private": true,
+  "type": "module"
+}

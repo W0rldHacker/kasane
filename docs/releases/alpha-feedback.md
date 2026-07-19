@@ -35,4 +35,4 @@ registry consumer evaluation and must be updated when public reports arrive.
 
 | Issue | Area | Severity | Decision | Owner | Target |
 | --- | --- | --- | --- | --- | --- |
-| None yet | — | — | Open for alpha evaluation | Maintainer | Before beta |
+| No alpha product defect reported | All | None | Promote the reviewed API baseline to beta freeze | `W0rldHacker` | Closed at beta gate |

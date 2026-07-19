@@ -5,6 +5,8 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import { npmTagForVersion } from './release-policy.mjs';
+
 const workspace = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   '..',
@@ -84,9 +86,7 @@ async function installPackage(consumer, packageReference, expectedVersion) {
   );
   if (
     manifest.name !== '@worldhacker/kasane' ||
-    (expectedVersion === undefined
-      ? !/^0\.1\.0-alpha\.\d+$/u.test(manifest.version)
-      : manifest.version !== expectedVersion)
+    manifest.version !== expectedVersion
   ) {
     throw new Error('Consumer did not install the expected kasane release');
   }
@@ -116,7 +116,8 @@ try {
     throw new Error('--packed and --registry are mutually exclusive');
   }
   const registrySpec = registry
-    ? (process.argv[registryArgument + 1] ?? '@worldhacker/kasane@next')
+    ? (process.argv[registryArgument + 1] ??
+      `${String(workspaceManifest.name)}@${npmTagForVersion(String(workspaceManifest.version))}`)
     : undefined;
   const tarball = packed
     ? path.join(workspace, `kasane-${String(workspaceManifest.version)}.tgz`)
@@ -140,17 +141,23 @@ try {
     run(pnpm, [...pnpmArguments, 'pack', '--out', tarball], workspace);
   }
 
-  for (const name of ['js-esm', 'ts-nodenext']) {
+  const runtimeConsumers = [
+    'backend-service',
+    'js-esm',
+    'test-infrastructure',
+    'tooling',
+  ];
+  for (const name of [...runtimeConsumers, 'ts-nodenext']) {
     await assertFixtureDoesNotEscape(name);
     const consumer = path.join(temporaryRoot, name);
     await cp(path.join(fixtures, name), consumer, { recursive: true });
     await installPackage(
       consumer,
       registrySpec ?? tarball,
-      registry ? undefined : workspaceManifest.version,
+      workspaceManifest.version,
     );
 
-    if (name === 'js-esm') {
+    if (runtimeConsumers.includes(name)) {
       run(process.execPath, ['index.mjs'], consumer);
       continue;
     }
@@ -186,7 +193,7 @@ try {
     ),
   );
   console.log(
-    `${registry ? 'Registry alpha' : 'Packed'} JS ESM and TS NodeNext consumers passed on Node ${process.versions.node} ` +
+    `${registry ? 'Registry prerelease' : 'Packed'} backend, tooling, test-infrastructure, JS ESM, and TS NodeNext consumers passed on Node ${process.versions.node} ` +
       `with TypeScript ${String(typescriptManifest.version)} and no dev dependencies`,
   );
 } finally {

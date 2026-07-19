@@ -117,8 +117,9 @@ includesAll(
     'pnpm release:publish',
     'name: release-tarball-${{ github.run_id }}',
     'pnpm release:published-check',
-    'Registry alpha smoke / Node.js ${{ matrix.node-version }}',
-    'pnpm test:consumer:alpha',
+    'Registry prerelease smoke / Node.js ${{ matrix.node-version }}',
+    'pnpm test:consumer:registry',
+    'pnpm test:consumer:upgrade:registry',
   ],
   'Publish workflow',
 );

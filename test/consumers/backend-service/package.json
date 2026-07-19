@@ -1,0 +1,5 @@
+{
+  "name": "kasane-backend-service-consumer",
+  "private": true,
+  "type": "module"
+}
