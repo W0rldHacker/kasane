@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { cp, mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
+import { access, cp, mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
@@ -55,17 +55,17 @@ async function assertFixtureDoesNotEscape(name) {
   }
 }
 
-async function installTarball(consumer, tarball, expectedVersion) {
+async function installPackage(consumer, packageReference, expectedVersion) {
   run(
     npm,
     [
       ...npmArguments,
       'install',
-      '--ignore-scripts',
+      '--omit=dev',
       '--no-audit',
       '--no-fund',
       '--package-lock=false',
-      tarball,
+      packageReference,
     ],
     consumer,
   );
@@ -84,9 +84,21 @@ async function installTarball(consumer, tarball, expectedVersion) {
   );
   if (
     manifest.name !== '@w0rldhacker/kasane' ||
-    manifest.version !== expectedVersion
+    (expectedVersion === undefined
+      ? !/^0\.1\.0-alpha\.\d+$/u.test(manifest.version)
+      : manifest.version !== expectedVersion)
   ) {
-    throw new Error('Consumer did not install the packed kasane artifact');
+    throw new Error('Consumer did not install the expected kasane release');
+  }
+
+  const installedEntries = await readdir(path.join(consumer, 'node_modules'));
+  const unexpected = installedEntries.filter(
+    (entry) => entry !== '.package-lock.json' && entry !== '@w0rldhacker',
+  );
+  if (unexpected.length > 0) {
+    throw new Error(
+      `Consumer installed unexpected dependencies: ${unexpected.join(', ')}`,
+    );
   }
 }
 
@@ -94,33 +106,49 @@ const temporaryRoot = await mkdtemp(
   path.join(os.tmpdir(), 'kasane-consumers-'),
 );
 try {
-  const packedOutput = run(
-    npm,
-    [
-      ...npmArguments,
-      'pack',
-      '--ignore-scripts',
-      '--json',
-      '--pack-destination',
-      temporaryRoot,
-    ],
-    workspace,
+  const workspaceManifest = JSON.parse(
+    await readFile(path.join(workspace, 'package.json'), 'utf8'),
   );
-  const packed = JSON.parse(packedOutput)[0];
-  if (
-    packed === undefined ||
-    typeof packed.filename !== 'string' ||
-    typeof packed.version !== 'string'
-  ) {
-    throw new Error('npm pack did not produce package metadata');
+  const packed = process.argv.includes('--packed');
+  const registryArgument = process.argv.indexOf('--registry');
+  const registry = registryArgument !== -1;
+  if (packed && registry) {
+    throw new Error('--packed and --registry are mutually exclusive');
   }
-  const tarball = path.join(temporaryRoot, packed.filename);
+  const registrySpec = registry
+    ? (process.argv[registryArgument + 1] ?? '@w0rldhacker/kasane@next')
+    : undefined;
+  const tarball = packed
+    ? path.join(workspace, `kasane-${String(workspaceManifest.version)}.tgz`)
+    : path.join(
+        temporaryRoot,
+        `kasane-${String(workspaceManifest.version)}.tgz`,
+      );
+  if (packed) {
+    await access(tarball);
+  } else {
+    const pnpm = process.platform === 'win32' ? process.execPath : 'pnpm';
+    const pnpmArguments =
+      process.platform === 'win32'
+        ? [
+            path.join(
+              path.dirname(process.execPath),
+              'node_modules/corepack/dist/pnpm.js',
+            ),
+          ]
+        : [];
+    run(pnpm, [...pnpmArguments, 'pack', '--out', tarball], workspace);
+  }
 
   for (const name of ['js-esm', 'ts-nodenext']) {
     await assertFixtureDoesNotEscape(name);
     const consumer = path.join(temporaryRoot, name);
     await cp(path.join(fixtures, name), consumer, { recursive: true });
-    await installTarball(consumer, tarball, packed.version);
+    await installPackage(
+      consumer,
+      registrySpec ?? tarball,
+      registry ? undefined : workspaceManifest.version,
+    );
 
     if (name === 'js-esm') {
       run(process.execPath, ['index.mjs'], consumer);
@@ -158,7 +186,8 @@ try {
     ),
   );
   console.log(
-    `Packed JS ESM and TS NodeNext consumers passed with TypeScript ${String(typescriptManifest.version)}`,
+    `${registry ? 'Registry alpha' : 'Packed'} JS ESM and TS NodeNext consumers passed on Node ${process.versions.node} ` +
+      `with TypeScript ${String(typescriptManifest.version)} and no dev dependencies`,
   );
 } finally {
   await rm(temporaryRoot, { force: true, recursive: true });

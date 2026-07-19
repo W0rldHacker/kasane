@@ -1,8 +1,9 @@
 import { spawnSync } from 'node:child_process';
-import { readdir, readFile } from 'node:fs/promises';
+import { access, readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
+import { auditTarball } from './check-tarball.mjs';
 import { npmTagForVersion } from './release-policy.mjs';
 
 const dryRun = process.argv.includes('--dry-run');
@@ -18,6 +19,7 @@ if (packageJson.publishConfig?.access !== 'public') {
   throw new Error('publishConfig.access must be public');
 }
 const tag = npmTagForVersion(packageJson.version);
+const tarball = path.join(process.cwd(), `kasane-${packageJson.version}.tgz`);
 const pendingChangesets = await readdir(
   path.join(process.cwd(), '.changeset'),
 ).catch((error) => {
@@ -39,6 +41,15 @@ if (!changelog.includes(`## ${packageJson.version} -`)) {
 if (process.env.NPM_TOKEN || process.env.NODE_AUTH_TOKEN) {
   throw new Error('Long-lived npm tokens are not accepted by this workflow');
 }
+await access(tarball).catch(() => {
+  throw new Error(
+    `Audited release tarball is missing: ${path.basename(tarball)}; run pnpm pack:check`,
+  );
+});
+const audited = await auditTarball(tarball);
+if (audited.manifest.version !== packageJson.version) {
+  throw new Error('Audited tarball version does not match package.json');
+}
 if (!dryRun) {
   if (
     process.env.GITHUB_ACTIONS !== 'true' ||
@@ -53,6 +64,7 @@ if (!dryRun) {
 }
 const args = [
   'publish',
+  tarball,
   '--ignore-scripts',
   '--access',
   'public',

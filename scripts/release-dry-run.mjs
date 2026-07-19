@@ -7,6 +7,7 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 import { npmTagForVersion, parseChangeset } from './release-policy.mjs';
+import { pack } from './check-tarball.mjs';
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const versionScript = path.join(root, 'scripts', 'release-version.mjs');
@@ -24,7 +25,14 @@ async function fixture(name, type, expected, options = {}) {
   await mkdir(path.join(directory, '.changeset'), { recursive: true });
   await writeFile(
     path.join(directory, 'package.json'),
-    `${JSON.stringify({ name: '@w0rldhacker/kasane', version: '1.0.0' }, null, 2)}\n`,
+    `${JSON.stringify(
+      {
+        name: '@w0rldhacker/kasane',
+        version: options.startVersion ?? '1.0.0',
+      },
+      null,
+      2,
+    )}\n`,
   );
   await writeFile(
     path.join(directory, '.changeset', 'config.json'),
@@ -95,6 +103,10 @@ try {
   await fixture('minor', 'minor', '1.1.0');
   await fixture('major', 'major', '2.0.0');
   await fixture('prerelease', 'minor', '1.1.0-alpha.0', { prerelease: true });
+  await fixture('initial-alpha', 'minor', '0.1.0-alpha.0', {
+    prerelease: true,
+    startVersion: '0.0.0',
+  });
 
   const missing = path.join(temporaryRoot, 'missing');
   await mkdir(path.join(missing, '.changeset'), { recursive: true });
@@ -114,7 +126,7 @@ try {
   );
 
   assert.equal(npmTagForVersion('1.0.0'), 'latest');
-  assert.equal(npmTagForVersion('1.1.0-alpha.0'), 'alpha');
+  assert.equal(npmTagForVersion('1.1.0-alpha.0'), 'next');
   assert.equal(npmTagForVersion('1.1.0-beta.0'), 'beta');
   assert.equal(npmTagForVersion('1.1.0-rc.0'), 'rc');
   assert.throws(
@@ -204,6 +216,7 @@ try {
     path.join(publishDirectory, 'CHANGELOG.md'),
     '# Changelog\n\n## 0.0.1 - 2000-01-01\n\n### Changed\n\n- Release rehearsal.\n',
   );
+  await pack(publishDirectory, path.join(publishDirectory, 'kasane-0.0.1.tgz'));
   const publishDryRun = spawnSync(
     process.execPath,
     [path.join(root, 'scripts', 'release-publish.mjs'), '--dry-run'],
@@ -215,7 +228,7 @@ try {
     publishDryRun.stderr || publishDryRun.stdout,
   );
   console.log(
-    'Release dry-run passed: patch, minor, major, prerelease, missing changeset, package publish rehearsal, and failed publish plan',
+    'Release dry-run passed: patch, minor, major, initial alpha, prerelease, missing changeset, package publish rehearsal, and failed publish plan',
   );
 } finally {
   await rm(temporaryRoot, { recursive: true, force: true });

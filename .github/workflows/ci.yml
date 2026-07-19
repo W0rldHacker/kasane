@@ -148,14 +148,10 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:package
-      - name: Create audited tarball artifact
-        run: |
-          mkdir -p artifacts
-          npm pack --ignore-scripts --pack-destination artifacts
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: packed-tarball-${{ github.run_id }}
-          path: artifacts/*.tgz
+          path: kasane-*.tgz
           if-no-files-found: error
           retention-days: 14
 

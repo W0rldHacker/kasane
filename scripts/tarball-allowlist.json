@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "maxUnpackedSizeBytes": 512000,
+  "requiredFiles": [
+    "LICENSE",
+    "README.md",
+    "SECURITY.md",
+    "dist/index.d.ts",
+    "dist/index.js",
+    "dist/standard-schema.d.ts",
+    "dist/standard-schema.js",
+    "package.json"
+  ],
+  "allowedTopLevelFiles": [
+    "LICENSE",
+    "README.md",
+    "SECURITY.md",
+    "package.json"
+  ],
+  "allowedDistExtensions": [".d.ts", ".js"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./standard-schema": {
+      "types": "./dist/standard-schema.d.ts",
+      "import": "./dist/standard-schema.js"
+    }
+  }
+}

@@ -31,7 +31,7 @@ Baseline: [requirements](./requirements.md) · [scope](./scope.md) ·
 | `TS-DIFF` | Five change kinds, stable source identity, arrays, secrets | `pnpm test:unit -- diff`; `pnpm test:security -- diff` | `DIFF-001` |
 | `TS-ERRORS` | Hierarchy, codes, safe details, cause sanitization | `pnpm test:unit -- errors`; `pnpm test:security -- errors` | `ERR-001` |
 | `TS-TYPES` | Inference, readonly API, absence of typed paths/private leaks | `pnpm test:types`; `pnpm api:check` | `TYPE-001`, `QA-005` |
-| `TS-PACKAGE` | ESM exports, dependency/tarball hygiene, real consumers | `pnpm test:package`; `pnpm test:packed` | `PKG-001`, `REL-002`, `QA-005` |
+| `TS-PACKAGE` | ESM exports, dependency/tarball hygiene, real consumers | `pnpm pack:check`; `pnpm test:package`; `pnpm test:consumer:packed` | `PKG-001`, `REL-002`, `QA-005` |
 | `TS-SECURITY` | Fuzz corpus, resource limits, prototype pollution, abort, canaries | `pnpm test:security`; `pnpm test:fuzz` | `SEC-004`, `QA-004` |
 | `TS-PLATFORM` | Node 22/24 on Linux, macOS, Windows | required CI matrix | `QA-006`, `CI-001` |
 | `TS-PERF` | Published latency/throughput/memory budgets | `pnpm bench`; `pnpm bench:ci` | `PERF-001` |

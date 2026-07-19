@@ -1,0 +1,63 @@
+name: Alpha feedback
+description:
+  Report API, env, explain, or package-resolution friction in the current next
+  prerelease.
+title: '[alpha] '
+labels:
+  - alpha-feedback
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Do not report secrets or vulnerabilities here. Follow SECURITY.md for
+        private disclosure.
+  - type: input
+    id: version
+    attributes:
+      label: Installed version
+      description: Output of npm view @w0rldhacker/kasane@next version.
+      placeholder: 0.1.0-alpha.0
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Feedback area
+      options:
+        - API friction
+        - Environment semantics
+        - Explain output
+        - Package resolution
+        - Documentation
+    validations:
+      required: true
+  - type: textarea
+    id: scenario
+    attributes:
+      label: Minimal scenario
+      description:
+        Include Node version, module mode, imports, expected result, and actual
+        result without credentials.
+    validations:
+      required: true
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Workaround and impact
+      description:
+        Describe any safe workaround and whether this blocks evaluation.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety confirmation
+      options:
+        - label:
+            I removed secrets, tokens, private configuration, and other
+            sensitive data.
+          required: true
+        - label:
+            I understand that this alpha does not promise API stability or
+            production readiness.
+          required: true

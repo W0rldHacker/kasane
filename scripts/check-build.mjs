@@ -35,7 +35,13 @@ if (
   throw new Error('Supported exports must be exactly . and ./standard-schema');
 }
 
-const expectedFiles = ['dist', 'LICENSE', 'README.md', 'SECURITY.md'];
+const expectedFiles = [
+  'dist/**/*.js',
+  'dist/**/*.d.ts',
+  'LICENSE',
+  'README.md',
+  'SECURITY.md',
+];
 if (JSON.stringify(manifest.files) !== JSON.stringify(expectedFiles)) {
   throw new Error(
     `Package files whitelist must be ${expectedFiles.join(', ')}`,

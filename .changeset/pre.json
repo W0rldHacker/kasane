@@ -1,0 +1,8 @@
+{
+  "mode": "pre",
+  "tag": "alpha",
+  "initialVersions": {
+    "@w0rldhacker/kasane": "0.0.0"
+  },
+  "changesets": []
+}
