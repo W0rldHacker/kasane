@@ -6,7 +6,7 @@ import path from 'node:path';
 import process from 'node:process';
 
 import { run } from './check-tarball.mjs';
-import { npmTagForVersion, parseVersion } from './release-policy.mjs';
+import { assertVersionTag, npmTagForVersion } from './release-policy.mjs';
 
 const workspace = process.cwd();
 const manifest = JSON.parse(
@@ -74,14 +74,7 @@ assert.equal(
   manifest.version,
   `${tag} points to wrong version`,
 );
-assert.equal(metadata.tags[tag], manifest.version, `Missing ${tag} dist-tag`);
-if (parseVersion(manifest.version).prerelease !== null) {
-  assert.notEqual(
-    metadata.tags.latest,
-    manifest.version,
-    'Prerelease must not receive latest',
-  );
-}
+assertVersionTag(manifest.version, metadata.tags);
 
 const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), 'kasane-registry-'));
 try {

@@ -31,6 +31,12 @@ Breaking-Approval: approved in PR #123
 Migration: docs/migrations.md#replace-the-deprecated-option
 ```
 
+The first non-breaking promotion from a frozen `0.x` prerelease API to `1.0`
+also uses a major Changeset because it crosses the SemVer major boundary. It
+declares `Promotion: 1.0`, `Promotion-Approval:`, and `Migration:` instead of
+claiming a breaking API change. This exception applies only while the current
+major version is zero and the target is `1.0.0-rc.N`.
+
 Every incompatible Changeset sets `Breaking: true`; the automated check rejects
 it without `Breaking-Approval:` and `Migration:`. It applies the same rule to
 every major Changeset. Direct edits to the package version are not accepted.
@@ -131,6 +137,13 @@ installs that archive with dev dependencies omitted and exercises the JavaScript
 ESM and TypeScript NodeNext consumers. Required CI repeats the consumer gate on
 the latest Node 22 and 24 patches and uploads the already-audited archive rather
 than packing a second artifact.
+
+`pnpm release:rehearse` projects an RC archive to the stable version, repacks
+it, reruns the tarball audit and npm publish dry-run with `latest`, and rejects
+any file or package metadata difference except `package.json` version. On the
+stable commit the same command downloads the audited `rc` package and performs
+the inverse comparison. The stable workflow therefore cannot silently accept
+source, build dependency, export, or generated-output drift after the RC.
 
 Repository administrators complete and periodically rehearse this checklist:
 

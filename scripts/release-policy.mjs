@@ -28,6 +28,19 @@ export function npmTagForVersion(version) {
   return channel === 'alpha' ? 'next' : channel;
 }
 
+export function assertVersionTag(version, tags) {
+  const tag = npmTagForVersion(version);
+  assert.equal(
+    tags[tag],
+    version,
+    `${tag} points to ${String(tags[tag])} instead of ${version}`,
+  );
+  if (parseVersion(version).prerelease !== null) {
+    assert.notEqual(tags.latest, version, 'Prerelease must not receive latest');
+  }
+  return tag;
+}
+
 export function pendingChangesetFiles(files, preState = null) {
   const consumed = new Set(
     preState?.mode === 'pre' && Array.isArray(preState.changesets)
@@ -72,6 +85,8 @@ export function parseChangeset(source, filename = '<changeset>') {
     .replace(/^Breaking:\s*.+$/gmu, '')
     .replace(/^Breaking-Approval:\s*.+$/gmu, '')
     .replace(/^Migration:\s*.+$/gmu, '')
+    .replace(/^Promotion:\s*.+$/gmu, '')
+    .replace(/^Promotion-Approval:\s*.+$/gmu, '')
     .replace(/\s+/gu, ' ')
     .trim();
   assert(summary.length > 0, `${filename} must include a user-facing summary`);
@@ -84,10 +99,22 @@ export function parseChangeset(source, filename = '<changeset>') {
     );
   }
   const breaking = metadata.Breaking === 'true';
-  if (type === 'major') {
-    assert(breaking, `${filename} major release requires Breaking: true`);
+  const promotion = metadata.Promotion === '1.0';
+  if (type === 'major' && !breaking) {
+    assert(
+      promotion,
+      `${filename} non-breaking major release must declare Promotion: 1.0`,
+    );
+    assert(
+      metadata['Promotion-Approval'],
+      `${filename} 1.0 promotion requires Promotion-Approval metadata`,
+    );
+    assert(
+      metadata.Migration,
+      `${filename} 1.0 promotion requires a Migration link`,
+    );
   }
-  if (type === 'major' || breaking) {
+  if ((type === 'major' && !promotion) || breaking) {
     assert(
       metadata['Breaking-Approval'],
       `${filename} breaking release requires Breaking-Approval metadata`,
