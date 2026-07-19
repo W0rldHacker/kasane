@@ -85,7 +85,7 @@ includesAll(
     'actions: write',
     'contents: write',
     'pull-requests: write',
-    'branch: changeset-release/main',
+    'branch: main',
     'pnpm release:version',
     'gh workflow run ci.yml --ref changeset-release/main',
   ],
