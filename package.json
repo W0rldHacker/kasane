@@ -69,10 +69,12 @@
     "test:property:nightly": "node scripts/test-property.mjs nightly",
     "test:architecture": "vitest run --project architecture",
     "pack:check": "pnpm build && node scripts/check-build.mjs && node scripts/check-tarball.mjs",
-    "test:package": "pnpm pack:check && node scripts/test-package.mjs && node scripts/test-consumers.mjs --packed",
+    "test:package": "pnpm pack:check && node scripts/test-package.mjs && node scripts/test-consumers.mjs --packed && node scripts/test-upgrade.mjs --packed",
     "test:types": "pnpm build && node scripts/test-types.mjs && node scripts/check-public-api.mjs && node scripts/check-type-performance.mjs",
     "test:consumer": "pnpm test:consumer:packed",
-    "test:consumer:alpha": "node scripts/test-consumers.mjs --registry @worldhacker/kasane@next",
+    "test:consumer:registry": "node scripts/test-consumers.mjs --registry",
+    "test:consumer:upgrade:packed": "pnpm pack:check && node scripts/test-upgrade.mjs --packed",
+    "test:consumer:upgrade:registry": "node scripts/test-upgrade.mjs --registry",
     "test:consumer:packed": "pnpm pack:check && node scripts/test-consumers.mjs --packed",
     "test:packed": "pnpm test:consumer:packed",
     "docs:check": "node scripts/docs-check.mjs",
@@ -91,7 +93,7 @@
     "bench:compare": "pnpm bench && node scripts/check-benchmarks.mjs && node scripts/compare-benchmarks.mjs",
     "bench:ci": "pnpm bench:check",
     "changeset": "changeset",
-    "verify": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm docs:check && pnpm security:policy-check && pnpm ci:policy-check && pnpm changeset:check && pnpm release:policy-check && pnpm architecture:check && pnpm build:check && pnpm examples:test && pnpm pack:check && node scripts/test-package.mjs && node scripts/test-consumers.mjs --packed && pnpm test && pnpm test:types"
+    "verify": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm docs:check && pnpm security:policy-check && pnpm ci:policy-check && pnpm changeset:check && pnpm release:policy-check && pnpm architecture:check && pnpm build:check && pnpm examples:test && pnpm test:package && pnpm test && pnpm test:types"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "0.18.5",

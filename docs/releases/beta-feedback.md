@@ -1,0 +1,33 @@
+# Beta feedback tracker
+
+This tracker owns feedback for the current `beta` prerelease. Public reports use
+the repository's **Beta feedback** issue form. Security reports use the private
+channel in [SECURITY.md](../../SECURITY.md).
+
+## Triage policy
+
+Every accepted item receives an owner, severity, disposition, and target before
+it leaves triage.
+
+| Severity | Meaning | Required beta outcome |
+| --- | --- | --- |
+| Critical | Secret exposure, package takeover/resolution failure, data corruption, or unusable documented API | Block promotion; assign immediately and publish a corrected beta |
+| High | Major compatibility/API/security/performance problem without a safe workaround | Resolve before RC or explicitly reject beta production evaluation |
+| Medium | Localized problem with a safe workaround or an operational resilience gap | Own and target before RC or stable |
+| Low | Documentation or ergonomic refinement | Own and schedule without expanding frozen scope |
+
+Open Critical: **0**. Open High: **0**.
+
+## Queue
+
+| Finding | Area | Severity | Owner | Target | Disposition | Status |
+| --- | --- | --- | --- | --- | --- | --- |
+| Add a backup private-advisory/release maintainer | Security operations | Medium | `W0rldHacker` | Before RC | Improve maintainer continuity without changing package API | Open |
+| No public beta reports yet | — | — | `W0rldHacker` | Continuous through RC | Triage new issue-form submissions | Monitoring |
+
+## Alpha disposition
+
+No P0/P1 product defect was reported during the alpha evaluation. Backend and
+test-infrastructure compatibility projects must still prove the published
+alpha-to-beta upgrade in the protected registry workflow before this beta is
+accepted.

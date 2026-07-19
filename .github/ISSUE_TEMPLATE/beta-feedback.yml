@@ -1,0 +1,84 @@
+name: Beta feedback
+description:
+  Report production-evaluation compatibility, performance, documentation, or API
+  problems in the current beta prerelease.
+title: '[beta] '
+labels:
+  - beta-feedback
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Do not report secrets or vulnerabilities here. Follow SECURITY.md for
+        private disclosure. Maintainers assign an owner and final severity
+        during triage.
+  - type: input
+    id: version
+    attributes:
+      label: Installed version
+      description: Output of npm view @worldhacker/kasane@beta version.
+      placeholder: 0.1.0-beta.1
+    validations:
+      required: true
+  - type: dropdown
+    id: scenario
+    attributes:
+      label: Consumer scenario
+      options:
+        - Backend service
+        - Tool or CLI-like application
+        - Test infrastructure
+        - Library integration
+        - Other ESM application
+    validations:
+      required: true
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Evaluation impact
+      options:
+        - Blocks evaluation
+        - Major friction with workaround
+        - Localized friction
+        - Documentation or ergonomics
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility context
+      description:
+        Include Node and TypeScript versions, operating system, module mode,
+        imports, and whether this is an alpha-to-beta upgrade.
+    validations:
+      required: true
+  - type: textarea
+    id: scenario_details
+    attributes:
+      label: Minimal scenario
+      description:
+        Describe expected and actual behavior using synthetic configuration
+        only.
+    validations:
+      required: true
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Workaround
+      description:
+        Describe the safest known workaround, or state that none exists.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety confirmation
+      options:
+        - label:
+            I removed secrets, tokens, private configuration, and other
+            sensitive data.
+          required: true
+        - label:
+            I understand that beta freezes the intended 1.0 API but is not yet a
+            production recommendation.
+          required: true
