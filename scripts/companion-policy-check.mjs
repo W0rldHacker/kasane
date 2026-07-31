@@ -52,6 +52,12 @@ assert.deepEqual(
   [],
   'Companion versions must not be linked',
 );
+assert.equal(
+  changesets.___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH
+    ?.onlyUpdatePeerDependentsWhenOutOfRange,
+  true,
+  'Core releases must preserve compatible companion peer ranges',
+);
 
 async function sourceFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -110,5 +116,5 @@ for (const file of runtimeFiles) {
 }
 
 console.log(
-  `Companion policy check passed: public testkit/watch packages, private template, independent release groups, zero core dependencies, and ${runtimeFiles.length} public-contract source files`,
+  `Companion policy check passed: public testkit/watch packages, private template, independent release groups, stable compatible peer ranges, zero core dependencies, and ${runtimeFiles.length} public-contract source files`,
 );

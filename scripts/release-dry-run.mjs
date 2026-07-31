@@ -32,6 +32,23 @@ const changesetCli = path.join(
 );
 const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), 'kasane-release-'));
 
+function changesetsConfig() {
+  return {
+    $schema: 'https://unpkg.com/@changesets/config@3.1.1/schema.json',
+    changelog: false,
+    commit: false,
+    fixed: [],
+    linked: [],
+    access: 'public',
+    baseBranch: 'main',
+    updateInternalDependencies: 'patch',
+    ___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH: {
+      onlyUpdatePeerDependentsWhenOutOfRange: true,
+    },
+    ignore: [],
+  };
+}
+
 async function fixture(name, type, expected, options = {}) {
   const directory = path.join(temporaryRoot, name);
   await mkdir(path.join(directory, '.changeset'), { recursive: true });
@@ -48,17 +65,7 @@ async function fixture(name, type, expected, options = {}) {
   );
   await writeFile(
     path.join(directory, '.changeset', 'config.json'),
-    `${JSON.stringify({
-      $schema: 'https://unpkg.com/@changesets/config@3.1.1/schema.json',
-      changelog: false,
-      commit: false,
-      fixed: [],
-      linked: [],
-      access: 'public',
-      baseBranch: 'main',
-      updateInternalDependencies: 'patch',
-      ignore: [],
-    })}\n`,
+    `${JSON.stringify(changesetsConfig())}\n`,
   );
   await writeFile(
     path.join(directory, 'CHANGELOG.md'),
@@ -146,17 +153,7 @@ async function companionFixture({ fixtureName, packageName, packagePath }) {
   );
   await writeFile(
     path.join(directory, '.changeset', 'config.json'),
-    `${JSON.stringify({
-      $schema: 'https://unpkg.com/@changesets/config@3.1.1/schema.json',
-      changelog: false,
-      commit: false,
-      fixed: [],
-      linked: [],
-      access: 'public',
-      baseBranch: 'main',
-      updateInternalDependencies: 'patch',
-      ignore: [],
-    })}\n`,
+    `${JSON.stringify(changesetsConfig())}\n`,
   );
   await writeFile(
     path.join(packageDirectory, 'CHANGELOG.md'),
@@ -187,8 +184,107 @@ async function companionFixture({ fixtureName, packageName, packagePath }) {
   );
 }
 
+async function corePatchCompatibilityFixture() {
+  const directory = path.join(temporaryRoot, 'core-patch-companions');
+  const companions = [
+    {
+      name: '@worldhacker/kasane-source-testkit',
+      packagePath: 'source-testkit',
+      version: '0.1.0',
+    },
+    {
+      name: '@worldhacker/kasane-watch',
+      packagePath: 'watch',
+      version: '0.1.0',
+    },
+    {
+      name: '@worldhacker/kasane-companion-template',
+      packagePath: 'companion-template',
+      version: '0.0.0',
+      private: true,
+    },
+  ];
+  await mkdir(path.join(directory, '.changeset'), { recursive: true });
+  await writeFile(
+    path.join(directory, 'package.json'),
+    `${JSON.stringify(
+      { name: '@worldhacker/kasane', version: '1.0.0' },
+      null,
+      2,
+    )}\n`,
+  );
+  await writeFile(
+    path.join(directory, 'pnpm-workspace.yaml'),
+    'packages:\n  - .\n  - packages/*\n',
+  );
+  await writeFile(
+    path.join(directory, '.changeset', 'config.json'),
+    `${JSON.stringify(changesetsConfig())}\n`,
+  );
+  await writeFile(
+    path.join(directory, 'CHANGELOG.md'),
+    '# Changelog\n\n<!-- release-notes -->\n',
+  );
+  for (const companion of companions) {
+    const packageDirectory = path.join(
+      directory,
+      'packages',
+      companion.packagePath,
+    );
+    await mkdir(packageDirectory, { recursive: true });
+    await writeFile(
+      path.join(packageDirectory, 'package.json'),
+      `${JSON.stringify(
+        {
+          name: companion.name,
+          version: companion.version,
+          ...(companion.private === true ? { private: true } : {}),
+          peerDependencies: {
+            '@worldhacker/kasane': '>=1.0.0 <2',
+          },
+        },
+        null,
+        2,
+      )}\n`,
+    );
+  }
+  await writeFile(
+    path.join(directory, '.changeset', 'core-patch.md'),
+    "---\n'@worldhacker/kasane': patch\n---\n\nFixed: Exercise a compatible core patch.\n",
+  );
+
+  const result = spawnSync(process.execPath, [versionScript], {
+    cwd: directory,
+    encoding: 'utf8',
+  });
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const core = JSON.parse(
+    await readFile(path.join(directory, 'package.json'), 'utf8'),
+  );
+  assert.equal(core.version, '1.0.1');
+  for (const companion of companions) {
+    const manifest = JSON.parse(
+      await readFile(
+        path.join(directory, 'packages', companion.packagePath, 'package.json'),
+        'utf8',
+      ),
+    );
+    assert.equal(
+      manifest.version,
+      companion.version,
+      `${companion.name} version changed during a core-only patch`,
+    );
+    assert.equal(
+      manifest.peerDependencies?.['@worldhacker/kasane'],
+      '>=1.0.0 <2',
+      `${companion.name} lost support for an already compatible core version`,
+    );
+  }
+}
+
 try {
   await fixture('patch', 'patch', '1.0.1');
+  await corePatchCompatibilityFixture();
   await fixture('security-patch', 'patch', '1.0.1', {
     category: 'Security',
   });
@@ -384,7 +480,7 @@ try {
     publishDryRun.stderr || publishDryRun.stdout,
   );
   console.log(
-    'Release dry-run passed: patch, security patch, minor, major, initial alpha, RC channel transition, stable exit from approved RC, new RC after fix, tag mismatch, prerelease, missing changeset, package publish rehearsal, and failed publish plan',
+    'Release dry-run passed: patch with stable companion peer ranges, security patch, minor, major, initial alpha, RC channel transition, stable exit from approved RC, new RC after fix, tag mismatch, prerelease, missing changeset, package publish rehearsal, and failed publish plan',
   );
 } finally {
   await rm(temporaryRoot, { recursive: true, force: true });
