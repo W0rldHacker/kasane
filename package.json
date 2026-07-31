@@ -49,7 +49,7 @@
   ],
   "scripts": {
     "lint": "pnpm lint:code && pnpm lint:markdown",
-    "lint:code": "eslint .",
+    "lint:code": "pnpm build && pnpm exec tsc -p packages/source-testkit/tsconfig.build.json && eslint .",
     "lint:markdown": "markdownlint-cli2",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

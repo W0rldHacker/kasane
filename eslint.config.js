@@ -9,6 +9,7 @@ export default defineConfig(
       'coverage/**',
       'dist/**',
       '**/dist/**',
+      'artifacts/**',
       'node_modules/**',
       'test/consumers/**',
       'test/fixtures/**',

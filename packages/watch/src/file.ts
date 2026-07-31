@@ -1,4 +1,4 @@
-import { watch as nodeWatch } from 'node:fs';
+import { realpathSync, watch as nodeWatch } from 'node:fs';
 import type { FSWatcher } from 'node:fs';
 import path from 'node:path';
 
@@ -85,8 +85,9 @@ export function watchFiles(
   } else {
     try {
       for (const [directory, names] of byDirectory) {
+        const watchedDirectory = realpathSync.native(directory);
         const watcher = nodeWatch(
-          directory,
+          watchedDirectory,
           { persistent: false },
           (_eventType, filename) => {
             const text = filenameText(filename);
