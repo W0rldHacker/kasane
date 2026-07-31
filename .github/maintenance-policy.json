@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "owner": "W0rldHacker",
+  "backup": null,
+  "stableMajor": 1,
+  "supportStarted": "2026-07-19",
+  "supportReviewOpens": "2026-10-31",
+  "supportDecisionDeadline": "2027-01-30",
+  "supportEndsWithoutExtension": "2027-04-30",
+  "quarterlyReviewMonths": [1, 4, 7, 10],
+  "nodeLines": [
+    {
+      "major": 22,
+      "status": "required",
+      "upstreamEol": "2027-04-30"
+    },
+    {
+      "major": 24,
+      "status": "required",
+      "upstreamEol": "2028-04-30"
+    },
+    {
+      "major": 26,
+      "status": "advisory",
+      "upstreamEol": "2029-04-30"
+    }
+  ],
+  "labels": [
+    {
+      "name": "status:needs-triage",
+      "color": "D4C5F9",
+      "description": "Accepted for maintainer classification and ownership"
+    },
+    {
+      "name": "severity:critical",
+      "color": "B60205",
+      "description": "Widespread guarantee failure or release/security emergency"
+    },
+    {
+      "name": "severity:high",
+      "color": "D93F0B",
+      "description": "Production-blocking defect without a safe workaround"
+    },
+    {
+      "name": "severity:medium",
+      "color": "FBCA04",
+      "description": "Localized production defect with a safe workaround"
+    },
+    {
+      "name": "severity:low",
+      "color": "0E8A16",
+      "description": "Low-impact correctness, documentation, or ergonomics issue"
+    },
+    {
+      "name": "type:regression",
+      "color": "D73A4A",
+      "description": "Behavior worked in a supported earlier version"
+    },
+    {
+      "name": "type:deprecation",
+      "color": "C2E0C6",
+      "description": "Public deprecation proposal or migration tracking"
+    },
+    {
+      "name": "area:node-support",
+      "color": "1D76DB",
+      "description": "Node.js support or upstream EOL migration"
+    },
+    {
+      "name": "maintenance",
+      "color": "5319E7",
+      "description": "Quarterly support, dependency, and toolchain review"
+    },
+    {
+      "name": "release:blocker",
+      "color": "B60205",
+      "description": "Must be resolved before the targeted release"
+    }
+  ]
+}

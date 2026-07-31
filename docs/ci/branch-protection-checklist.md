@@ -10,8 +10,10 @@ deployment, or OIDC credentials to pull-request workflows.
   complete once so GitHub registers the check context.
 - [x] Protect `main` and require the exact status check `Required gates` with
   strict up-to-date branches.
-- [x] Require a pull request with at least one approving review and dismiss
-  stale approvals when new commits are pushed.
+- [x] Require a pull request. The current solo-maintainer configuration requires
+  zero approving reviews, dismisses stale approvals, and relies on strict
+  required CI plus the later protected-environment approval. Raise the count to
+  one as soon as an independent maintainer is available.
 - [x] Enforce the rule for administrators, block force pushes and deletion, and
   require conversation resolution.
 - [x] Do not permit bypass actors. Emergency changes use the normal pull request
@@ -94,9 +96,10 @@ For every case:
 
 | Field | Value |
 | --- | --- |
-| Date and verifier | 2026-07-18, repository administrator via GitHub REST API |
+| Date and verifier | 2026-07-31, repository administrator via GitHub REST API |
 | Branch rule or ruleset URL | `https://api.github.com/repos/W0rldHacker/kasane/branches/main/protection` |
 | Required context | `Required gates` |
+| Required approving reviews | `0` while there is one maintainer; PR remains mandatory |
 | Failing pull request URL | `https://github.com/W0rldHacker/kasane/pull/4` |
 | Fork permission run | |
 | Cancelled/newest run pair | Runs `29652396509` and `29652410628` cancelled after newer pushes |

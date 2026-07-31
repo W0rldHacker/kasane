@@ -311,7 +311,7 @@ export function npmPublishDryRunArgs(tarball, version) {
   ];
 }
 
-function runPackageTools(tarball, version) {
+function runPackageTools(tarball) {
   const publint = path.join(
     workspace,
     'node_modules',
@@ -334,7 +334,6 @@ function runPackageTools(tarball, version) {
     '--config-path',
     path.join(workspace, '.attw.json'),
   ]);
-  run('npm', npmPublishDryRunArgs(tarball, version));
 }
 
 async function main() {
@@ -345,7 +344,7 @@ async function main() {
   await pack(workspace, tarball);
   const audit = await auditTarball(tarball);
   const hash = await checkReproducible(tarball);
-  runPackageTools(tarball, manifest.version);
+  runPackageTools(tarball);
   console.log(
     `Tarball check passed: ${path.basename(tarball)}, ` +
       `${String(audit.files.length)} files, ${String(audit.unpackedSize)} bytes unpacked, ` +

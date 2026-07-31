@@ -1,0 +1,88 @@
+name: Maintenance dry run
+
+on:
+  schedule:
+    - cron: '17 8 1 1,4,7,10 *'
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: Tabletop release path to exercise without publishing
+        required: true
+        type: choice
+        default: all
+        options:
+          - all
+          - patch-release
+          - security-patch-release
+
+concurrency:
+  group: maintenance-${{ github.event_name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  CI: 'true'
+
+jobs:
+  tabletop:
+    name: Patch and security release tabletop
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+        with:
+          run_install: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24.x
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm maintenance:check
+      - run: pnpm release:dry-run
+      - name: Run the selected maintenance decision tabletop
+        env:
+          TABLETOP_SCENARIO: ${{ inputs.scenario }}
+        run: pnpm maintenance:tabletop -- --scenario "$TABLETOP_SCENARIO"
+
+  quarterly-review:
+    name: Quarterly dependency, toolchain, and Node review
+    if: ${{ github.event_name == 'schedule' }}
+    permissions:
+      contents: read
+      issues: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+        with:
+          run_install: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24.x
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm maintenance:check -- --check-upstream
+      - name: Open the idempotent quarterly review issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          quarter=$(( ($(date -u +%-m) - 1) / 3 + 1 ))
+          title="[maintenance] $(date -u +%Y)-Q${quarter} review"
+          count=$(gh issue list --state open --search "${title} in:title" --json number --jq length)
+          if [ "${count}" -eq 0 ]; then
+            gh issue create \
+              --title "${title}" \
+              --label maintenance \
+              --body-file .github/maintenance-review.md
+          fi

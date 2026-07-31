@@ -122,12 +122,15 @@ failures, Standard Schema, `freeze: false`, and runtime path access.
 
 ## How do I compare reloads?
 
-Kasane does not watch files. Your application decides when to build the next
-snapshot, then calls `previous.diff(next)`. Changes distinguish values from
+Kasane core does not watch files. Your application decides when to build the
+next snapshot, then calls `previous.diff(next)`. Changes distinguish values from
 sources, so an identical value supplied by a different layer is visible.
 
 [Diff and reloads](./docs/guides/diff-and-reloads.md) documents all change
-kinds, source-only changes, arrays, and secret-safe comparison.
+kinds, source-only changes, arrays, and secret-safe comparison. The post-`1.0`
+[`@worldhacker/kasane-watch` companion](./docs/watch.md) can turn file or
+provider notifications into explicit snapshot candidates without adding a watch
+export or dependency to core.
 
 ## How do I integrate another format or provider?
 
@@ -140,6 +143,11 @@ See
 [Getting started](./docs/guides/getting-started.md#how-do-i-add-a-custom-parser)
 and the executable [custom parser](./examples/custom-parser/index.mjs) and
 [custom source](./examples/custom-source/index.mjs) examples.
+
+Companion authors can use the public
+[source and parser compatibility kit](./docs/companions.md). It keeps provider
+SDKs outside core and verifies failure, abort, secret, dangerous-key, and
+no-source-owned-merge behavior.
 
 ## What is deliberately outside the core package?
 
@@ -160,6 +168,9 @@ for the complete boundary.
 - [Limitations and non-goals](./docs/guides/limitations.md)
 - [Platform support](./docs/platform-support.md)
 - [Versioning and releases](./docs/versioning.md)
+- [Stable maintenance and support](./docs/maintenance.md)
+- [Companion sources and formats](./docs/companions.md)
+- [Snapshot-based watch companion](./docs/watch.md)
 - [Migration policy and guide](./docs/migrations.md)
 - [Changelog](./CHANGELOG.md)
 - [Security policy](./SECURITY.md)

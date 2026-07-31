@@ -30,8 +30,34 @@ const entries = await Promise.all(
     ),
   ),
 );
-const before = JSON.parse(
-  await readFile(path.join(root, 'package.json'), 'utf8'),
+const packageLocations = new Map([
+  ['@worldhacker/kasane', root],
+  [
+    '@worldhacker/kasane-source-testkit',
+    path.join(root, 'packages', 'source-testkit'),
+  ],
+  ['@worldhacker/kasane-watch', path.join(root, 'packages', 'watch')],
+]);
+const affectedPackages = [
+  ...new Set(entries.map((entry) => entry.packageName)),
+];
+for (const packageName of affectedPackages) {
+  assert(
+    packageLocations.has(packageName),
+    `No release location is configured for ${packageName}`,
+  );
+}
+const beforeByPackage = new Map(
+  await Promise.all(
+    affectedPackages.map(async (packageName) => {
+      const location = packageLocations.get(packageName);
+      const manifest = JSON.parse(
+        await readFile(path.join(location, 'package.json'), 'utf8'),
+      );
+      assert.equal(manifest.name, packageName);
+      return [packageName, manifest];
+    }),
+  ),
 );
 const preState = await readFile(
   path.join(changesetDirectory, 'pre.json'),
@@ -51,6 +77,8 @@ if (promotionEntries.length > 0) {
     1,
     'Only one 1.0 promotion Changeset is allowed',
   );
+  const before = beforeByPackage.get('@worldhacker/kasane');
+  assert(before, 'Promotion: 1.0 requires a core package Changeset');
   const beforeVersion = parseVersion(before.version);
   const entersReleaseCandidate =
     beforeVersion.major === 0 &&
@@ -89,58 +117,90 @@ if (result.stdout) process.stdout.write(result.stdout);
 if (result.stderr) process.stderr.write(result.stderr);
 assert.equal(result.status, 0, 'Changesets version command failed');
 
-let after = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
-const beforeChannel = parseVersion(before.version).prerelease?.split('.')[0];
-const generated = parseVersion(after.version);
-if (
-  preState?.mode === 'pre' &&
-  preState.tag === 'rc' &&
-  beforeChannel !== 'rc' &&
-  generated.major === 1 &&
-  generated.minor === 0 &&
-  generated.patch === 0 &&
-  generated.prerelease?.startsWith('rc.')
-) {
-  after = { ...after, version: '1.0.0-rc.1' };
-  await writeFile(
-    path.join(root, 'package.json'),
-    `${JSON.stringify(after, null, 2)}\n`,
+const afterByPackage = new Map(
+  await Promise.all(
+    affectedPackages.map(async (packageName) => {
+      const location = packageLocations.get(packageName);
+      return [
+        packageName,
+        JSON.parse(await readFile(path.join(location, 'package.json'), 'utf8')),
+      ];
+    }),
+  ),
+);
+const coreBefore = beforeByPackage.get('@worldhacker/kasane');
+let coreAfter = afterByPackage.get('@worldhacker/kasane');
+if (coreBefore && coreAfter) {
+  const beforeChannel = parseVersion(coreBefore.version).prerelease?.split(
+    '.',
+  )[0];
+  const generated = parseVersion(coreAfter.version);
+  if (
+    preState?.mode === 'pre' &&
+    preState.tag === 'rc' &&
+    beforeChannel !== 'rc' &&
+    generated.major === 1 &&
+    generated.minor === 0 &&
+    generated.patch === 0 &&
+    generated.prerelease?.startsWith('rc.')
+  ) {
+    coreAfter = { ...coreAfter, version: '1.0.0-rc.1' };
+    afterByPackage.set('@worldhacker/kasane', coreAfter);
+    await writeFile(
+      path.join(root, 'package.json'),
+      `${JSON.stringify(coreAfter, null, 2)}\n`,
+    );
+  }
+}
+for (const packageName of affectedPackages) {
+  assert.notEqual(
+    afterByPackage.get(packageName).version,
+    beforeByPackage.get(packageName).version,
+    `Changesets did not advance ${packageName}`,
   );
 }
-assert.notEqual(
-  after.version,
-  before.version,
-  'Changesets did not advance the package version',
-);
 
-const groups = new Map(changelogCategories.map((category) => [category, []]));
-for (const entry of entries) groups.get(entry.category).push(entry.summary);
-const sections = changelogCategories
-  .filter((category) => groups.get(category).length > 0)
-  .map(
-    (category) =>
-      `### ${category}\n\n${groups
-        .get(category)
-        .map((summary) => `- ${summary}`)
-        .join('\n')}`,
+const changelogPaths = [];
+for (const packageName of affectedPackages) {
+  const packageEntries = entries.filter(
+    (entry) => entry.packageName === packageName,
   );
-const release = `## ${after.version} - ${new Date().toISOString().slice(0, 10)}\n\n${sections.join('\n\n')}\n`;
-const changelogPath = path.join(root, 'CHANGELOG.md');
-const changelog = await readFile(changelogPath, 'utf8');
-const heading = '# Changelog\n';
-assert(
-  changelog.startsWith(heading),
-  'CHANGELOG.md must start with # Changelog',
-);
-const marker = '<!-- release-notes -->';
-assert(
-  changelog.includes(marker),
-  'CHANGELOG.md must contain the release-notes marker',
-);
-await writeFile(
-  changelogPath,
-  changelog.replace(marker, `${marker}\n\n${release.trimEnd()}`),
-);
+  const groups = new Map(changelogCategories.map((category) => [category, []]));
+  for (const entry of packageEntries) {
+    groups.get(entry.category).push(entry.summary);
+  }
+  const sections = changelogCategories
+    .filter((category) => groups.get(category).length > 0)
+    .map(
+      (category) =>
+        `### ${category}\n\n${groups
+          .get(category)
+          .map((summary) => `- ${summary}`)
+          .join('\n')}`,
+    );
+  const version = afterByPackage.get(packageName).version;
+  const release = `## ${version} - ${new Date().toISOString().slice(0, 10)}\n\n${sections.join('\n\n')}\n`;
+  const changelogPath = path.join(
+    packageLocations.get(packageName),
+    'CHANGELOG.md',
+  );
+  const changelog = await readFile(changelogPath, 'utf8');
+  const heading = '# Changelog\n';
+  assert(
+    changelog.startsWith(heading),
+    `${packageName} CHANGELOG.md must start with # Changelog`,
+  );
+  const marker = '<!-- release-notes -->';
+  assert(
+    changelog.includes(marker),
+    `${packageName} CHANGELOG.md must contain the release-notes marker`,
+  );
+  await writeFile(
+    changelogPath,
+    changelog.replace(marker, `${marker}\n\n${release.trimEnd()}`),
+  );
+  changelogPaths.push(changelogPath);
+}
 const prettier = path.join(
   scriptRoot,
   'node_modules',
@@ -150,7 +210,7 @@ const prettier = path.join(
 );
 const format = spawnSync(
   process.execPath,
-  [prettier, '--write', changelogPath],
+  [prettier, '--write', ...changelogPaths],
   {
     cwd: root,
     encoding: 'utf8',
@@ -161,5 +221,10 @@ if (format.stdout) process.stdout.write(format.stdout);
 if (format.stderr) process.stderr.write(format.stderr);
 assert.equal(format.status, 0, 'CHANGELOG.md formatting failed');
 console.log(
-  `Prepared @worldhacker/kasane ${after.version} and updated CHANGELOG.md`,
+  `Prepared ${affectedPackages
+    .map(
+      (packageName) =>
+        `${packageName} ${afterByPackage.get(packageName).version}`,
+    )
+    .join(', ')} and updated package changelogs`,
 );

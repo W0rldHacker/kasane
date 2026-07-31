@@ -79,6 +79,17 @@
     "test:packed": "pnpm test:consumer:packed",
     "docs:check": "node scripts/docs-check.mjs",
     "security:policy-check": "node scripts/security-policy-check.mjs",
+    "maintenance:table": "node scripts/update-support-table.mjs",
+    "maintenance:check": "node scripts/maintenance-policy-check.mjs",
+    "maintenance:tabletop": "node scripts/maintenance-tabletop.mjs",
+    "companion:policy-check": "node scripts/companion-policy-check.mjs",
+    "companion:verify": "pnpm companion:policy-check && pnpm --filter @worldhacker/kasane-source-testkit typecheck && pnpm --filter kasane-companion-template typecheck && pnpm --filter @worldhacker/kasane-watch typecheck && pnpm --filter @worldhacker/kasane-source-testkit test && pnpm --filter kasane-companion-template test && pnpm --filter @worldhacker/kasane-watch test",
+    "companion:release:pack": "node scripts/companion-release.mjs pack",
+    "companion:release:rehearse": "node scripts/companion-release.mjs rehearse",
+    "companion:release:publish": "node scripts/companion-release.mjs publish",
+    "companion:release:bootstrap-publish": "node scripts/companion-release.mjs bootstrap-publish",
+    "companion:release:published-check": "node scripts/companion-release.mjs published-check",
+    "companion:release:registry-smoke": "node scripts/companion-release.mjs registry-smoke",
     "ci:policy-check": "node scripts/ci-policy-check.mjs",
     "changeset:check": "node scripts/changeset-check.mjs",
     "release:policy-check": "node scripts/release-policy-check.mjs",
@@ -94,7 +105,7 @@
     "bench:compare": "pnpm bench && node scripts/check-benchmarks.mjs && node scripts/compare-benchmarks.mjs",
     "bench:ci": "pnpm bench:check",
     "changeset": "changeset",
-    "verify": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm docs:check && pnpm security:policy-check && pnpm ci:policy-check && pnpm changeset:check && pnpm release:policy-check && pnpm architecture:check && pnpm build:check && pnpm examples:test && pnpm test:package && pnpm release:rehearse && pnpm test && pnpm test:types"
+    "verify": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm docs:check && pnpm security:policy-check && pnpm maintenance:check && pnpm companion:verify && pnpm ci:policy-check && pnpm changeset:check && pnpm release:policy-check && pnpm architecture:check && pnpm build:check && pnpm examples:test && pnpm test:package && pnpm release:dry-run && pnpm release:rehearse && pnpm test && pnpm test:types"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "0.18.5",

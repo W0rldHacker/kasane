@@ -3,6 +3,7 @@
 !.env.example
 .idea/
 .vscode/*.local.json
+artifacts/
 coverage/
 dist/
 node_modules/

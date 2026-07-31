@@ -48,6 +48,13 @@ installs, and runs the complete correctness/type surface.
 | Create release classification     | `pnpm changeset`                                       |
 | Validate release policy           | `pnpm release:policy-check`                            |
 | Rehearse release scenarios        | `pnpm release:dry-run`                                 |
+| Validate stable maintenance       | `pnpm maintenance:check`                               |
+| Rehearse patch/security decisions | `pnpm maintenance:tabletop`                            |
+| Verify companion contracts        | `pnpm companion:verify`                                |
+| Check every workspace tarball     | `pnpm -r pack:check`                                   |
+| Pack a selected companion         | `pnpm companion:release:pack --package=watch`          |
+| Rehearse a companion publish      | `pnpm companion:release:rehearse --package=watch`      |
+| Test snapshot watch lifecycle     | `pnpm --filter @worldhacker/kasane-watch test`         |
 
 Focused commands speed up iteration, but every pull request must end with
 `pnpm verify`. Performance, security, property, and nightly fuzz commands are
@@ -123,6 +130,12 @@ User-visible behavior updates the relevant guide and
 exports, defaults, ADR status, imports, doctests, and generated merge tables.
 Never document a deep import or post-`1.0` capability as core.
 
+Companion packages follow the independent boundary in
+[Companion sources and formats](./docs/companions.md). Runtime code may import
+only the public core package, must leave merge semantics in core, and must run
+the reusable source/parser conformance suite. Provider SDK dependencies belong
+only to the companion that uses them.
+
 ## Does my change need a Changeset?
 
 Run `pnpm changeset` for a user-visible fix, feature, deprecation, behavior
@@ -137,7 +150,8 @@ Start the summary with `Added:`, `Changed:`, `Fixed:`, or `Security:`. A major
 classification also records `Breaking: true`, `Breaking-Approval:`, and a
 `Migration:` link. A pre-`1.0` breaking minor uses the same metadata. See
 [Versioning and releases](./docs/versioning.md) for beta approval, deprecation,
-prerelease, and npm tag rules.
+prerelease, and npm tag rules. Stable regressions, backports, Node EOL, and
+support windows follow the [maintenance policy](./docs/maintenance.md).
 
 Internal tests/refactoring with no published effect normally need no Changeset.
 Explain the omission in the pull request when it is not obvious. Do not edit the
@@ -166,6 +180,18 @@ long-lived npm token and remains blocked until its protected environment and npm
 trusted publisher are configured. An ad-hoc `npm publish` is not an approved
 release path. A failed publication is corrected with a new version; routine
 rollback does not use `npm unpublish`.
+
+Public companions use the separate protected `npm-companions` workflow with an
+allowlisted `source-testkit` or `watch` selector. The private template is never
+published. Each public companion needs its own npm trusted-publisher entry, and
+the source testkit is published before companions that depend on a newly
+released conformance contract.
+
+Because npm cannot configure trusted publishing before a package exists, only
+the first publication may use `companion-bootstrap.yml` and the protected
+one-day `NPM_BOOTSTRAP_TOKEN`. The bootstrap command rejects an existing package
+name. Revoke that token and delete the environment secret immediately after the
+two package names exist; all updates use the token-free OIDC workflow.
 
 ## Pull request checklist
 
