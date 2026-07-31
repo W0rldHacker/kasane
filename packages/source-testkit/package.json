@@ -1,0 +1,59 @@
+{
+  "name": "@worldhacker/kasane-source-testkit",
+  "version": "0.1.0",
+  "description": "Reusable conformance tests for Kasane companion sources and parsers.",
+  "keywords": [
+    "kasane",
+    "configuration",
+    "conformance",
+    "provider",
+    "parser"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/W0rldHacker/kasane.git",
+    "directory": "packages/source-testkit"
+  },
+  "homepage": "https://github.com/W0rldHacker/kasane/tree/main/packages/source-testkit#readme",
+  "bugs": {
+    "url": "https://github.com/W0rldHacker/kasane/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22"
+  },
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.d.ts",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "pnpm --dir ../.. build && tsc -p tsconfig.build.json",
+    "typecheck": "pnpm --dir ../.. build && tsc -p tsconfig.json --noEmit",
+    "test": "pnpm build && vitest run",
+    "pack:check": "pnpm build && node ../../scripts/check-companion-package.mjs ."
+  },
+  "peerDependencies": {
+    "@worldhacker/kasane": ">=1.0.0 <2"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.1",
+    "@worldhacker/kasane": "workspace:*",
+    "typescript": "6.0.3",
+    "vitest": "4.1.10"
+  }
+}

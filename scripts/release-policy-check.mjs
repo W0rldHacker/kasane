@@ -13,6 +13,10 @@ const [
   releasePr,
   publish,
   publishScript,
+  companionPublish,
+  companionBootstrap,
+  companionPublishScript,
+  companionPublishUtils,
   packageJson,
 ] = await Promise.all([
   read('.changeset/config.json'),
@@ -22,6 +26,10 @@ const [
   read('.github/workflows/release-pr.yml'),
   read('.github/workflows/release.yml'),
   read('scripts/release-publish.mjs'),
+  read('.github/workflows/companion-release.yml'),
+  read('.github/workflows/companion-bootstrap.yml'),
+  read('scripts/companion-release.mjs'),
+  read('scripts/companion-release-utils.mjs'),
   read('package.json'),
 ]);
 
@@ -61,7 +69,14 @@ includesAll(
     '`rc`',
     '`latest`',
     'protected `npm` environment',
+    'protected `npm-companions` environment',
+    '`@worldhacker/kasane-source-testkit`',
+    '`@worldhacker/kasane-watch`',
+    '`companion-bootstrap.yml`',
+    '`NPM_BOOTSTRAP_TOKEN`',
+    'npm can attach a trusted publisher only after a package already exists',
     'trusted publisher',
+    'never attempts to dry-run an immutable version',
   ],
   'Versioning policy',
 );
@@ -74,6 +89,8 @@ includesAll(
 for (const [source, label] of [
   [releasePr, 'Release PR workflow'],
   [publish, 'Publish workflow'],
+  [companionPublish, 'Companion publish workflow'],
+  [companionBootstrap, 'Companion bootstrap workflow'],
 ])
   pinned(source, label);
 
@@ -147,6 +164,110 @@ includesAll(
   ],
   'Publish script',
 );
+includesAll(
+  companionPublish,
+  [
+    'workflow_dispatch:',
+    'type: choice',
+    '- source-testkit',
+    '- watch',
+    'environment: npm-companions',
+    'contents: read',
+    'id-token: write',
+    'node-version: 24.x',
+    'package-manager-cache: false',
+    'pnpm install --frozen-lockfile',
+    'pnpm verify',
+    'pnpm companion:release:pack',
+    'pnpm companion:release:rehearse',
+    'needs: prepare',
+    'actions/download-artifact@',
+    'name: companion-${{ inputs.package }}-${{ github.run_id }}',
+    'path: artifacts/companions/*.tgz',
+    'pnpm companion:release:publish',
+    'pnpm companion:release:published-check',
+    'Companion registry smoke / Node.js ${{ matrix.node-version }}',
+    '- 22.x',
+    '- 24.x',
+    'pnpm companion:release:registry-smoke',
+  ],
+  'Companion publish workflow',
+);
+assert(
+  !/\b(?:NPM_TOKEN|NODE_AUTH_TOKEN)\b/u.test(companionPublish),
+  'Companion publish workflow must not use a long-lived npm token',
+);
+assert(
+  !/\bsecrets\./u.test(companionPublish),
+  'Companion publish workflow must not read repository secrets',
+);
+includesAll(
+  companionBootstrap,
+  [
+    'workflow_dispatch:',
+    'type: choice',
+    '- source-testkit',
+    '- watch',
+    'Type bootstrap to confirm one-time token use',
+    'test "$BOOTSTRAP_CONFIRMATION" = bootstrap',
+    'environment: npm-companions',
+    'contents: read',
+    'id-token: write',
+    'package-manager-cache: false',
+    'pnpm verify',
+    'pnpm companion:release:pack',
+    'pnpm companion:release:rehearse',
+    'needs: prepare',
+    'actions/download-artifact@',
+    'pnpm companion:release:bootstrap-publish',
+    'NODE_AUTH_TOKEN: ${{ secrets.NPM_BOOTSTRAP_TOKEN }}',
+    'Revoke the npm bootstrap token',
+    'Bootstrap registry smoke / Node.js ${{ matrix.node-version }}',
+    '- 22.x',
+    '- 24.x',
+  ],
+  'Companion bootstrap workflow',
+);
+const bootstrapSecrets = [
+  ...companionBootstrap.matchAll(/\bsecrets\.([A-Z0-9_]+)/gu),
+].map((match) => match[1]);
+assert.deepEqual(
+  bootstrapSecrets,
+  ['NPM_BOOTSTRAP_TOKEN'],
+  'Bootstrap workflow may read only the one-time npm bootstrap token',
+);
+includesAll(
+  companionPublishScript,
+  [
+    'Long-lived npm tokens are not accepted',
+    'Pending Changeset',
+    'GITHUB_REF_NAME',
+    'ACTIONS_ID_TOKEN_REQUEST_URL',
+    'GITHUB_SHA',
+    "['status', '--porcelain']",
+    'Expected exactly one audited companion tarball',
+    'npmTagForVersion(manifest.version)',
+    'differs from the audited artifact',
+    "'--provenance'",
+    "'npm-cache'",
+    'allowBootstrapToken',
+    'registryPackageExists()',
+    'already exists; bootstrap credentials must never publish updates',
+  ],
+  'Companion publish script',
+);
+includesAll(
+  companionPublishUtils,
+  [
+    "'source-testkit'",
+    "'@worldhacker/kasane-source-testkit'",
+    "'@worldhacker/kasane-watch'",
+    'Unexpected companion package file',
+    'Packed output contains',
+    "'>=1.0.0 <2'",
+  ],
+  'Companion publish utilities',
+);
 
 const manifest = JSON.parse(packageJson);
 assert.equal(manifest.name, '@worldhacker/kasane');
@@ -156,6 +277,22 @@ assert.equal(
   manifest.scripts?.['release:rehearse'],
   'node scripts/release-rehearse.mjs',
 );
+assert.equal(
+  manifest.scripts?.['companion:release:publish'],
+  'node scripts/companion-release.mjs publish',
+);
+assert.equal(
+  manifest.scripts?.['companion:release:bootstrap-publish'],
+  'node scripts/companion-release.mjs bootstrap-publish',
+);
+assert.equal(
+  manifest.scripts?.['companion:release:published-check'],
+  'node scripts/companion-release.mjs published-check',
+);
+assert(
+  manifest.scripts?.verify.includes('pnpm release:dry-run'),
+  'Ordinary verification must exercise synthetic publish plans',
+);
 console.log(
-  'Release policy check passed: SemVer, changelog, migration, release PR, and OIDC publish controls',
+  'Release policy check passed: SemVer, changelog, migration, release PR, and core/companion OIDC publish controls',
 );

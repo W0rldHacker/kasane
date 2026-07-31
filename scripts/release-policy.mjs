@@ -58,14 +58,17 @@ export function parseChangeset(source, filename = '<changeset>') {
     source.trim(),
   );
   assert(match, `${filename} must contain YAML frontmatter and a summary`);
-  const declaration =
-    /^['"]?@worldhacker\/kasane['"]?:\s*(patch|minor|major)\s*$/mu.exec(
-      match[1],
-    );
+  const declarations = [
+    ...match[1].matchAll(
+      /^['"]?(@worldhacker\/(?:kasane|kasane-source-testkit|kasane-watch))['"]?:\s*(patch|minor|major)\s*$/gmu,
+    ),
+  ];
   assert(
-    declaration,
-    `${filename} must classify @worldhacker/kasane as patch, minor, or major`,
+    declarations.length === 1,
+    `${filename} must classify exactly one releasable Kasane package as patch, minor, or major`,
   );
+  const declaration = declarations[0];
+  const packageName = declaration[1];
 
   const body = match[2].trim();
   const categoryMatch = /^(Added|Changed|Fixed|Security):\s+([\s\S]+)$/u.exec(
@@ -75,7 +78,7 @@ export function parseChangeset(source, filename = '<changeset>') {
     categoryMatch,
     `${filename} summary must start with Added:, Changed:, Fixed:, or Security:`,
   );
-  const type = declaration[1];
+  const type = declaration[2];
   const metadata = Object.fromEntries(
     [...body.matchAll(/^([A-Za-z-]+):\s*(.+)$/gmu)]
       .filter((entry) => entry[1] !== categoryMatch[1])
@@ -100,6 +103,13 @@ export function parseChangeset(source, filename = '<changeset>') {
   }
   const breaking = metadata.Breaking === 'true';
   const promotion = metadata.Promotion === '1.0';
+  if (promotion) {
+    assert.equal(
+      packageName,
+      '@worldhacker/kasane',
+      `${filename} Promotion: 1.0 applies only to the core package`,
+    );
+  }
   if (type === 'major' && !breaking) {
     assert(
       promotion,
@@ -125,5 +135,12 @@ export function parseChangeset(source, filename = '<changeset>') {
     );
   }
 
-  return { breaking, category: categoryMatch[1], metadata, summary, type };
+  return {
+    breaking,
+    category: categoryMatch[1],
+    metadata,
+    packageName,
+    summary,
+    type,
+  };
 }

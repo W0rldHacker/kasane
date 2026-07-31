@@ -129,6 +129,7 @@ requireAll(
     'name: Fast / static, docs, architecture',
     'pnpm docs:check',
     'pnpm security:policy-check',
+    'pnpm maintenance:check',
     'pnpm changeset:check',
     'pnpm release:policy-check',
     'pnpm test:unit',
@@ -138,6 +139,8 @@ requireAll(
     'pnpm test:property',
     'pnpm test:coverage',
     'pnpm test:package',
+    'pnpm companion:verify',
+    'pnpm -r pack:check',
     'pnpm bench:ci',
     'name: Required gates',
     "job.result !== 'success'",
@@ -162,6 +165,7 @@ requireAll(
     '- security-property',
     '- coverage',
     '- package',
+    '- companions',
     '- supported-node',
     '- platform',
     '- performance',
@@ -171,6 +175,11 @@ requireAll(
 assert(
   !(jobs(ci).get('required') ?? '').includes('node-26-advisory'),
   'Node.js 26 must remain advisory',
+);
+requireAll(
+  jobs(ci).get('platform') ?? '',
+  ['pnpm --filter @worldhacker/kasane-watch test'],
+  'Required platform watch coverage',
 );
 
 requireAll(
@@ -234,7 +243,9 @@ requireAll(
   [
     'Required gates',
     'strict up-to-date branches',
-    'at least one approving review',
+    'Require a pull request',
+    'zero approving reviews',
+    'Raise the count to one',
     'block force pushes and deletion',
     'Fork pull request permissions',
     'Cancelled run',

@@ -86,3 +86,8 @@ If loading, merging, or validation fails, keep using the previous snapshot.
 Kasane never returns a partial snapshot. Polling, retries, watchers, rollout
 policy, and component restart behavior are application or companion-package
 responsibilities.
+
+The post-`1.0` [`@worldhacker/kasane-watch` companion](../watch.md) implements
+this transaction as an async iterator. It emits candidates and errors but
+changes its last-known-good base only after the application explicitly accepts
+a candidate.

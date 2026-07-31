@@ -50,6 +50,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm docs:check
       - run: pnpm security:policy-check
+      - run: pnpm maintenance:check
       - run: pnpm ci:policy-check
       - run: pnpm changeset:check
       - run: pnpm release:policy-check
@@ -155,6 +156,26 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  companions:
+    name: Companion contracts and packages
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+        with:
+          run_install: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24.x
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm companion:verify
+      - run: pnpm -r pack:check
+
   supported-node:
     name: Supported / Ubuntu / Node.js ${{ matrix.node-version }}
     runs-on: ubuntu-latest
@@ -203,6 +224,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:integration
       - run: pnpm test:consumer
+      - run: pnpm --filter @worldhacker/kasane-watch test
 
   performance:
     name: Performance budget / Ubuntu / Node.js 24
@@ -253,6 +275,7 @@ jobs:
       - security-property
       - coverage
       - package
+      - companions
       - supported-node
       - platform
       - performance

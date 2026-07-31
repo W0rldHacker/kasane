@@ -14,6 +14,12 @@ CI job runs the full suite but cannot block a change. Promoting Node.js 26 to a
 required line needs an explicit support-policy update. See the official
 [Node.js release schedule](https://github.com/nodejs/Release#release-schedule).
 
+Required-line EOL does not silently extend Kasane support. The
+[stable maintenance policy](./maintenance.md#how-is-nodejs-eol-handled) defines
+the 180-day migration review, 90-day decision, major-release requirement for a
+runtime-floor increase, and the separately resourced exception needed for any
+post-EOL support.
+
 ## Filesystem behavior
 
 - File paths are resolved with Node's platform path implementation against the

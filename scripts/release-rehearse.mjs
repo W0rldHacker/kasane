@@ -43,6 +43,25 @@ const candidate = path.join(
 );
 await auditTarball(candidate);
 
+if (channel === 'stable') {
+  const tags = JSON.parse(
+    run('npm', ['view', String(manifest.name), 'dist-tags', '--json']).stdout,
+  );
+  if (tags.latest === manifest.version) {
+    console.log(
+      `Stable maintenance rehearsal passed: ${String(manifest.version)} is the immutable published baseline; exact publish dry-run waits for the next version commit`,
+    );
+    process.exit(0);
+  }
+  if (String(manifest.version) !== '1.0.0') {
+    run('npm', npmPublishDryRunArgs(candidate, String(manifest.version)));
+    console.log(
+      `Stable maintenance release rehearsal passed: ${String(manifest.version)} is newer than latest ${String(tags.latest)} and its audited tarball passed npm publish dry-run`,
+    );
+    process.exit(0);
+  }
+}
+
 function digest(source) {
   return createHash('sha256').update(source).digest('hex');
 }

@@ -89,9 +89,10 @@ async function fixture(name, type, expected, options = {}) {
     : type === 'major'
       ? '\nBreaking: true\nBreaking-Approval: maintainer-reviewed\nMigration: docs/migrations.md#fixture'
       : '';
+  const category = options.category ?? 'Changed';
   await writeFile(
     path.join(directory, '.changeset', `${name}.md`),
-    `---\n'@worldhacker/kasane': ${type}\n---\n\nChanged: Exercise ${type} release classification.${metadata}\n`,
+    `---\n'@worldhacker/kasane': ${type}\n---\n\n${category}: Exercise ${type} release classification.${metadata}\n`,
   );
   const result = spawnSync(process.execPath, [versionScript], {
     cwd: directory,
@@ -111,7 +112,7 @@ async function fixture(name, type, expected, options = {}) {
     `${name} changelog version is missing`,
   );
   assert(
-    changelog.includes('### Changed'),
+    changelog.includes(`### ${category}`),
     `${name} changelog category is missing`,
   );
   const format = spawnSync(
@@ -122,8 +123,85 @@ async function fixture(name, type, expected, options = {}) {
   assert.equal(format.status, 0, format.stderr || format.stdout);
 }
 
+async function companionFixture({ fixtureName, packageName, packagePath }) {
+  const directory = path.join(temporaryRoot, fixtureName);
+  const packageDirectory = path.join(directory, 'packages', packagePath);
+  await mkdir(path.join(directory, '.changeset'), { recursive: true });
+  await mkdir(packageDirectory, { recursive: true });
+  await writeFile(
+    path.join(directory, 'package.json'),
+    `${JSON.stringify(
+      { name: '@worldhacker/kasane', private: true, version: '1.0.0' },
+      null,
+      2,
+    )}\n`,
+  );
+  await writeFile(
+    path.join(packageDirectory, 'package.json'),
+    `${JSON.stringify({ name: packageName, version: '0.1.0' }, null, 2)}\n`,
+  );
+  await writeFile(
+    path.join(directory, 'pnpm-workspace.yaml'),
+    'packages:\n  - .\n  - packages/*\n',
+  );
+  await writeFile(
+    path.join(directory, '.changeset', 'config.json'),
+    `${JSON.stringify({
+      $schema: 'https://unpkg.com/@changesets/config@3.1.1/schema.json',
+      changelog: false,
+      commit: false,
+      fixed: [],
+      linked: [],
+      access: 'public',
+      baseBranch: 'main',
+      updateInternalDependencies: 'patch',
+      ignore: [],
+    })}\n`,
+  );
+  await writeFile(
+    path.join(packageDirectory, 'CHANGELOG.md'),
+    '# Changelog\n\n<!-- release-notes -->\n',
+  );
+  await writeFile(
+    path.join(directory, '.changeset', `${packagePath}.md`),
+    `---\n'${packageName}': minor\n---\n\nAdded: Exercise an independent companion release.\n`,
+  );
+  const result = spawnSync(process.execPath, [versionScript], {
+    cwd: directory,
+    encoding: 'utf8',
+  });
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const core = JSON.parse(
+    await readFile(path.join(directory, 'package.json'), 'utf8'),
+  );
+  const companion = JSON.parse(
+    await readFile(path.join(packageDirectory, 'package.json'), 'utf8'),
+  );
+  assert.equal(core.version, '1.0.0', 'Companion release changed core');
+  assert.equal(companion.version, '0.2.0');
+  assert(
+    (
+      await readFile(path.join(packageDirectory, 'CHANGELOG.md'), 'utf8')
+    ).includes('## 0.2.0'),
+    'Companion changelog version is missing',
+  );
+}
+
 try {
   await fixture('patch', 'patch', '1.0.1');
+  await fixture('security-patch', 'patch', '1.0.1', {
+    category: 'Security',
+  });
+  await companionFixture({
+    fixtureName: 'source-testkit-release-group',
+    packageName: '@worldhacker/kasane-source-testkit',
+    packagePath: 'source-testkit',
+  });
+  await companionFixture({
+    fixtureName: 'watch-release-group',
+    packageName: '@worldhacker/kasane-watch',
+    packagePath: 'watch',
+  });
   await fixture('minor', 'minor', '1.1.0');
   await fixture('major', 'major', '2.0.0');
   await fixture('prerelease', 'minor', '1.1.0-alpha.0', { prerelease: true });
@@ -306,7 +384,7 @@ try {
     publishDryRun.stderr || publishDryRun.stdout,
   );
   console.log(
-    'Release dry-run passed: patch, minor, major, initial alpha, RC channel transition, stable exit from approved RC, new RC after fix, tag mismatch, prerelease, missing changeset, package publish rehearsal, and failed publish plan',
+    'Release dry-run passed: patch, security patch, minor, major, initial alpha, RC channel transition, stable exit from approved RC, new RC after fix, tag mismatch, prerelease, missing changeset, package publish rehearsal, and failed publish plan',
   );
 } finally {
   await rm(temporaryRoot, { recursive: true, force: true });

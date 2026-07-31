@@ -8,6 +8,8 @@ export default defineConfig(
     ignores: [
       'coverage/**',
       'dist/**',
+      '**/dist/**',
+      'artifacts/**',
       'node_modules/**',
       'test/consumers/**',
       'test/fixtures/**',

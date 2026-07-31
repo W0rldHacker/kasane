@@ -1,0 +1,77 @@
+name: Stable regression
+description: Report behavior that regressed in a supported Kasane release.
+title: '[regression] '
+labels:
+  - bug
+  - status:needs-triage
+  - type:regression
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        This form is public. Use synthetic configuration only and move any
+        sensitive report to the confidential channel linked at the end.
+  - type: input
+    id: version
+    attributes:
+      label: Installed Kasane version
+      description: Provide the exact version from npm or the lockfile.
+      placeholder: 1.0.0
+    validations:
+      required: true
+  - type: input
+    id: previous_version
+    attributes:
+      label: Last known working version
+      description: Provide the exact version, or state that this is unknown.
+      placeholder: 1.0.0-rc.1
+    validations:
+      required: true
+  - type: input
+    id: node_version
+    attributes:
+      label: Node.js version
+      placeholder: 22.23.1
+    validations:
+      required: true
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Production impact
+      description: Maintainers assign the final severity after reproduction.
+      options:
+        - Production is blocked; no safe workaround
+        - Production is degraded; a safe workaround exists
+        - Localized correctness or diagnostic impact
+        - Documentation or ergonomics only
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Safe reproduction
+      description: >-
+        Use synthetic configuration and include imports, options, expected
+        behavior, actual behavior, and operating system.
+    validations:
+      required: true
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Workaround
+      description:
+        Describe the safest known workaround, or state that none exists.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety confirmation
+      options:
+        - label: I removed secrets, tokens, private paths, and customer data.
+          required: true
+        - label: This report is safe for public disclosure.
+          required: true
+  - type: markdown
+    attributes:
+      value: Read SECURITY.md before filing any sensitive report.

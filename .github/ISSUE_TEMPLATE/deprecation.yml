@@ -1,0 +1,45 @@
+name: Deprecation proposal
+description: Propose a compatible deprecation and documented migration.
+title: '[deprecation] '
+labels:
+  - status:needs-triage
+  - type:deprecation
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Public deprecations ship in a minor, retain the old surface for at least
+        one complete minor, and remove it only in a major. Security-sensitive
+        reports belong in private vulnerability reporting.
+  - type: input
+    id: surface
+    attributes:
+      label: Public surface
+      description:
+        Name the export, option, type, default, or documented behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: reason
+    attributes:
+      label: Reason for deprecation
+      description:
+        Explain the user outcome and why continued support is harmful.
+    validations:
+      required: true
+  - type: textarea
+    id: replacement
+    attributes:
+      label: Replacement and migration
+      description:
+        Describe the compatible replacement and proposed migration path.
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility impact
+      description:
+        Identify affected consumers and the earliest safe removal major.
+    validations:
+      required: true

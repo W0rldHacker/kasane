@@ -52,6 +52,9 @@ advisory, and accompanied by the safest available migration.
 
 No long-term support window is promised by this policy. Supported release lines
 and security reporting are defined in [the security policy](../SECURITY.md).
+Triage severity, patch/minor cadence, regression requirements, backports, and
+Node EOL migration are defined in the
+[stable maintenance policy](./maintenance.md).
 
 ## How is the changelog produced?
 
@@ -115,6 +118,42 @@ The publish command also rejects the placeholder version, pending Changesets, a
 missing current-version changelog entry, long-lived npm token variables, a
 non-`main` ref, or a job without GitHub's OIDC request context.
 
+Companion packages use the separate manual
+[`companion-release.yml`](../.github/workflows/companion-release.yml) workflow
+and protected `npm-companions` environment. Its input is an allowlisted package
+selector: `source-testkit` publishes
+`@worldhacker/kasane-source-testkit`, and `watch` publishes
+`@worldhacker/kasane-watch`. The private companion template cannot be selected.
+Each package is released independently; publish the source testkit first when a
+watch or provider release depends on its new conformance contract.
+
+The companion job runs the full repository gate, creates and audits exactly one
+tarball, performs a provenance-enabled npm dry-run, uploads that audited
+artifact, and publishes that same file through OIDC. It then downloads the
+registry tarball and requires an exact SHA-256 match, checks the version-derived
+dist-tag and integrity, and installs from a fresh npm cache on Node 22 and 24.
+The registry smoke covers the source-testkit root export or the watch root,
+`/file`, and `/provider` exports. A failed companion release is corrected with
+a new patch version; the workflow never treats `npm unpublish` as routine
+rollback.
+
+npm can attach a trusted publisher only after a package already exists. The
+first publication of each new companion therefore uses the separate manual
+[`companion-bootstrap.yml`](../.github/workflows/companion-bootstrap.yml)
+workflow. It has the same prepare/audit, protected environment, provenance,
+registry digest, and Node 22/24 consumer checks, but its publish step alone
+receives `NODE_AUTH_TOKEN` from the environment secret
+`NPM_BOOTSTRAP_TOKEN`. The command first proves that the package name does not
+exist and permanently refuses bootstrap credentials for an existing package.
+
+The bootstrap credential is a one-day granular npm token with read/write access
+limited to the `@worldhacker` scope and bypass-2FA enabled because npm requires
+2FA or such a token for non-interactive package creation. After both first
+publications, revoke the token and delete the GitHub environment secret before
+configuring the two package-specific trusted publishers. Every later release
+uses `companion-release.yml`; the bootstrap workflow cannot update either
+package.
+
 npm provenance is requested through `publishConfig` and the OIDC publish. npm
 can issue provenance only for a public package built from a public repository.
 The repository satisfies the public-source prerequisite; publication remains
@@ -131,12 +170,16 @@ runtime dependencies, broken export targets, and an unpacked size at or above
 500 KiB. Source maps are intentionally excluded from the release artifact; a
 different size or source-map policy requires an ADR.
 
-The same archive must pass publint, attw, a provenance-enabled npm publish
-dry-run, and a byte-for-byte repeated-pack check. `pnpm test:consumer:packed`
-installs that archive with dev dependencies omitted and exercises the JavaScript
-ESM and TypeScript NodeNext consumers. Required CI repeats the consumer gate on
-the latest Node 22 and 24 patches and uploads the already-audited archive rather
-than packing a second artifact.
+The same archive must pass publint, attw, and a byte-for-byte repeated-pack
+check. `pnpm test:consumer:packed` installs that archive with dev dependencies
+omitted and exercises the JavaScript ESM and TypeScript NodeNext consumers.
+`pnpm release:dry-run` exercises synthetic patch/security versioning and publish
+plans on ordinary pull requests. On a version commit, `pnpm release:rehearse`
+runs the provenance-enabled npm publish dry-run against the exact, not-yet-
+published version; it never attempts to dry-run an immutable version already in
+the registry. Required CI repeats the consumer gate on the latest Node 22 and 24
+patches and uploads the already-audited archive rather than packing a second
+artifact.
 
 `pnpm release:rehearse` projects an RC archive to the stable version, repacks
 it, reruns the tarball audit and npm publish dry-run with `latest`, and rejects
@@ -154,6 +197,16 @@ Repository administrators complete and periodically rehearse this checklist:
 - confirm that the maintainer controls the `worldhacker` npm user scope and
   register the trusted publisher for `@worldhacker/kasane` with the exact
   repository, workflow filename, and environment above before any release;
+- create the protected `npm-companions` environment with the same branch and
+  reviewer restrictions, then register separate npm trusted-publisher entries
+  for `@worldhacker/kasane-source-testkit` and
+  `@worldhacker/kasane-watch`; each entry must name repository
+  `W0rldHacker/kasane`, workflow `companion-release.yml`, and environment
+  `npm-companions`;
+- for initial package creation only, store the one-day scoped token as the
+  `npm-companions` environment secret `NPM_BOOTSTRAP_TOKEN`, dispatch
+  `companion-bootstrap.yml` once for each absent package, then revoke the token
+  and delete the secret before registering trusted publishing;
 - keep Actions pinned to reviewed commit SHAs and default workflow permissions
   read-only;
 - verify `pnpm changeset status`, `pnpm release:dry-run`, the packed contents,

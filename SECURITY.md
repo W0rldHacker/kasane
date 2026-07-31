@@ -2,20 +2,27 @@
 
 ## Supported versions
 
-Kasane is currently prerelease software. Until a stable release is published,
-only the newest published prerelease and the current `main` branch receive
-security fixes. A branch is development code, not a supported release.
+Kasane supports the current stable major under the bounded window and ownership
+rules in the [stable maintenance policy](./docs/maintenance.md). There is no
+indefinite LTS or response-time SLA. Ordinary fixes target the latest patch of
+the latest `1.x` minor; a security backport to an older minor occurs only when
+an advisory explicitly names that line.
 
-| Release line                      | Supported                                    |
-| --------------------------------- | -------------------------------------------- |
-| Newest published `0.x` prerelease | Yes                                          |
-| Older `0.x` prereleases           | No                                           |
-| Unreleased `main` branch          | Fixes are prepared here; it is not a release |
-| Stable releases                   | None published yet                           |
+<!-- maintenance-support:start -->
 
-When the support policy changes, this table will be updated before the affected
-release. Node.js runtime support is documented separately in the
-[platform support policy](./docs/platform-support.md).
+| Release line                    | Status           | Fix policy                                                        | Runtime window                                                                                                      |
+| ------------------------------- | ---------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `1.x` latest minor and patch    | Supported        | Compatible production and security fixes                          | Node.js 22 and 24; commitment ends no later than 2027-04-30 unless an explicit funded extension replaces this table |
+| Earlier `1.x` minors or patches | Upgrade required | Security backport only when an advisory explicitly names the line | No independent runtime window                                                                                       |
+| `0.x` prereleases               | Unsupported      | No fixes or backports                                             | None                                                                                                                |
+| `main`                          | Development only | Fixes are prepared here; it is not a release                      | Required CI matrix                                                                                                  |
+
+<!-- maintenance-support:end -->
+
+The table is generated from `.github/maintenance-policy.json` and checked in CI.
+Node.js runtime support and upstream EOL migration are documented in the
+[platform support policy](./docs/platform-support.md) and
+[maintenance policy](./docs/maintenance.md#how-is-nodejs-eol-handled).
 
 ## Reporting a vulnerability
 

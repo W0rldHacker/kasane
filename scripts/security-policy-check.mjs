@@ -67,16 +67,20 @@ const supported = section(policy, 'Supported versions');
 requireAll(
   supported,
   [
-    'Newest published `0.x` prerelease',
-    'Older `0.x` prereleases',
-    'Unreleased `main` branch',
-    'Stable releases',
+    '`1.x` latest minor and patch',
+    'Earlier `1.x` minors or patches',
+    '`0.x` prereleases',
+    '`main`',
+    'Security backport',
+    '2027-04-30',
   ],
   'Supported versions table',
 );
 assert(
-  /^\|\s*Release line\s*\|\s*Supported\s*\|$/mu.test(supported),
-  'Supported versions table needs Release line and Supported columns',
+  /^\|\s*Release line\s*\|\s*Status\s*\|\s*Fix policy\s*\|\s*Runtime window\s*\|$/mu.test(
+    supported,
+  ),
+  'Supported versions table needs release, status, fixes, and runtime columns',
 );
 
 const reporting = section(policy, 'Reporting a vulnerability');

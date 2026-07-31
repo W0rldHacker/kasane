@@ -1,0 +1,9 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Private vulnerability report
+    url: https://github.com/W0rldHacker/kasane/security/advisories/new
+    about: Use the confidential GitHub advisory channel for sensitive reports.
+  - name: Maintenance and support policy
+    url: https://github.com/W0rldHacker/kasane/blob/main/docs/maintenance.md
+    about:
+      Check supported versions, severity, release cadence, and Node EOL policy.

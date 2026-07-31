@@ -1,0 +1,46 @@
+{
+  "name": "@worldhacker/kasane-companion-template",
+  "version": "0.0.0",
+  "description": "Copyable template for an independently released Kasane source package.",
+  "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/W0rldHacker/kasane.git",
+    "directory": "packages/companion-template"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22"
+  },
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.d.ts",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "pnpm --dir ../.. build && tsc -p tsconfig.build.json",
+    "typecheck": "pnpm --dir ../.. build && pnpm --dir ../source-testkit build && tsc -p tsconfig.json --noEmit",
+    "test": "pnpm build && pnpm --dir ../source-testkit build && vitest run",
+    "pack:check": "pnpm build && node ../../scripts/check-companion-package.mjs ."
+  },
+  "peerDependencies": {
+    "@worldhacker/kasane": ">=1.0.0 <2"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.1",
+    "@worldhacker/kasane": "workspace:*",
+    "@worldhacker/kasane-source-testkit": "workspace:*",
+    "typescript": "6.0.3",
+    "vitest": "4.1.10"
+  }
+}
