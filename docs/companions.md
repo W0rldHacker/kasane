@@ -76,7 +76,10 @@ core API or merge semantics.
 Changesets are independent: `.changeset/config.json` has empty `fixed` and
 `linked` groups. Releasing one companion therefore does not require a core or
 unrelated companion release. Each Changeset classifies exactly one releasable
-package, and `pnpm release:version` writes that package's own changelog.
+package, and `pnpm release:version` writes that package's own changelog. Core
+patches and minors that remain inside a declared companion peer range do not
+narrow that range or advance the companion version; the release dry-run
+rehearses this invariant with the actual Changesets CLI.
 
 ## Publish checklist
 
