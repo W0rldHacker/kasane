@@ -130,7 +130,13 @@ async function fixture(name, type, expected, options = {}) {
   assert.equal(format.status, 0, format.stderr || format.stdout);
 }
 
-async function companionFixture({ fixtureName, packageName, packagePath }) {
+async function companionFixture({
+  expectedVersion = '0.2.0',
+  fixtureName,
+  packageName,
+  packagePath,
+  startVersion = '0.1.0',
+}) {
   const directory = path.join(temporaryRoot, fixtureName);
   const packageDirectory = path.join(directory, 'packages', packagePath);
   await mkdir(path.join(directory, '.changeset'), { recursive: true });
@@ -145,7 +151,7 @@ async function companionFixture({ fixtureName, packageName, packagePath }) {
   );
   await writeFile(
     path.join(packageDirectory, 'package.json'),
-    `${JSON.stringify({ name: packageName, version: '0.1.0' }, null, 2)}\n`,
+    `${JSON.stringify({ name: packageName, version: startVersion }, null, 2)}\n`,
   );
   await writeFile(
     path.join(directory, 'pnpm-workspace.yaml'),
@@ -175,11 +181,11 @@ async function companionFixture({ fixtureName, packageName, packagePath }) {
     await readFile(path.join(packageDirectory, 'package.json'), 'utf8'),
   );
   assert.equal(core.version, '1.0.0', 'Companion release changed core');
-  assert.equal(companion.version, '0.2.0');
+  assert.equal(companion.version, expectedVersion);
   assert(
     (
       await readFile(path.join(packageDirectory, 'CHANGELOG.md'), 'utf8')
-    ).includes('## 0.2.0'),
+    ).includes(`## ${expectedVersion}`),
     'Companion changelog version is missing',
   );
 }
@@ -304,9 +310,11 @@ try {
     packagePath: 'watch',
   });
   await companionFixture({
+    expectedVersion: '0.1.0',
     fixtureName: 'cli-release-group',
     packageName: '@worldhacker/kasane-cli',
     packagePath: 'cli',
+    startVersion: '0.0.0',
   });
   await fixture('minor', 'minor', '1.1.0');
   await fixture('major', 'major', '2.0.0');

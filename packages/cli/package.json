@@ -1,6 +1,6 @@
 {
   "name": "@worldhacker/kasane-cli",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "Secret-safe operational diagnostics for Kasane configuration.",
   "keywords": [
     "kasane",
