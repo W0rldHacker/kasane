@@ -221,6 +221,7 @@ includesAll(
     'actions/download-artifact@',
     'pnpm companion:release:bootstrap-publish',
     'NODE_AUTH_TOKEN: ${{ secrets.NPM_BOOTSTRAP_TOKEN }}',
+    "NODE_AUTH_TOKEN: ''",
     'Revoke the npm bootstrap token',
     'Bootstrap registry smoke / Node.js ${{ matrix.node-version }}',
     '- 22.x',
