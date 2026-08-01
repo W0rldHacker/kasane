@@ -178,8 +178,11 @@ assert(
 );
 requireAll(
   jobs(ci).get('platform') ?? '',
-  ['pnpm --filter @worldhacker/kasane-watch test'],
-  'Required platform watch coverage',
+  [
+    'pnpm --filter @worldhacker/kasane-watch test',
+    'pnpm --filter @worldhacker/kasane-cli test',
+  ],
+  'Required platform companion coverage',
 );
 
 requireAll(

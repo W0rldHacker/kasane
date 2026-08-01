@@ -37,6 +37,7 @@ const packageLocations = new Map([
     path.join(root, 'packages', 'source-testkit'),
   ],
   ['@worldhacker/kasane-watch', path.join(root, 'packages', 'watch')],
+  ['@worldhacker/kasane-cli', path.join(root, 'packages', 'cli')],
 ]);
 const affectedPackages = [
   ...new Set(entries.map((entry) => entry.packageName)),

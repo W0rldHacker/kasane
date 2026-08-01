@@ -188,6 +188,11 @@ async function corePatchCompatibilityFixture() {
   const directory = path.join(temporaryRoot, 'core-patch-companions');
   const companions = [
     {
+      name: '@worldhacker/kasane-cli',
+      packagePath: 'cli',
+      version: '0.1.0',
+    },
+    {
       name: '@worldhacker/kasane-source-testkit',
       packagePath: 'source-testkit',
       version: '0.1.0',
@@ -297,6 +302,11 @@ try {
     fixtureName: 'watch-release-group',
     packageName: '@worldhacker/kasane-watch',
     packagePath: 'watch',
+  });
+  await companionFixture({
+    fixtureName: 'cli-release-group',
+    packageName: '@worldhacker/kasane-cli',
+    packagePath: 'cli',
   });
   await fixture('minor', 'minor', '1.1.0');
   await fixture('major', 'major', '2.0.0');

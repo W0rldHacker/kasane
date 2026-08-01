@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "layers": [
+    {
+      "type": "remote",
+      "name": "unsupported"
+    }
+  ]
+}

@@ -6,11 +6,12 @@ import process from 'node:process';
 const root = process.cwd();
 const readJson = async (file) =>
   JSON.parse(await readFile(path.join(root, file), 'utf8'));
-const [core, testkit, template, watch, changesets] = await Promise.all([
+const [core, testkit, template, watch, cli, changesets] = await Promise.all([
   readJson('package.json'),
   readJson('packages/source-testkit/package.json'),
   readJson('packages/companion-template/package.json'),
   readJson('packages/watch/package.json'),
+  readJson('packages/cli/package.json'),
   readJson('.changeset/config.json'),
 ]);
 
@@ -31,7 +32,10 @@ assert.notEqual(testkit.private, true, 'Source testkit must be publishable');
 assert.equal(template.private, true, 'Copyable template must not be published');
 assert.equal(watch.name, '@worldhacker/kasane-watch');
 assert.notEqual(watch.private, true, 'Watch companion must be publishable');
-for (const manifest of [testkit, template, watch]) {
+assert.equal(cli.name, '@worldhacker/kasane-cli');
+assert.notEqual(cli.private, true, 'CLI companion must be publishable');
+assert.deepEqual(cli.bin, { kasane: './dist/bin.js' });
+for (const manifest of [testkit, template, watch, cli]) {
   assert.equal(
     manifest.peerDependencies?.['@worldhacker/kasane'],
     '>=1.0.0 <2',
@@ -75,6 +79,7 @@ const sourceRoots = [
   path.join(root, 'packages', 'source-testkit', 'src'),
   path.join(root, 'packages', 'companion-template', 'src'),
   path.join(root, 'packages', 'watch', 'src'),
+  path.join(root, 'packages', 'cli', 'src'),
 ];
 const runtimeFiles = (await Promise.all(sourceRoots.map(sourceFiles))).flat();
 for (const file of runtimeFiles) {
@@ -116,5 +121,5 @@ for (const file of runtimeFiles) {
 }
 
 console.log(
-  `Companion policy check passed: public testkit/watch packages, private template, independent release groups, stable compatible peer ranges, zero core dependencies, and ${runtimeFiles.length} public-contract source files`,
+  `Companion policy check passed: public testkit/watch/CLI packages, private template, independent release groups, stable compatible peer ranges, zero core dependencies, and ${runtimeFiles.length} public-contract source files`,
 );

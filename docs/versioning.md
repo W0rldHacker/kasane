@@ -121,7 +121,7 @@ non-`main` ref, or a job without GitHub's OIDC request context.
 Companion packages use the separate manual
 [`companion-release.yml`](../.github/workflows/companion-release.yml) workflow
 and protected `npm-companions` environment. Its input is an allowlisted package
-selector: `source-testkit` publishes
+selector: `cli` publishes `@worldhacker/kasane-cli`, `source-testkit` publishes
 `@worldhacker/kasane-source-testkit`, and `watch` publishes
 `@worldhacker/kasane-watch`. The private companion template cannot be selected.
 Each package is released independently; publish the source testkit first when a
@@ -132,8 +132,8 @@ tarball, performs a provenance-enabled npm dry-run, uploads that audited
 artifact, and publishes that same file through OIDC. It then downloads the
 registry tarball and requires an exact SHA-256 match, checks the version-derived
 dist-tag and integrity, and installs from a fresh npm cache on Node 22 and 24.
-The registry smoke covers the source-testkit root export or the watch root,
-`/file`, and `/provider` exports. A failed companion release is corrected with
+The registry smoke covers the CLI or source-testkit root export, or the watch
+root, `/file`, and `/provider` exports. A failed companion release is corrected with
 a new patch version; the workflow never treats `npm unpublish` as routine
 rollback.
 
@@ -148,11 +148,10 @@ exist and permanently refuses bootstrap credentials for an existing package.
 
 The bootstrap credential is a one-day granular npm token with read/write access
 limited to the `@worldhacker` scope and bypass-2FA enabled because npm requires
-2FA or such a token for non-interactive package creation. After both first
+2FA or such a token for non-interactive package creation. After the first
 publications, revoke the token and delete the GitHub environment secret before
-configuring the two package-specific trusted publishers. Every later release
-uses `companion-release.yml`; the bootstrap workflow cannot update either
-package.
+configuring the package-specific trusted publishers. Every later release uses
+`companion-release.yml`; the bootstrap workflow cannot update any package.
 
 npm provenance is requested through `publishConfig` and the OIDC publish. npm
 can issue provenance only for a public package built from a public repository.
@@ -200,7 +199,7 @@ Repository administrators complete and periodically rehearse this checklist:
 - create the protected `npm-companions` environment with the same branch and
   reviewer restrictions, then register separate npm trusted-publisher entries
   for `@worldhacker/kasane-source-testkit` and
-  `@worldhacker/kasane-watch`; each entry must name repository
+  `@worldhacker/kasane-watch`, plus one for `@worldhacker/kasane-cli`; each entry must name repository
   `W0rldHacker/kasane`, workflow `companion-release.yml`, and environment
   `npm-companions`;
 - for initial package creation only, store the one-day scoped token as the

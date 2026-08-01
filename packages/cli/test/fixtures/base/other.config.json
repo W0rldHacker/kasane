@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "layers": [
+    {
+      "type": "value",
+      "name": "production",
+      "data": {
+        "server": {
+          "host": "127.0.0.1",
+          "port": 4000
+        },
+        "token": "POST_003_SECRET_CANARY_B"
+      }
+    }
+  ],
+  "secrets": ["token"]
+}

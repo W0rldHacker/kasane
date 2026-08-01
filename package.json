@@ -49,7 +49,7 @@
   ],
   "scripts": {
     "lint": "pnpm lint:code && pnpm lint:markdown",
-    "lint:code": "pnpm build && pnpm exec tsc -p packages/source-testkit/tsconfig.build.json && eslint .",
+    "lint:code": "pnpm build && pnpm exec tsc -p packages/source-testkit/tsconfig.build.json && pnpm exec tsc -p packages/cli/tsconfig.build.json && eslint .",
     "lint:markdown": "markdownlint-cli2",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -83,7 +83,7 @@
     "maintenance:check": "node scripts/maintenance-policy-check.mjs",
     "maintenance:tabletop": "node scripts/maintenance-tabletop.mjs",
     "companion:policy-check": "node scripts/companion-policy-check.mjs",
-    "companion:verify": "pnpm companion:policy-check && pnpm --filter @worldhacker/kasane-source-testkit typecheck && pnpm --filter kasane-companion-template typecheck && pnpm --filter @worldhacker/kasane-watch typecheck && pnpm --filter @worldhacker/kasane-source-testkit test && pnpm --filter kasane-companion-template test && pnpm --filter @worldhacker/kasane-watch test",
+    "companion:verify": "pnpm companion:policy-check && pnpm --filter @worldhacker/kasane-source-testkit typecheck && pnpm --filter kasane-companion-template typecheck && pnpm --filter @worldhacker/kasane-watch typecheck && pnpm --filter @worldhacker/kasane-cli typecheck && pnpm --filter @worldhacker/kasane-source-testkit test && pnpm --filter kasane-companion-template test && pnpm --filter @worldhacker/kasane-watch test && pnpm --filter @worldhacker/kasane-cli test",
     "companion:release:pack": "node scripts/companion-release.mjs pack",
     "companion:release:rehearse": "node scripts/companion-release.mjs rehearse",
     "companion:release:publish": "node scripts/companion-release.mjs publish",

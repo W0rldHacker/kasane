@@ -60,7 +60,7 @@ export function parseChangeset(source, filename = '<changeset>') {
   assert(match, `${filename} must contain YAML frontmatter and a summary`);
   const declarations = [
     ...match[1].matchAll(
-      /^['"]?(@worldhacker\/(?:kasane|kasane-source-testkit|kasane-watch))['"]?:\s*(patch|minor|major)\s*$/gmu,
+      /^['"]?(@worldhacker\/(?:kasane|kasane-cli|kasane-source-testkit|kasane-watch))['"]?:\s*(patch|minor|major)\s*$/gmu,
     ),
   ];
   assert(
