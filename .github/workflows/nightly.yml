@@ -33,7 +33,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:property:nightly
       - if: ${{ failure() }}
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: property-failure-${{ github.run_id }}
           path: test/property/regressions/last-failure.json
@@ -57,7 +57,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:fuzz:nightly
       - if: ${{ failure() }}
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: minimized-fuzz-corpus-${{ github.run_id }}
           path: test/fuzz-corpus/generated/last-failure.json
@@ -84,7 +84,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm bench:ci
       - if: ${{ always() }}
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: nightly-benchmark-${{ github.run_id }}
           path: benchmarks/results/nightly.json
