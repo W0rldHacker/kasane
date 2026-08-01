@@ -54,7 +54,7 @@
     "@worldhacker/kasane": ">=1.0.0 <2"
   },
   "devDependencies": {
-    "@types/node": "22.20.1",
+    "@types/node": "26.1.2",
     "@worldhacker/kasane": "workspace:*",
     "kasane-cli-local": "link:.",
     "typescript": "6.0.3",
