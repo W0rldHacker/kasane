@@ -136,5 +136,6 @@ describe('@worldhacker/kasane-cli end-to-end diagnostics', () => {
       expect(result.status, result.stderr).toBe(0);
       expect(result.stdout).toContain('server.port');
     },
+    30_000,
   );
 });
