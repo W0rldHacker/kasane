@@ -5,6 +5,19 @@ SemVer level. The release PR generates dated entries from pending Changesets.
 
 <!-- release-notes -->
 
+## 1.0.1 - 2026-08-01
+
+### Changed
+
+- Publish the bounded stable maintenance, triage, regression, deprecation,
+  security backport, Node EOL, and failed-publish policies with automated
+  support tables and patch-release tabletops.
+
+### Fixed
+
+- Preserve compatible companion peer ranges when Changesets prepares a core-only
+  patch release.
+
 ## 1.0.0 - 2026-07-19
 
 ### Added
