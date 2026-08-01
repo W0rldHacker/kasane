@@ -12,6 +12,12 @@
     },
     "MD036": false,
   },
-  "globs": ["*.md", "docs/**/*.md", "examples/**/*.md"],
-  "ignores": ["node_modules/**", "dist/**", "coverage/**"],
+  "globs": [
+    "*.md",
+    "docs/**/*.md",
+    "examples/**/*.md",
+    "experiments/**/*.md",
+    "rfcs/**/*.md",
+  ],
+  "ignores": ["**/node_modules/**", "**/dist/**", "**/coverage/**"],
 }

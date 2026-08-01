@@ -60,6 +60,10 @@ update.
 These capabilities MUST NOT be advertised as core, included in stable root
 exports, or used to pass a `1.0` release gate.
 
+POST-004 research is indexed in [`rfcs/`](../rfcs/README.md). Its private
+prototype package is removable, creates no stable export, and remains blocked
+from promotion until the RFC evidence gate is satisfied.
+
 ## Explicit non-goals
 
 | ID | Non-goal | Source | Enforcement and future task |

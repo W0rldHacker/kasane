@@ -41,6 +41,7 @@ Baseline: [requirements](./requirements.md) · [scope](./scope.md) ·
 | `TS-COMPANION` | Public source/parser contracts, failure, abort, secrets, dangerous keys, no source-owned merge, package isolation | `pnpm --filter @worldhacker/kasane-source-testkit test`; `pnpm companion:verify`; `pnpm -r pack:check` | `POST-001` |
 | `TS-WATCH` | New snapshots, explicit acceptance, debounce, errors, abort, optional deletion/recreation, secret diff, native platform events | `pnpm --filter @worldhacker/kasane-watch test`; required Windows CI | `POST-002` |
 | `TS-CLI` | Missing paths, invalid config, versioned JSON, secret explain/print/diff, public imports, no reveal flag, Windows shell | `pnpm --filter @worldhacker/kasane-cli test`; `pnpm companion:policy-check` | `POST-003` |
+| `TS-POST-004` | Large typed-path compile, telemetry redaction/failure isolation, polling cancellation/single-flight, callback rejection, prototype budgets | `pnpm post-004:verify`; `pnpm post-004:bench`; RFC review and consumer evidence records | `POST-004` |
 | `TS-ABSENCE` | No non-goal/post-1.0 export, dependency, or tarball content | API report plus packed allowlist tests | `TYPE-001`, `PKG-001`, `REL-002` |
 
 ## Mandatory `1.0` coverage matrix
@@ -100,7 +101,7 @@ Baseline: [requirements](./requirements.md) · [scope](./scope.md) ·
 | `REQ-POST-001` | `post-1.0` | `POST-002` | `TS-WATCH`; `TS-ABSENCE` for core | Implemented outside core |
 | `REQ-POST-002` | `post-1.0` | `POST-003` | `TS-CLI`; `TS-ABSENCE` for core | Implemented outside core |
 | `REQ-POST-003` | `post-1.0` | `POST-001` | `TS-COMPANION`; `TS-ABSENCE` for core | Implemented outside core |
-| `REQ-POST-004` | `post-1.0` | `POST-004` | Future RFC-specific suites; `TS-ABSENCE` for core | Excluded |
+| `REQ-POST-004` | `post-1.0` | `POST-004` | `TS-POST-004`; `TS-ABSENCE` for core | Research only; external demand hold |
 
 ## Normative release gates
 
