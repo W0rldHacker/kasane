@@ -126,12 +126,23 @@ export async function auditCompanionTarball(tarball, expectedManifest) {
       .filter(Boolean)
       .map((entry) => entry.replace(/^package\//u, ''))
       .sort();
+    const binTargets = Object.values(expectedManifest.bin ?? {}).map(
+      (target) => {
+        assert.equal(
+          typeof target,
+          'string',
+          'Package bin target must be a string',
+        );
+        return target.replace(/^\.\//u, '');
+      },
+    );
     for (const required of [
       'LICENSE',
       'README.md',
       'dist/index.d.ts',
       'dist/index.js',
       'package.json',
+      ...binTargets,
     ]) {
       assert(
         entries.includes(required),
@@ -140,9 +151,10 @@ export async function auditCompanionTarball(tarball, expectedManifest) {
     }
     for (const entry of entries) {
       assert(
-        /^(?:LICENSE|README\.md|package\.json|dist\/.+\.(?:d\.ts|js))$/u.test(
-          entry,
-        ),
+        binTargets.includes(entry) ||
+          /^(?:LICENSE|README\.md|package\.json|dist\/.+\.(?:d\.ts|js))$/u.test(
+            entry,
+          ),
         `Unexpected companion package file: ${entry}`,
       );
     }

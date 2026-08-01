@@ -34,7 +34,7 @@ assert.equal(watch.name, '@worldhacker/kasane-watch');
 assert.notEqual(watch.private, true, 'Watch companion must be publishable');
 assert.equal(cli.name, '@worldhacker/kasane-cli');
 assert.notEqual(cli.private, true, 'CLI companion must be publishable');
-assert.deepEqual(cli.bin, { kasane: './dist/bin.js' });
+assert.deepEqual(cli.bin, { kasane: './bin/kasane.js' });
 for (const manifest of [testkit, template, watch, cli]) {
   assert.equal(
     manifest.peerDependencies?.['@worldhacker/kasane'],
