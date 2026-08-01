@@ -86,7 +86,11 @@ jobs:
         run: pnpm companion:release:bootstrap-publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_BOOTSTRAP_TOKEN }}
-      - run: pnpm companion:release:published-check
+      - name: Verify the published artifact without bootstrap credentials
+        run: pnpm companion:release:published-check
+        env:
+          # setup-node sets a non-secret placeholder when registry-url is used.
+          NODE_AUTH_TOKEN: ''
       - name: Require credential cleanup
         if: always()
         run:
