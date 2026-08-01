@@ -32,6 +32,16 @@ assert.equal(
   undefined,
   'Core must retain zero dependencies',
 );
+const lintCode = core.scripts?.['lint:code'];
+assert.equal(typeof lintCode, 'string', 'Root lint:code script is required');
+const watchBuildIndex = lintCode.indexOf(
+  'tsc -p packages/watch/tsconfig.build.json',
+);
+const eslintIndex = lintCode.indexOf('eslint .');
+assert(
+  watchBuildIndex >= 0 && eslintIndex > watchBuildIndex,
+  'Root lint must build watch declarations before type-aware ESLint',
+);
 
 async function sourceFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -96,5 +106,5 @@ for (const directory of await readdir(path.join(root, 'packages'), {
 }
 
 console.log(
-  'POST-004 policy check passed: private removable package, public-only imports, unchanged core exports, and no public package dependency',
+  'POST-004 policy check passed: private removable package, public-only imports, clean-checkout lint ordering, unchanged core exports, and no public package dependency',
 );
