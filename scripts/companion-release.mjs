@@ -38,6 +38,8 @@ const selector =
 const companion = resolveCompanion(workspace, selector);
 const manifest = await readCompanionManifest(companion);
 const artifactRoot = path.join(workspace, 'artifacts', 'companions');
+const registryPropagationAttempts = 73;
+const registryPropagationDelayMs = 10_000;
 
 function assertManifest() {
   assert.notEqual(manifest.version, '0.0.0', 'Placeholder cannot be published');
@@ -250,7 +252,7 @@ function assertProtectedWorkflow() {
 
 async function publishedCheck(tarball) {
   let lastError;
-  for (let attempt = 1; attempt <= 6; attempt += 1) {
+  for (let attempt = 1; attempt <= registryPropagationAttempts; attempt += 1) {
     try {
       assert(await registryArtifactMatches(tarball, false));
       const tags = JSON.parse(
@@ -278,8 +280,10 @@ async function publishedCheck(tarball) {
       return;
     } catch (error) {
       lastError = error;
-      if (attempt < 6) {
-        await new Promise((resolve) => setTimeout(resolve, 5_000));
+      if (attempt < registryPropagationAttempts) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, registryPropagationDelayMs),
+        );
       }
     }
   }
@@ -298,7 +302,11 @@ async function registrySmoke() {
     );
     let installed = false;
     let lastError;
-    for (let attempt = 1; attempt <= 6 && !installed; attempt += 1) {
+    for (
+      let attempt = 1;
+      attempt <= registryPropagationAttempts && !installed;
+      attempt += 1
+    ) {
       try {
         run(
           'npm',
@@ -317,8 +325,10 @@ async function registrySmoke() {
         installed = true;
       } catch (error) {
         lastError = error;
-        if (attempt < 6) {
-          await new Promise((resolve) => setTimeout(resolve, 5_000));
+        if (attempt < registryPropagationAttempts) {
+          await new Promise((resolve) =>
+            setTimeout(resolve, registryPropagationDelayMs),
+          );
         }
       }
     }

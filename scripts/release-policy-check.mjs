@@ -249,6 +249,8 @@ includesAll(
     'Expected exactly one audited companion tarball',
     'npmTagForVersion(manifest.version)',
     'differs from the audited artifact',
+    'registryPropagationAttempts = 73',
+    'registryPropagationDelayMs = 10_000',
     "'--provenance'",
     "'npm-cache'",
     'allowBootstrapToken',
