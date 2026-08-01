@@ -7,6 +7,10 @@ import path from 'node:path';
 import process from 'node:process';
 
 export const companionPackages = Object.freeze({
+  cli: Object.freeze({
+    directory: 'cli',
+    name: '@worldhacker/kasane-cli',
+  }),
   'source-testkit': Object.freeze({
     directory: 'source-testkit',
     name: '@worldhacker/kasane-source-testkit',
@@ -74,7 +78,7 @@ export function resolveCompanion(workspace, selector) {
   const selected = companionPackages[selector];
   assert(
     selected,
-    `Unknown companion package ${String(selector)}; use source-testkit or watch`,
+    `Unknown companion package ${String(selector)}; use cli, source-testkit, or watch`,
   );
   return Object.freeze({
     ...selected,

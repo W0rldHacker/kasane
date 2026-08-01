@@ -1,0 +1,24 @@
+{
+  "name": "@kasane/post-004-experiments",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Removable POST-004 research prototypes; not a supported contract.",
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "pnpm --dir ../.. build && pnpm --dir ../../packages/watch build && tsc -p tsconfig.build.json",
+    "typecheck": "pnpm --dir ../.. build && pnpm --dir ../../packages/watch build && tsc -p tsconfig.json --noEmit",
+    "test": "pnpm build && vitest run && node dist/scripts/type-benchmark.js --check && node dist/scripts/runtime-benchmark.js --check",
+    "bench": "pnpm build && node dist/scripts/type-benchmark.js --check && node dist/scripts/runtime-benchmark.js --check"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.1",
+    "@worldhacker/kasane": "workspace:*",
+    "@worldhacker/kasane-watch": "workspace:*",
+    "typescript": "6.0.3",
+    "vitest": "4.1.10"
+  }
+}

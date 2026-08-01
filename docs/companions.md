@@ -55,6 +55,10 @@ repository use the existing `@worldhacker/*` publishing scope.
 The watch companion follows the same publisher-prefixed convention as
 `@worldhacker/kasane-watch`.
 
+The post-`1.0` diagnostics binary is the independently versioned
+[`@worldhacker/kasane-cli` companion](./cli.md). Unlike source companions, it accepts only
+a bounded declarative JSON contract and never executes application code.
+
 A proposed companion must identify real consumers, its provider SDK and
 transitive dependency cost, credential model, abort behavior, secret
 annotation strategy, and maintenance owner before implementation begins.
@@ -94,9 +98,9 @@ Before a companion package is made public:
    than routine `npm unpublish`.
 
 Publication is a manual dispatch of `companion-release.yml` from the audited
-`main` commit. Select `source-testkit` for
+`main` commit. Select `cli` for `@worldhacker/kasane-cli`, `source-testkit` for
 `@worldhacker/kasane-source-testkit` or `watch` for
-`@worldhacker/kasane-watch`; those are the only public package selectors. The
+`@worldhacker/kasane-watch`; those are the public package selectors. The
 workflow uses the protected `npm-companions` environment and package-specific
 npm trusted-publisher registrations. It accepts no long-lived npm token.
 
@@ -112,7 +116,7 @@ There is one bootstrap exception: npm requires a package to exist before a
 trusted publisher can be configured. For the first `0.1.0` publication only,
 use `companion-bootstrap.yml` with explicit `bootstrap` confirmation and the
 short-lived `NPM_BOOTSTRAP_TOKEN` environment secret. Its guarded publish
-command fails if the package already exists. After bootstrapping both package
+command fails if the package already exists. After bootstrapping the package
 names, revoke the token, remove the secret, configure their trusted publishers,
 and use only the OIDC workflow for subsequent versions.
 

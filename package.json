@@ -49,7 +49,7 @@
   ],
   "scripts": {
     "lint": "pnpm lint:code && pnpm lint:markdown",
-    "lint:code": "pnpm build && pnpm exec tsc -p packages/source-testkit/tsconfig.build.json && eslint .",
+    "lint:code": "pnpm build && pnpm exec tsc -p packages/source-testkit/tsconfig.build.json && pnpm exec tsc -p packages/watch/tsconfig.build.json && pnpm exec tsc -p packages/cli/tsconfig.build.json && eslint .",
     "lint:markdown": "markdownlint-cli2",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -83,7 +83,10 @@
     "maintenance:check": "node scripts/maintenance-policy-check.mjs",
     "maintenance:tabletop": "node scripts/maintenance-tabletop.mjs",
     "companion:policy-check": "node scripts/companion-policy-check.mjs",
-    "companion:verify": "pnpm companion:policy-check && pnpm --filter @worldhacker/kasane-source-testkit typecheck && pnpm --filter kasane-companion-template typecheck && pnpm --filter @worldhacker/kasane-watch typecheck && pnpm --filter @worldhacker/kasane-source-testkit test && pnpm --filter kasane-companion-template test && pnpm --filter @worldhacker/kasane-watch test",
+    "companion:verify": "pnpm companion:policy-check && pnpm --filter @worldhacker/kasane-source-testkit typecheck && pnpm --filter kasane-companion-template typecheck && pnpm --filter @worldhacker/kasane-watch typecheck && pnpm --filter @worldhacker/kasane-cli typecheck && pnpm --filter @worldhacker/kasane-source-testkit test && pnpm --filter kasane-companion-template test && pnpm --filter @worldhacker/kasane-watch test && pnpm --filter @worldhacker/kasane-cli test",
+    "post-004:policy-check": "node scripts/post-004-policy-check.mjs",
+    "post-004:verify": "pnpm post-004:policy-check && pnpm --filter @kasane/post-004-experiments typecheck && pnpm --filter @kasane/post-004-experiments test",
+    "post-004:bench": "pnpm --filter @kasane/post-004-experiments bench",
     "companion:release:pack": "node scripts/companion-release.mjs pack",
     "companion:release:rehearse": "node scripts/companion-release.mjs rehearse",
     "companion:release:publish": "node scripts/companion-release.mjs publish",
@@ -105,7 +108,7 @@
     "bench:compare": "pnpm bench && node scripts/check-benchmarks.mjs && node scripts/compare-benchmarks.mjs",
     "bench:ci": "pnpm bench:check",
     "changeset": "changeset",
-    "verify": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm docs:check && pnpm security:policy-check && pnpm maintenance:check && pnpm companion:verify && pnpm ci:policy-check && pnpm changeset:check && pnpm release:policy-check && pnpm architecture:check && pnpm build:check && pnpm examples:test && pnpm test:package && pnpm release:dry-run && pnpm release:rehearse && pnpm test && pnpm test:types"
+    "verify": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm docs:check && pnpm security:policy-check && pnpm maintenance:check && pnpm companion:verify && pnpm post-004:verify && pnpm ci:policy-check && pnpm changeset:check && pnpm release:policy-check && pnpm architecture:check && pnpm build:check && pnpm examples:test && pnpm test:package && pnpm release:dry-run && pnpm release:rehearse && pnpm test && pnpm test:types"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "0.18.5",

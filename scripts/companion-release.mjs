@@ -333,10 +333,14 @@ async function registrySmoke() {
       }
     }
     if (!installed) throw lastError;
-    const smokeSource =
-      companion.selector === 'source-testkit'
-        ? `import { assertSafeProviderReference, runSourceConformance } from '${manifest.name}';\nif (typeof assertSafeProviderReference !== 'function' || typeof runSourceConformance !== 'function') process.exit(1);\n`
-        : `import { watchFiles, watchProvider, watchSnapshots } from '${manifest.name}';\nimport { watchFiles as fileSubpath } from '${manifest.name}/file';\nimport { watchProvider as providerSubpath } from '${manifest.name}/provider';\nif ([watchFiles, watchProvider, watchSnapshots, fileSubpath, providerSubpath].some((value) => typeof value !== 'function')) process.exit(1);\n`;
+    let smokeSource;
+    if (companion.selector === 'source-testkit') {
+      smokeSource = `import { assertSafeProviderReference, runSourceConformance } from '${manifest.name}';\nif (typeof assertSafeProviderReference !== 'function' || typeof runSourceConformance !== 'function') process.exit(1);\n`;
+    } else if (companion.selector === 'cli') {
+      smokeSource = `import { CLI_OUTPUT_SCHEMA_VERSION, loadCliConfig, runCli } from '${manifest.name}';\nif (CLI_OUTPUT_SCHEMA_VERSION !== 1 || typeof loadCliConfig !== 'function' || typeof runCli !== 'function') process.exit(1);\n`;
+    } else {
+      smokeSource = `import { watchFiles, watchProvider, watchSnapshots } from '${manifest.name}';\nimport { watchFiles as fileSubpath } from '${manifest.name}/file';\nimport { watchProvider as providerSubpath } from '${manifest.name}/provider';\nif ([watchFiles, watchProvider, watchSnapshots, fileSubpath, providerSubpath].some((value) => typeof value !== 'function')) process.exit(1);\n`;
+    }
     await writeFile(path.join(temporaryRoot, 'smoke.mjs'), smokeSource);
     run(process.execPath, ['smoke.mjs'], { cwd: temporaryRoot });
     console.log(

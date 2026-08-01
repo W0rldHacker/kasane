@@ -225,6 +225,7 @@ jobs:
       - run: pnpm test:integration
       - run: pnpm test:consumer
       - run: pnpm --filter @worldhacker/kasane-watch test
+      - run: pnpm --filter @worldhacker/kasane-cli test
 
   performance:
     name: Performance budget / Ubuntu / Node.js 24
