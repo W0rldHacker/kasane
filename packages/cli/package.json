@@ -28,7 +28,7 @@
     "node": ">=22"
   },
   "bin": {
-    "kasane": "./dist/bin.js"
+    "kasane": "./bin/kasane.js"
   },
   "types": "./dist/index.d.ts",
   "exports": {
@@ -38,6 +38,7 @@
     }
   },
   "files": [
+    "bin/kasane.js",
     "dist/**/*.js",
     "dist/**/*.d.ts",
     "LICENSE",

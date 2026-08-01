@@ -226,6 +226,8 @@ jobs:
       - run: pnpm test:consumer
       - run: pnpm --filter @worldhacker/kasane-watch test
       - run: pnpm --filter @worldhacker/kasane-cli test
+      - run:
+          pnpm --filter @worldhacker/kasane-cli exec kasane explain server.port
 
   performance:
     name: Performance budget / Ubuntu / Node.js 24

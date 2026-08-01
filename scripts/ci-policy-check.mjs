@@ -181,6 +181,7 @@ requireAll(
   [
     'pnpm --filter @worldhacker/kasane-watch test',
     'pnpm --filter @worldhacker/kasane-cli test',
+    'pnpm --filter @worldhacker/kasane-cli exec kasane explain server.port',
   ],
   'Required platform companion coverage',
 );
