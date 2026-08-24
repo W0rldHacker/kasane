@@ -62,6 +62,6 @@
     "@types/node": "22.20.1",
     "@worldhacker/kasane": "workspace:*",
     "typescript": "6.0.3",
-    "vitest": "4.1.10"
+    "vitest": "4.1.11"
   }
 }
